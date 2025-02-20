@@ -1,0 +1,8 @@
+###
+POST http://localhost:8787/login HTTP/1.1
+Content-Type: application/json
+
+{"password":"{{$dotenv %test_password}}",
+"email":"eloirebollo97@gmail.com"
+}
+
