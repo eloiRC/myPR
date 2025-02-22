@@ -9,7 +9,14 @@
 	"compatibility_date": "2025-02-14",
 	"observability": {
 		"enabled": true
-	}
+	},
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "mypr",
+      "database_id": "ec460b6a-48bf-47ec-abf2-5a504ac8670a"
+    }
+  ]
   /**
    * Smart Placement
    * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

@@ -1,35 +1,106 @@
 import { Hono } from 'hono'
 import { logger } from 'hono/logger'
 import { zValidator } from '@hono/zod-validator'
-import { z } from 'zod'
-import { env } from 'hono/adapter'
+import { HTTPException } from 'hono/http-exception'
+import { verify, sign, decode, jwt } from 'hono/jwt'
+import { schema, nouExercici, petition } from './schema'
+
 
 type Bindings = {
-  test_password: string
+  DB: D1Database;
+  test_password: string;
+  jwt_secret: string;
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
 
-const schema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8).regex(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/, { message: "Minimum eight characters, at least one letter and one number " })
+app.use(logger())
+
+app.use('/api/*', async (c, next) => {
+  const { token } = await c.req.json();
+  console.log(token)
+  try {
+    const decodedPayload = await verify(token, c.env.jwt_secret)
+    c.set('jwtPayload', decodedPayload)
+    await next()
+
+  } catch (error) {
+    return c.json({ message: 'invalid token' })
+
+  }
+
+
 })
 
-app.use(logger())
+app.post('/api/nouExercici', zValidator('json', nouExercici), async (c) => {
+  const { nom, grups_musculars } = await c.req.json();
+
+  let GM1 = grups_musculars[0] || null
+  let GM2 = grups_musculars[1] || null
+  let GM3 = grups_musculars[2] || null
+  let GM4 = grups_musculars[3] || null
+  let GM5 = grups_musculars[4] || null
+
+  const result = await c.env.DB.prepare('INSERT INTO Exercici (Nom, UserId, PR, GrupMuscular1, GrupMuscular2, GrupMuscular3, GrupMuscular4, GrupMuscular5) VALUES (?, ?, 0, ?, ?, ?, ?, ?);').bind(nom, await c.get('jwtPayload').UserId, GM1, GM2, GM3, GM4, GM5).run()
+  return c.json({ message: 'exercici creat', result: result })
+
+})
+
+
+app.get('/api/exercicis', zValidator('json', petition), async (c) => {//retorna tots els exercisi de la taula d'aquest usuari
+
+  const { results } = await c.env.DB.prepare('SELECT * FROM EXERCICI WHERE UserId=?').bind(c.get('jwtPayload').UserId).all();
+  return c.json(results)
+})
+
 
 app.post('/login', zValidator('json', schema), async (c) => {
   const { email, password } = await c.req.json();
 
-  //todo comprovar password con la bd
-  if (password == c.env.test_password && email == "eloirebollo97@gmail.com") {
-    console.log("log in succesfull")
-    return c.text("login succesfull")
-    //todo return a token?
-  }
-  else {
-    return c.text("login failed")
+  if (!email && !password) {
+    throw new HTTPException(401, { message: 'Invalid credentials' })
   }
 
+
+  //todo la contrasenya no s'encripta ni desencripta esta a la DB en text pla !! 
+
+  try {
+    //busquem usauri a la DB y retornem contrasenya
+    let results = await c.env.DB.prepare('SELECT * FROM Users WHERE Email=?').bind(email).first() || { Password: "no" };
+    if (password == results.Password) {
+      console.log("log in succesfull")
+
+
+      const payload = {
+        email: email,
+        UserId: results.UserId,
+        exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60// 7 dies 
+      }
+
+      //generem jwt token 
+      const token = await sign(payload, c.env.jwt_secret)
+
+      //retornem el jwt token al client
+      return c.json({ message: 'authorized', token: token })
+
+    }
+    else {
+      throw new HTTPException(401, { message: 'Invalid credentials' })
+    }
+  } catch (error) {
+    throw new HTTPException(401, { message: 'error sql query' })
+  }
+
+
+
+
 })
+
+app.onError((err, c) => {
+  console.error(`${err}`)
+  return c.text('Uknown error', 500)
+})
+
+
 
 export default app
