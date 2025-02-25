@@ -23,6 +23,14 @@ Content-Type: application/json
 }
 
 ###
+POST http://localhost:8787/api/nouEntreno HTTP/1.1
+Content-Type: application/json
+
+{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImVsb2lyZWJvbGxvOTdAZ21haWwuY29tIiwiVXNlcklkIjoxLCJleHAiOjE3NDA4NTg2MDV9.sxaJxaJedpKtlzVrqvxSWzlXhisavo8Z5aTlxVUK86M"
+}
+
+
+###
 GET http://localhost:8787/api/exercicis HTTP/1.1
 Content-Type: application/json
 

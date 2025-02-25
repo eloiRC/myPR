@@ -32,6 +32,7 @@ app.use('/api/*', async (c, next) => {
 
 })
 
+//crear un exercisi nou, requerim nom y grup muscular(id del grup)
 app.post('/api/nouExercici', zValidator('json', nouExercici), async (c) => {
   const { nom, grups_musculars } = await c.req.json();
 
@@ -42,8 +43,26 @@ app.post('/api/nouExercici', zValidator('json', nouExercici), async (c) => {
   let GM5 = grups_musculars[4] || null
 
   const result = await c.env.DB.prepare('INSERT INTO Exercici (Nom, UserId, PR, GrupMuscular1, GrupMuscular2, GrupMuscular3, GrupMuscular4, GrupMuscular5) VALUES (?, ?, 0, ?, ?, ?, ?, ?);').bind(nom, await c.get('jwtPayload').UserId, GM1, GM2, GM3, GM4, GM5).run()
-  return c.json({ message: 'exercici creat', result: result })
+  return c.json({ message: 'exercici creat', idExecici: result.meta.last_row_id })
 
+})
+
+//creem un entreno nou l'entrem a la DB retoem OK, Id de l'entereno i data de creacio
+app.post('/api/nouEntreno', async (c) => {
+  const data = Math.floor(Date.now() / 1000)
+
+  const result = await c.env.DB.prepare('INSERT INTO Entreno (UserId,Data,CargaTotal) VALUES (?, ?,?);').bind(await c.get('jwtPayload').UserId, data, 0).run()
+  return c.json({ message: 'Nou Entreno Creat', idEntreno: result.meta.last_row_id, DataInici: data })
+
+})
+
+//retorna tots els entrtenos entre dos dates d'un usuari
+app.get('/api/entrenos', zValidator('json', getEntrenos), async (c) => {
+  //revem variables data inici + fi, 
+
+  //todo
+  const { results } = await c.env.DB.prepare('SELECT * FROM EXERCICI WHERE UserId=?').bind(c.get('jwtPayload').UserId).all();
+  return c.json(results)
 })
 
 
