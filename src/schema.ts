@@ -11,6 +11,15 @@ export const petition = z.object({
 
 export const nouExercici = z.object({
     token: z.string(),
-    nom: z.string(),
+    nom: z.string().min(3),
     grups_musculars: z.number().array().min(1).max(5)
 })
+
+export const getEntrenos = z.object({
+    token: z.string(),
+    dataInici: z.number().min(1735693300).max(2529450460),
+    dataFi: z.number().min(1735693300).max(2529450460)
+}).refine(data => data.dataInici < data.dataFi, {
+    message: "la fecha de fin es mas pequna que la de inicio"
+})
+

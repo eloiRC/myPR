@@ -3,7 +3,7 @@ import { logger } from 'hono/logger'
 import { zValidator } from '@hono/zod-validator'
 import { HTTPException } from 'hono/http-exception'
 import { verify, sign, decode, jwt } from 'hono/jwt'
-import { schema, nouExercici, petition } from './schema'
+import { schema, nouExercici, petition, getEntrenos } from './schema'
 
 
 type Bindings = {
@@ -57,16 +57,16 @@ app.post('/api/nouEntreno', async (c) => {
 })
 
 //retorna tots els entrtenos entre dos dates d'un usuari
-app.get('/api/entrenos', zValidator('json', getEntrenos), async (c) => {
-  //revem variables data inici + fi, 
+app.get('/api/getEntrenos', zValidator('json', getEntrenos), async (c) => {
+  const { dataInici, dataFi } = await c.req.json();
 
-  //todo
-  const { results } = await c.env.DB.prepare('SELECT * FROM EXERCICI WHERE UserId=?').bind(c.get('jwtPayload').UserId).all();
+  const { results } = await c.env.DB.prepare('SELECT * FROM Entreno WHERE UserId=? AND Data > ? AND Data < ?').bind(c.get('jwtPayload').UserId, dataInici, dataFi).all();
+  console.log(await c.env.DB.prepare('SELECT * FROM Entreno WHERE UserId=1').all())
   return c.json(results)
 })
 
 
-app.get('/api/exercicis', zValidator('json', petition), async (c) => {//retorna tots els exercisi de la taula d'aquest usuari
+app.get('/api/getExercicis', zValidator('json', petition), async (c) => {//retorna tots els exercisi de la taula d'aquest usuari
 
   const { results } = await c.env.DB.prepare('SELECT * FROM EXERCICI WHERE UserId=?').bind(c.get('jwtPayload').UserId).all();
   return c.json(results)
