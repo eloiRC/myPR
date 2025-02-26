@@ -56,6 +56,8 @@ app.post('/api/nouEntreno', async (c) => {
 
 })
 
+//todo nova serie exercici reps kg entreno relacionat
+
 //retorna tots els entrtenos entre dos dates d'un usuari
 app.get('/api/getEntrenos', zValidator('json', getEntrenos), async (c) => {
   const { dataInici, dataFi } = await c.req.json();
@@ -65,6 +67,7 @@ app.get('/api/getEntrenos', zValidator('json', getEntrenos), async (c) => {
   return c.json(results)
 })
 
+//todo getEntreno amb les series que tingui relacionaes
 
 app.get('/api/getExercicis', zValidator('json', petition), async (c) => {//retorna tots els exercisi de la taula d'aquest usuari
 
