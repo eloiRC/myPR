@@ -29,6 +29,16 @@ Content-Type: application/json
 {"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImVsb2lyZWJvbGxvOTdAZ21haWwuY29tIiwiVXNlcklkIjoxLCJleHAiOjE3NDA4NTg2MDV9.sxaJxaJedpKtlzVrqvxSWzlXhisavo8Z5aTlxVUK86M"
 }
 
+###
+POST http://localhost:8787/api/novaSerie HTTP/1.1
+Content-Type: application/json
+
+{"token":"{{$dotenv %token}}",
+"entrenoId":1,
+"exerciciId":2,
+"kg":115,
+"reps":2
+}
 
 ###
 GET http://localhost:8787/api/getExercicis HTTP/1.1

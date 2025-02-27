@@ -1,3 +1,6 @@
+PRAGMA defer_foreign_keys = on;
+
+
 -- Primero creamos las tablas padre antes de las tablas que las referencian
 -- Tabla Users
 DROP TABLE IF EXISTS Users;
@@ -45,9 +48,25 @@ CREATE TABLE Entreno (
     FOREIGN KEY (UserId) REFERENCES Users(UserId)
 );
 
+-- Tabla Series
+DROP TABLE IF EXISTS Series;
+CREATE TABLE Series (
+    SerieId INTEGER PRIMARY KEY AUTOINCREMENT, 
+    UserId INTEGER,
+    EntrenoId INTEGER,
+    ExerciciId INTEGER,
+    Kg INTEGER,
+    Reps INTEGER,
+    Data INTEGER, 
+    Carga INTEGER,
+    FOREIGN KEY (UserId) REFERENCES Users(UserId),
+    FOREIGN KEY (EntrenoId) REFERENCES Entreno(EntrenoId),
+    FOREIGN KEY (ExerciciId) REFERENCES Exercici(ExerciciId)
+);
+
 -- Inserta datos en las tablas padre primero
 INSERT INTO Users (Email, Password) VALUES 
-    ('eloirebollo97@gmail.com', $(test_password)), 
+    ('eloirebollo97@gmail.com', 'elo12597'), 
     ('eloirebollo@gmail.com', 'Thomas Hardy');
 
 INSERT INTO GrupMuscular (Nom) VALUES 
@@ -61,3 +80,6 @@ INSERT INTO Exercici (Nom, UserId, PR, GrupMuscular1) VALUES
 
 INSERT INTO Entreno (UserId, Data, CargaTotal) VALUES 
     (1, 0, 0);
+
+INSERT INTO Series (UserId,EntrenoId,ExerciciId,Kg,Reps,Data,Carga) VALUES
+    (1,1,1,10,10,1765849,100);

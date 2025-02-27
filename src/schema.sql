@@ -15,3 +15,17 @@ DROP TABLE IF EXISTS GrupMuscular;
 CREATE TABLE IF NOT EXISTS GrupMuscular (GrupMuscularId INTEGER PRIMARY KEY AUTOINCREMENT, Nom TEXT UNIQUE);
 INSERT INTO GrupMuscular (Nom) VALUES ( "Pectoral"),("Hombros"),("Biceps"),("Triceps"),("Dorsals"),("Trapezi"),("Core"),("Gltuis"),("Quadriceps"),("Lumbars"),("Femoral"),("Bessons");
 
+DROP TABLE IF EXISTS Series;
+CREATE TABLE Series (
+    SerieId INTEGER PRIMARY KEY AUTOINCREMENT, 
+    UserId INTEGER,
+    ExerciciId INTEGER,
+    Kg INTEGER,
+    Reps INTEGER,
+    Data INTEGER, 
+    Carga INTEGER,
+    FOREIGN KEY (UserId) REFERENCES Users(UserId),
+    FOREIGN KEY (ExerciciId) REFERENCES Exercici(ExerciciId)
+);
+INSERT INTO Series (UserId,ExerciciId,Kg,Reps,Data,Carga) VALUES
+    (1,1,10,10,1765849,100);
