@@ -1,9 +1,10 @@
-import { Hono } from 'hono'
+import { Context, Hono } from 'hono'
 import { logger } from 'hono/logger'
 import { zValidator } from '@hono/zod-validator'
 import { HTTPException } from 'hono/http-exception'
 import { verify, sign, decode, jwt } from 'hono/jwt'
-import { schema, nouExercici, petition, getEntrenos, novaSerie } from './schema'
+import { schema, nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie } from './schema'
+import { checkOptionalParameter } from 'hono/utils/url'
 
 
 type Bindings = {
@@ -67,7 +68,7 @@ app.post('/api/nouEntreno', async (c) => {
 
 })
 
-//crea nova serie i comprova si es un nou PR
+//crea nova serie i comprova si es un nou PR iactualitza la carga total
 app.post('/api/novaSerie', zValidator('json', novaSerie), async (c, next) => {
   const { entrenoId, exerciciId, kg, reps } = await c.req.json()
   const data = Math.floor(Date.now() / 1000)
@@ -76,21 +77,48 @@ app.post('/api/novaSerie', zValidator('json', novaSerie), async (c, next) => {
   let prUpdated = false
 
   try {
-    const result = await c.env.DB.prepare('INSERT INTO Series (UserId,EntrenoId,ExerciciId,Kg,Reps,Carga,Data) VALUES (?,?,?,?,?,?,?);').bind(userId, entrenoId, exerciciId, kg, reps, carga, data).run()
+    const result = await c.env.DB.prepare('INSERT INTO Series (UserId,EntrenoId,ExerciciId,Kg,Reps,Carga,Data) VALUES (?,?,?,?,?,?,?) RETURNING *').bind(userId, entrenoId, exerciciId, kg, reps, carga, data).run()
     const updatePr = await c.env.DB.prepare('UPDATE Exercici SET PR=? WHERE UserID=? AND ExerciciId=? AND ? > PR').bind(kg, userId, exerciciId, kg).run()
+    const updateCarga = await c.env.DB.prepare('UPDATE Entreno SET CargaTotal=CargaTotal+? WHERE UserID=? AND EntrenoId=?  RETURNING *').bind(carga, userId, entrenoId).run()
+
     if (updatePr.meta.rows_written > 0) {
       prUpdated = true;
     }
-    return c.json({ message: 'Serie Guardada', serieId: result.meta.last_row_id, prUpdated: prUpdated })
+    return c.json({ message: 'Serie Guardada', serieId: result.results[0].SerieId, prUpdated: prUpdated, cargaTotal: updateCarga.results[0].CargaTotal })
 
   } catch (error) {
     throw new HTTPException(500, { message: 'error sql query' })
   }
 })
 
-//todo crear nou exercici (user,name,grups musculars)
-
 //todo actualitzar una serie (serieID,kg,reps,actualitzem carga i PR si cal)
+app.post('/api/editSerie', zValidator('json', editSerie), async (c, next) => {
+  const { exerciciId, kg, reps, serieId, entrenoId } = await c.req.json()
+  const carga = kg * reps
+  const userId = await c.get('jwtPayload').UserId
+  let newPr = false
+
+  try {
+    //actualitzem la serie
+    const updateSerie = await c.env.DB.prepare('UPDATE Series SET Kg=?,Reps=?,Carga=? WHERE UserID=? AND SerieId=?  RETURNING *').bind(kg, reps, carga, userId, serieId).run()
+
+    //actualitzem el pr
+    const updatePr = await checkPr(c, userId, exerciciId, kg)
+
+    //actualitzem la carga total de l'entreno
+    const updateCT = await updateCargaTotal(c, userId, entrenoId)
+
+    console.log(updateSerie)
+    if (updatePr.prUpdated && updatePr.newPR == kg) {
+      newPr = true
+    }
+    return c.json({ message: 'Serie Actualitzada', serieId: updateSerie.results[0].SerieId, prUpdated: newPr, cargaTotal: updateCT.results[0].CargaTotal })
+
+  } catch (error) {
+    throw new HTTPException(500, { message: 'error sql query' })
+  }
+})
+
 
 //retorna tots els entrtenos entre dos dates d'un usuari
 app.get('/api/getEntrenos', zValidator('json', getEntrenos), async (c) => {
@@ -106,7 +134,22 @@ app.get('/api/getEntrenos', zValidator('json', getEntrenos), async (c) => {
 
 })
 
-//todo getEntreno amb les series que tingui relacionaes
+//retona dades de l'entreno + series 
+app.get('/api/getEntreno', zValidator('json', getEntreno), async (c) => {
+  const { entrenoId } = await c.req.json()
+  const userId = await c.get('jwtPayload').UserId
+
+  try {
+    const resultsE = await c.env.DB.prepare('SELECT * FROM Entreno WHERE EntrenoId=? AND UserId=?').bind(entrenoId, userId).all();
+    const resultsS = await c.env.DB.prepare('SELECT * FROM Series WHERE EntrenoId = ? AND UserId=?').bind(entrenoId, userId).all();
+
+    return c.json({ entreno: resultsE.results, series: resultsS.results })
+  } catch (error) {
+    console.log(error)
+    throw new HTTPException(500, { message: 'error sql query' })
+  }
+})
+
 
 app.get('/api/getExercicis', zValidator('json', petition), async (c) => {//retorna tots els exercisi de la taula d'aquest usuari
 
@@ -174,4 +217,36 @@ app.onError((err, c) => {
 
 
 export default app
+
+async function checkPr(c: any, userId: any, exerciciId: any, kg: any) {
+
+  try {
+    const updatePr = await c.env.DB.prepare('UPDATE Exercici SET PR=(SELECT MAX(Kg) FROM Series WHERE ExerciciId=? ) WHERE UserID=? AND ExerciciId=? AND PR!=? RETURNING *').bind(exerciciId, userId, exerciciId, kg).run()
+    if (updatePr.meta.rows_written > 0) {
+      return { prUpdated: true, newPR: updatePr.results[0].PR }
+    }
+    else {
+      return { prUpdated: false, newPR: null }
+    }
+
+  } catch (error) {
+    throw new HTTPException(500, { message: 'error sql query' })
+  }
+
+
+}
+
+function updateCargaTotal(c: any, userId: any, entrenoId: any) {
+
+  try {
+    const updateCarga = c.env.DB.prepare('UPDATE Entreno SET CargaTotal=(SELECT SUM(Carga) From Series WHERE EntrenoId=?) WHERE UserId=? AND EntrenoId=?  RETURNING *').bind(entrenoId, userId, entrenoId).run()
+
+    return updateCarga
+
+  } catch (error) {
+    throw new HTTPException(500, { message: 'error sql query' })
+  }
+
+
+}
 

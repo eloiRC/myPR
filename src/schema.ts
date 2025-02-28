@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { string, z } from 'zod'
 
 export const schema = z.object({
     email: z.string().email(),
@@ -13,6 +13,11 @@ export const nouExercici = z.object({
     token: z.string().min(10),
     nom: z.string().min(3),
     grups_musculars: z.number().array().min(1).max(5)
+})
+
+export const getEntreno = z.object({
+    token: z.string().min(10),
+    entrenoId: z.number().min(0)
 })
 
 export const getEntrenos = z.object({
@@ -31,3 +36,11 @@ export const novaSerie = z.object({
     reps: z.number().min(1)
 })
 
+export const editSerie = z.object({
+    token: z.string().min(10),
+    serieId: z.number().min(1),
+    entrenoId: z.number().min(1),
+    exerciciId: z.number().min(1),
+    kg: z.number().min(0),
+    reps: z.number().min(1)
+})
