@@ -1,9 +1,15 @@
 import { string, z } from 'zod'
 
-export const schema = z.object({
+export const login = z.object({
     email: z.string().email(),
     password: z.string().min(8).regex(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/, { message: "Minimum eight characters, at least one letter and one number " })
 });
+
+export const signup = z.object({
+    email: z.string().email(),
+    password: z.string().min(8).regex(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/, { message: "Minimum eight characters, at least one letter and one number " })
+
+})
 
 export const petition = z.object({
     token: z.string().min(10)
@@ -44,3 +50,9 @@ export const editSerie = z.object({
     kg: z.number().min(0),
     reps: z.number().min(1)
 })
+
+export const deleteSerie = z.object({
+    token: z.string().min(10),
+    serieId: z.number().min(1)
+})
+

@@ -3,7 +3,7 @@ import { logger } from 'hono/logger'
 import { zValidator } from '@hono/zod-validator'
 import { HTTPException } from 'hono/http-exception'
 import { verify, sign, decode, jwt } from 'hono/jwt'
-import { schema, nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie } from './schema'
+import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie } from './schema'
 import { checkOptionalParameter } from 'hono/utils/url'
 
 
@@ -52,6 +52,9 @@ app.post('/api/nouExercici', zValidator('json', nouExercici), async (c) => {
   }
 })
 
+//todo edit exercici
+
+
 //creem un entreno nou l'entrem a la DB retoem OK, Id de l'entereno i data de creacio
 app.post('/api/nouEntreno', async (c) => {
   const data = Math.floor(Date.now() / 1000)
@@ -91,8 +94,8 @@ app.post('/api/novaSerie', zValidator('json', novaSerie), async (c, next) => {
   }
 })
 
-//todo actualitzar una serie (serieID,kg,reps,actualitzem carga i PR si cal)
-app.post('/api/editSerie', zValidator('json', editSerie), async (c, next) => {
+//edit serie nou pes i reps
+app.post('/api/editSerie', zValidator('json', editSerie), async (c) => {
   const { exerciciId, kg, reps, serieId, entrenoId } = await c.req.json()
   const carga = kg * reps
   const userId = await c.get('jwtPayload').UserId
@@ -117,6 +120,33 @@ app.post('/api/editSerie', zValidator('json', editSerie), async (c, next) => {
   } catch (error) {
     throw new HTTPException(500, { message: 'error sql query' })
   }
+})
+
+//delete serie
+app.post('/api/deleteSerie', zValidator('json', deleteSerie), async (c) => {
+  const { serieId } = await c.req.json();
+  const userId = await c.get('jwtPayload').UserId
+
+  try {
+    const result = await c.env.DB.prepare('SELECT * FROM Series WHERE SerieId=? AND UserId=?').bind(serieId, userId).run()
+    const resultD = await c.env.DB.prepare('DELETE FROM Series WHERE SerieId=? AND UserId = ?').bind(serieId, userId).run()
+    //recalcular el pr
+    console.log(result.results.length)
+    if (result.results.length != 0) {
+      const updatePr = await checkPr(c, userId, result.results[0].ExerciciId, 0)
+      //reclacular carga
+      const updateCT = await updateCargaTotal(c, userId, result.results[0].EntrenoId)
+      return c.json({ mesage: 'Serie Borrada', cargaTotal: updateCT.results[0].CargaTotal })
+    }
+    else {
+      return c.json({ mesage: 'Serie NO Borrada' })
+    }
+
+  } catch (error) {
+    console.log(error)
+    throw new HTTPException(500, { message: 'error sql query' })
+  }
+
 })
 
 
@@ -150,7 +180,7 @@ app.get('/api/getEntreno', zValidator('json', getEntreno), async (c) => {
   }
 })
 
-
+//retorna la llista d'exercicis
 app.get('/api/getExercicis', zValidator('json', petition), async (c) => {//retorna tots els exercisi de la taula d'aquest usuari
 
   try {
@@ -163,32 +193,39 @@ app.get('/api/getExercicis', zValidator('json', petition), async (c) => {//retor
 
 })
 
+//new user
+app.post('/signup', zValidator('json', signup), async (c) => {
+  const { email, password } = await c.req.json()
 
-app.post('/login', zValidator('json', schema), async (c) => {
-  const { email, password } = await c.req.json();
+  try {
+    const { results } = await c.env.DB.prepare('INSERT INTO Users (Email,Password) VALUES (?,?) RETURNING *').bind(email, password).run()
+    const token = await generateToken(email, results[0].UserId, c)
 
-  if (!email && !password) {
-    throw new HTTPException(401, { message: 'Invalid credentials' })
+    return c.json({ message: 'signup succesfull', token: token })
+  } catch (error: any) {
+
+    if (error.message == "D1_ERROR: UNIQUE constraint failed: Users.Email: SQLITE_CONSTRAINT") {
+
+      return c.text('este email ya esta registrado', 500)
+    }
+    throw new HTTPException(500, { message: 'error sql query' })
   }
+
+})
+
+app.post('/login', zValidator('json', login), async (c) => {
+  const { email, password } = await c.req.json();
 
 
   //todo la contrasenya no s'encripta ni desencripta esta a la DB en text pla !! 
 
   try {
     //busquem usauri a la DB y retornem contrasenya
-    let results = await c.env.DB.prepare('SELECT * FROM Users WHERE Email=?').bind(email).first() || { Password: "no" };
-    if (password == results.Password) {
+    const { results } = await c.env.DB.prepare('SELECT * FROM Users WHERE Email=?').bind(email).run();
+    if (password == results[0].Password) {
       console.log("log in succesfull")
 
-
-      const payload = {
-        email: email,
-        UserId: results.UserId,
-        exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60// 7 dies 
-      }
-
-      //generem jwt token 
-      const token = await sign(payload, c.env.jwt_secret)
+      const token = await generateToken(email, results[0].UserId, c)
 
       //retornem el jwt token al client
       return c.json({ message: 'authorized', token: token })
@@ -230,6 +267,7 @@ async function checkPr(c: any, userId: any, exerciciId: any, kg: any) {
     }
 
   } catch (error) {
+    console.log(error)
     throw new HTTPException(500, { message: 'error sql query' })
   }
 
@@ -248,5 +286,18 @@ function updateCargaTotal(c: any, userId: any, entrenoId: any) {
   }
 
 
+}
+
+function generateToken(email: any, userId: any, c: any) {
+  const payload = {
+    email: email,
+    UserId: userId,
+    exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60// 7 dies 
+  }
+
+  //generem jwt token 
+  const token = sign(payload, c.env.jwt_secret)
+
+  return token
 }
 
