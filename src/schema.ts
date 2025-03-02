@@ -18,7 +18,14 @@ export const petition = z.object({
 export const nouExercici = z.object({
     token: z.string().min(10),
     nom: z.string().min(3),
-    grups_musculars: z.number().array().min(1).max(5)
+    grupsMusculars: z.number().array().min(1).max(5)
+})
+
+export const editExercici = z.object({
+    token: z.string().min(10),
+    exerciciId: z.number().min(1),
+    nom: z.string().min(3),
+    grupsMusculars: z.number().array().min(1).max(5)
 })
 
 export const getEntreno = z.object({

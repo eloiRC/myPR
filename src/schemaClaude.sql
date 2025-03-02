@@ -58,7 +58,8 @@ CREATE TABLE Series (
     Kg INTEGER,
     Reps INTEGER,
     Data INTEGER, 
-    Carga INTEGER,
+    Carga INTEGER, 
+    PR BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (UserId) REFERENCES Users(UserId),
     FOREIGN KEY (EntrenoId) REFERENCES Entreno(EntrenoId),
     FOREIGN KEY (ExerciciId) REFERENCES Exercici(ExerciciId)
