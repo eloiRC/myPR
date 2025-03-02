@@ -122,7 +122,7 @@ app.post('/api/editSerie', zValidator('json', editSerie), async (c) => {
     if (updatePr.serieId == serieId) {
       newPr = true
     }
-    console.log(updatePr)
+
     //actualitzem la carga total de l'entreno
     const updateCT = await updateCargaTotal(c, userId, entrenoId)
 
@@ -143,7 +143,7 @@ app.post('/api/deleteSerie', zValidator('json', deleteSerie), async (c) => {
     const result = await c.env.DB.prepare('SELECT * FROM Series WHERE SerieId=? AND UserId=?').bind(serieId, userId).run()
     const resultD = await c.env.DB.prepare('DELETE FROM Series WHERE SerieId=? AND UserId = ?').bind(serieId, userId).run()
     //recalcular el pr
-    console.log(result.results.length)
+
     if (result.results.length != 0) {
       const updatePr = await checkPr(c, userId, result.results[0].ExerciciId, 0)
       //reclacular carga
@@ -272,9 +272,9 @@ async function checkPr(c: any, userId: any, exerciciId: any, kg: any) {
   try {
     const updatePr = await c.env.DB.prepare('UPDATE Exercici SET PR=(SELECT MAX(Kg) FROM Series WHERE ExerciciId=? ) WHERE UserID=? AND ExerciciId=? AND PR!=? RETURNING *').bind(exerciciId, userId, exerciciId, kg).run()
     if (updatePr.meta.rows_written > 0) {
-      const resetPr = await c.env.DB.prepare('UPDATE Series SET PR=FALSE WHERE UserID=? AND ExerciciId=? AND PR=TRUE RETURNING *').bind(userId, exerciciId).run()
+      await c.env.DB.prepare('UPDATE Series SET PR=FALSE WHERE UserID=? AND ExerciciId=? AND PR=TRUE RETURNING *').bind(userId, exerciciId).run()
       const { results } = await c.env.DB.prepare('UPDATE Series SET PR=? WHERE UserID=? AND ExerciciId=? AND Kg=(SELECT MAX(Kg) FROM Series WHERE ExerciciId=?) RETURNING *').bind(true, userId, exerciciId, exerciciId).run()
-      console.log(results)
+
       return { prUpdated: true, newPR: updatePr.results[0].PR, serieId: results[0].SerieId }
     }
     else {
