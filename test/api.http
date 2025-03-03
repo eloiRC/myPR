@@ -3,7 +3,7 @@ POST http://localhost:8787/signup HTTP/1.1
 Content-Type: application/json
 
 {
-"email":"eloirebollo1@gmail.com",
+"email":"eloirebollo97@gmail.com",
 "password":"{{$dotenv %test_password}}"
 }
 
@@ -88,7 +88,7 @@ Content-Type: application/json
 }
 
 ###
-GET http://localhost:8787/api/getEntreno HTTP/1.1
+POST http://localhost:8787/api/getEntreno HTTP/1.1
 Content-Type: application/json
 
 {"token":"{{$dotenv %token}}",
@@ -96,7 +96,7 @@ Content-Type: application/json
 }
 
 ###
-GET http://localhost:8787/api/getEntrenos HTTP/1.1
+POST http://localhost:8787/api/getEntrenos HTTP/1.1
 Content-Type: application/json
 
 {"token":"{{$dotenv %token}}",

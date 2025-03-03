@@ -3,7 +3,8 @@ import { logger } from 'hono/logger'
 import { zValidator } from '@hono/zod-validator'
 import { HTTPException } from 'hono/http-exception'
 import { verify, sign } from 'hono/jwt'
-import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici } from './schema'
+import { cors } from 'hono/cors'
+import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars } from './schema'
 
 
 type Bindings = {
@@ -15,6 +16,17 @@ type Bindings = {
 const app = new Hono<{ Bindings: Bindings }>()
 
 app.use(logger())
+
+// Configurar CORS
+app.use('*', cors({
+  origin: ['http://localhost:5173', 'https://myprfr.pages.dev'], // URL del frontend local y de Cloudflare Pages
+  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'Authorization'],
+  exposeHeaders: ['Content-Length'],
+  maxAge: 600,
+  credentials: true,
+}))
+
 
 app.use('/api/*', async (c, next) => {
   const { token } = await c.req.json();
@@ -163,7 +175,7 @@ app.post('/api/deleteSerie', zValidator('json', deleteSerie), async (c) => {
 
 
 //retorna tots els entrtenos entre dos dates d'un usuari
-app.get('/api/getEntrenos', zValidator('json', getEntrenos), async (c) => {
+app.post('/api/getEntrenos', zValidator('json', getEntrenos), async (c) => {
   const { dataInici, dataFi } = await c.req.json()
 
   try {
@@ -177,7 +189,7 @@ app.get('/api/getEntrenos', zValidator('json', getEntrenos), async (c) => {
 })
 
 //retona dades de l'entreno + series 
-app.get('/api/getEntreno', zValidator('json', getEntreno), async (c) => {
+app.post('/api/getEntreno', zValidator('json', getEntreno), async (c) => {
   const { entrenoId } = await c.req.json()
   const userId = await c.get('jwtPayload').UserId
 
@@ -193,7 +205,7 @@ app.get('/api/getEntreno', zValidator('json', getEntreno), async (c) => {
 })
 
 //retorna la llista d'exercicis
-app.get('/api/getExercicis', zValidator('json', petition), async (c) => {//retorna tots els exercisi de la taula d'aquest usuari
+app.post('/api/getExercicis', zValidator('json', petition), async (c) => {//retorna tots els exercisi de la taula d'aquest usuari
 
   try {
     const { results } = await c.env.DB.prepare('SELECT * FROM EXERCICI WHERE UserId=?').bind(c.get('jwtPayload').UserId).all();
@@ -205,12 +217,119 @@ app.get('/api/getExercicis', zValidator('json', petition), async (c) => {//retor
 
 })
 
+//retorna la llista de grupos musculares
+app.post('/api/getGrupsMusculars', zValidator('json', getGrupsMusculars), async (c) => {
+  try {
+    const { results } = await c.env.DB.prepare('SELECT * FROM GrupMuscular').all();
+    return c.json(results)
+  } catch (error) {
+    console.log(error)
+    throw new HTTPException(500, { message: 'Error al obtener grupos musculares' })
+  }
+})
+
+// Funciones para encriptar y verificar contraseñas
+async function hashPassword(password: string): Promise<string> {
+  // Convertir la contraseña a un ArrayBuffer
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+
+  // Generar un salt aleatorio
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+
+  // Derivar una clave usando PBKDF2
+  const key = await crypto.subtle.importKey(
+    'raw',
+    data,
+    { name: 'PBKDF2' },
+    false,
+    ['deriveBits']
+  );
+
+  const hash = await crypto.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      salt: salt.buffer,
+      iterations: 100000,
+      hash: 'SHA-256'
+    },
+    key,
+    256
+  );
+
+  // Combinar salt y hash para almacenamiento
+  const hashArray = new Uint8Array(hash);
+  const result = new Uint8Array(salt.length + hashArray.length);
+  result.set(salt);
+  result.set(hashArray, salt.length);
+
+  // Convertir a base64 para almacenamiento
+  return btoa(String.fromCharCode(...result));
+}
+
+async function verifyPassword(storedHash: string, password: string): Promise<boolean> {
+  try {
+    // Decodificar el hash almacenado
+    const hashData = Uint8Array.from(atob(storedHash), c => c.charCodeAt(0));
+
+    // Extraer salt (primeros 16 bytes)
+    const salt = hashData.slice(0, 16);
+    const originalHash = hashData.slice(16);
+
+    // Convertir la contraseña a verificar
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+
+    // Importar la clave
+    const key = await crypto.subtle.importKey(
+      'raw',
+      data,
+      { name: 'PBKDF2' },
+      false,
+      ['deriveBits']
+    );
+
+    // Derivar bits con el mismo salt
+    const verifyHash = await crypto.subtle.deriveBits(
+      {
+        name: 'PBKDF2',
+        salt: salt.buffer,
+        iterations: 100000,
+        hash: 'SHA-256'
+      },
+      key,
+      256
+    );
+
+    // Comparar los hashes
+    const verifyHashArray = new Uint8Array(verifyHash);
+
+    if (originalHash.length !== verifyHashArray.length) {
+      return false;
+    }
+
+    // Comparación segura contra timing attacks
+    let result = 0;
+    for (let i = 0; i < originalHash.length; i++) {
+      result |= originalHash[i] ^ verifyHashArray[i];
+    }
+
+    return result === 0;
+  } catch (error) {
+    console.error('Error al verificar la contraseña:', error);
+    return false;
+  }
+}
+
 //new user
 app.post('/signup', zValidator('json', signup), async (c) => {
   const { email, password } = await c.req.json()
 
   try {
-    const { results } = await c.env.DB.prepare('INSERT INTO Users (Email,Password) VALUES (?,?) RETURNING *').bind(email, password).run()
+    // Encriptar la contraseña antes de guardarla
+    const hashedPassword = await hashPassword(password);
+
+    const { results } = await c.env.DB.prepare('INSERT INTO Users (Email,Password) VALUES (?,?) RETURNING *').bind(email, hashedPassword).run()
     const token = await generateToken(email, results[0].UserId, c)
 
     return c.json({ message: 'signup succesfull', token: token })
@@ -228,13 +347,18 @@ app.post('/signup', zValidator('json', signup), async (c) => {
 app.post('/login', zValidator('json', login), async (c) => {
   const { email, password } = await c.req.json();
 
-
-  //todo la contrasenya no s'encripta ni desencripta esta a la DB en text pla !! 
-
   try {
-    //busquem usauri a la DB y retornem contrasenya
+    // Buscar usuario en la DB y obtener la contraseña encriptada
     const { results } = await c.env.DB.prepare('SELECT * FROM Users WHERE Email=?').bind(email).run();
-    if (password == results[0].Password) {
+
+    if (results.length === 0) {
+      throw new HTTPException(401, { message: 'Invalid credentials' });
+    }
+
+    // Verificar la contraseña
+    const isPasswordValid = await verifyPassword(results[0].Password as string, password);
+
+    if (isPasswordValid) {
       console.log("log in succesfull")
 
       const token = await generateToken(email, results[0].UserId, c)
@@ -249,11 +373,8 @@ app.post('/login', zValidator('json', login), async (c) => {
   } catch (error) {
     throw new HTTPException(500, { message: 'error sql query' })
   }
-
-
-
-
 })
+
 
 app.onError((err, c) => {
   console.error(`${err}`)
@@ -315,4 +436,3 @@ function generateToken(email: any, userId: any, c: any) {
 
   return token
 }
-

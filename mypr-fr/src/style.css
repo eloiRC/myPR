@@ -1,0 +1,143 @@
+/* Variables CSS para los colores del tema */
+:root {
+  /* Colores principales */
+  --color-cobalt-blue: #1956C8;
+  --color-razzmatazz: #db3069;
+  --color-naples-yellow: #f5d547;
+  --color-beige: #ebebd3;
+  --color-delft-blue: #3a4569;
+
+  /* Colores de fondo */
+  --bg-primary: #171c2a;
+  --bg-secondary: #23293f;
+  --bg-tertiary: #2e3754;
+
+  /* Colores de texto */
+  --text-primary: #ebebd3;
+  --text-secondary: #cece95;
+  --text-tertiary: #b2b258;
+
+  /* Colores de acento */
+  --accent-primary: #1956C8;
+  --accent-secondary: #1648A0;
+  --accent-tertiary: #123A7D;
+
+  /* Colores de estado */
+  --error: #db3069;
+  --success: #f5d547;
+  --warning: #f7de6c;
+  --info: #4e84e9;
+  --border: #3a4569;
+}
+
+/* Estilos globales */
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+/* Estilos para el modo oscuro (por defecto) */
+html.dark {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Utilidades comunes */
+.min-h-screen {
+  min-height: 100vh;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.rounded {
+  border-radius: 0.25rem;
+}
+
+.p-4 {
+  padding: 1rem;
+}
+
+.m-4 {
+  margin: 1rem;
+}
+
+/* Botones */
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  border: none;
+  outline: none;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  background-color: var(--accent-primary);
+  color: var(--text-primary);
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-secondary);
+}
+
+/* Formularios */
+.form-control {
+  margin-bottom: 1rem;
+}
+
+.input {
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  border: 1px solid var(--border);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  width: 100%;
+}
+
+.input:focus {
+  outline: 2px solid var(--accent-primary);
+  border-color: transparent;
+}
+
+/* Contenedores */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.card {
+  background-color: var(--bg-secondary);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}

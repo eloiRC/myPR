@@ -15,6 +15,10 @@ export const petition = z.object({
     token: z.string().min(10)
 })
 
+export const getGrupsMusculars = z.object({
+    token: z.string().min(10)
+})
+
 export const nouExercici = z.object({
     token: z.string().min(10),
     nom: z.string().min(3),
