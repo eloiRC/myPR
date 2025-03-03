@@ -45,6 +45,9 @@ CREATE TABLE Entreno (
     UserId INTEGER,
     Data INTEGER, 
     CargaTotal INTEGER,
+    Nom TEXT,
+    Descripcio TEXT,
+    Puntuacio INTEGER CHECK (Puntuacio >= 1 AND Puntuacio <= 5),
     FOREIGN KEY (UserId) REFERENCES Users(UserId)
 );
 
@@ -68,7 +71,8 @@ CREATE TABLE Series (
 -- Inserta datos en las tablas padre primero
 INSERT INTO Users (Email, Password) VALUES 
     ('eloirebollo97@gmail.com', 'elo12597'), 
-    ('eloirebollo@gmail.com', 'Thomas Hardy');
+    ('eloirebollo@gmail.com', 'Thomas Hardy'),
+    ('eloirebollodp@gmail.com', 'qcDOAuHY6szdy6HAD1S7sqOraZ156zHHWXbLUGjPMFqZjKPRIqAaz9pG3I2JvFiJ');
 
 INSERT INTO GrupMuscular (Nom) VALUES 
     ('Pectoral'),('Hombros'),('Biceps'),('Triceps'),('Dorsals'),
@@ -79,8 +83,8 @@ INSERT INTO GrupMuscular (Nom) VALUES
 INSERT INTO Exercici (Nom, UserId, PR, GrupMuscular1) VALUES 
     ('Press Banca', 1, 0, 1);
 
-INSERT INTO Entreno (UserId, Data, CargaTotal) VALUES 
-    (1, 0, 0);
+INSERT INTO Entreno (UserId, Data, CargaTotal, Nom, Descripcio, Puntuacio) VALUES 
+    (1, 0, 0, 'Entreno 1', 'Descripción del entreno 1', 3);
 
 INSERT INTO Series (UserId,EntrenoId,ExerciciId,Kg,Reps,Data,Carga) VALUES
     (1,1,1,10,10,1765849,100);

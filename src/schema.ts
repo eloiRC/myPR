@@ -39,10 +39,25 @@ export const getEntreno = z.object({
 
 export const getEntrenos = z.object({
     token: z.string().min(10),
-    dataInici: z.number().min(1735693300).max(2529450460),
-    dataFi: z.number().min(1735693300).max(2529450460)
+    dataInici: z.number().min(1704294132).max(2529450460),
+    dataFi: z.number().min(1704294132).max(2529450460)
 }).refine(data => data.dataInici < data.dataFi, {
     message: "la fecha de fin es mas pequna que la de inicio"
+})
+
+export const nouEntreno = z.object({
+    token: z.string().min(10),
+    nom: z.string().min(1),
+    descripcio: z.string().optional(),
+    puntuacio: z.number().min(1).max(5).optional()
+})
+
+export const editEntreno = z.object({
+    token: z.string().min(10),
+    entrenoId: z.number().min(1),
+    nom: z.string().min(1),
+    descripcio: z.string().optional(),
+    puntuacio: z.number().min(1).max(5).optional()
 })
 
 export const novaSerie = z.object({
@@ -65,5 +80,20 @@ export const editSerie = z.object({
 export const deleteSerie = z.object({
     token: z.string().min(10),
     serieId: z.number().min(1)
+})
+
+export const getExercici = z.object({
+    token: z.string().min(10),
+    exerciciId: z.number().min(1)
+})
+
+export const getPesosHistorial = z.object({
+    token: z.string().min(10),
+    exerciciId: z.number().min(1)
+})
+
+export const getCargaHistorial = z.object({
+    token: z.string().min(10),
+    exerciciId: z.number().min(1)
 })
 

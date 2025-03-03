@@ -4,7 +4,7 @@ import { zValidator } from '@hono/zod-validator'
 import { HTTPException } from 'hono/http-exception'
 import { verify, sign } from 'hono/jwt'
 import { cors } from 'hono/cors'
-import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars } from './schema'
+import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars, getExercici, getPesosHistorial, nouEntreno, editEntreno, getCargaHistorial } from './schema'
 
 
 type Bindings = {
@@ -77,17 +77,21 @@ app.post('/api/editExercici', zValidator('json', editExercici), async (c) => {
 //creem un entreno nou l'entrem a la DB retoem OK, Id de l'entereno i data de creacio
 app.post('/api/nouEntreno', async (c) => {
   const data = Math.floor(Date.now() / 1000)
-
+  const userId = await c.get('jwtPayload').UserId
 
   try {
-    const result = await c.env.DB.prepare('INSERT INTO Entreno (UserId,Data,CargaTotal) VALUES (?, ?,?);').bind(await c.get('jwtPayload').UserId, data, 0).run()
-    return c.json({ message: 'Nou Entreno Creat', entrenoId: result.meta.last_row_id, dataInici: data })
+    // Obtener el número total de entrenos del usuario
+    const { results } = await c.env.DB.prepare('SELECT COUNT(*) as total FROM Entreno WHERE UserId = ?').bind(userId).all();
+    const numeroEntreno = Number(results[0].total || 0) + 1;
 
+    const result = await c.env.DB.prepare('INSERT INTO Entreno (UserId, Data, CargaTotal, Nom, Descripcio, Puntuacio) VALUES (?, ?, ?, ?, ?, ?);')
+      .bind(userId, data, 0, `Entreno #${numeroEntreno}`, '', 3)
+      .run();
+
+    return c.json({ message: 'Nou Entreno Creat', entrenoId: result.meta.last_row_id, dataInici: data })
   } catch (error) {
     throw new HTTPException(500, { message: 'error sql query' })
-
   }
-
 })
 
 //crea nova serie i comprova si es un nou PR iactualitza la carga total
@@ -227,6 +231,115 @@ app.post('/api/getGrupsMusculars', zValidator('json', getGrupsMusculars), async 
     throw new HTTPException(500, { message: 'Error al obtener grupos musculares' })
   }
 })
+
+// Obtener detalles de un ejercicio
+app.post('/api/getExercici', zValidator('json', getExercici), async (c) => {
+  const { exerciciId } = await c.req.json();
+  const userId = await c.get('jwtPayload').UserId;
+
+  try {
+    const results = await c.env.DB.prepare('SELECT * FROM Exercici WHERE ExerciciId = ? AND UserId = ?').bind(exerciciId, userId).all();
+
+    if (results.results.length === 0) {
+      throw new HTTPException(404, { message: 'Ejercicio no encontrado' });
+    }
+
+    return c.json(results.results[0]);
+  } catch (error) {
+    throw new HTTPException(500, { message: 'Error al obtener el ejercicio' });
+  }
+});
+
+// Obtener historial de pesos de un ejercicio
+app.post('/api/getPesosHistorial', zValidator('json', getPesosHistorial), async (c) => {
+  const { exerciciId } = await c.req.json();
+  const userId = await c.get('jwtPayload').UserId;
+
+  try {
+    const results = await c.env.DB.prepare(`
+      SELECT e.Data, MAX(s.Kg) as PesoMaximo
+      FROM Entreno e
+      JOIN Series s ON e.EntrenoId = s.EntrenoId
+      WHERE s.ExerciciId = ? AND e.UserId = ?
+      GROUP BY e.EntrenoId
+      ORDER BY e.Data DESC
+    `).bind(exerciciId, userId).all();
+
+    return c.json(results.results);
+  } catch (error) {
+    throw new HTTPException(500, { message: 'Error al obtener el historial de pesos' });
+  }
+});
+
+// Obtener historial de carga de un ejercicio
+app.post('/api/getCargaHistorial', zValidator('json', getCargaHistorial), async (c) => {
+  const { exerciciId } = await c.req.json();
+  const userId = await c.get('jwtPayload').UserId;
+
+  try {
+    const results = await c.env.DB.prepare(`
+      SELECT 
+        e.Data,
+        COALESCE(SUM(s.Kg * s.Reps), 0) as CargaTotal
+      FROM Entreno e
+      JOIN Series s ON e.EntrenoId = s.EntrenoId
+      WHERE s.ExerciciId = ? AND e.UserId = ?
+      GROUP BY e.Data, e.EntrenoId
+      ORDER BY e.Data DESC
+    `).bind(exerciciId, userId).all();
+
+    return c.json(results.results);
+  } catch (error) {
+    console.error('Error al obtener el historial de carga:', error);
+    throw new HTTPException(500, { message: 'Error al obtener el historial de carga' });
+  }
+});
+
+// Editar un entrenamiento
+app.post('/api/editEntreno', zValidator('json', editEntreno), async (c) => {
+  const { entrenoId, nom, descripcio, puntuacio } = await c.req.json();
+  const userId = await c.get('jwtPayload').UserId;
+
+  try {
+    // Verificar que el entrenamiento existe y pertenece al usuario
+    const checkEntreno = await c.env.DB.prepare('SELECT * FROM Entreno WHERE EntrenoId = ? AND UserId = ?')
+      .bind(entrenoId, userId)
+      .all();
+
+    if (checkEntreno.results.length === 0) {
+      throw new HTTPException(404, { message: 'Entrenamiento no encontrado' });
+    }
+
+    // Actualizar el entrenamiento
+    const result = await c.env.DB.prepare(`
+      UPDATE Entreno 
+      SET Nom = ?, 
+          Descripcio = ?,
+          Puntuacio = ?
+      WHERE EntrenoId = ? AND UserId = ?
+    `).bind(nom, descripcio || '', puntuacio || null, entrenoId, userId).run();
+
+    if (result.meta.rows_written === 0) {
+      throw new HTTPException(500, { message: 'Error al actualizar el entrenamiento' });
+    }
+
+    // Obtener el entrenamiento actualizado para devolverlo
+    const updatedEntreno = await c.env.DB.prepare('SELECT * FROM Entreno WHERE EntrenoId = ? AND UserId = ?')
+      .bind(entrenoId, userId)
+      .all();
+
+    return c.json({
+      message: 'Entrenamiento actualizado correctamente',
+      entreno: updatedEntreno.results[0]
+    });
+  } catch (error) {
+    console.error('Error al actualizar el entrenamiento:', error);
+    if (error instanceof HTTPException) {
+      throw error;
+    }
+    throw new HTTPException(500, { message: 'Error al actualizar el entrenamiento' });
+  }
+});
 
 // Funciones para encriptar y verificar contraseñas
 async function hashPassword(password: string): Promise<string> {

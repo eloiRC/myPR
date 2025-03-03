@@ -1,4 +1,3 @@
-
 DROP TABLE IF EXISTS Users;
 CREATE TABLE IF NOT EXISTS Users (UserId INTEGER PRIMARY KEY AUTOINCREMENT, Email TEXT UNIQUE, Password TEXT);
 INSERT INTO Users ( Email, Password) VALUES ('eloirebollo97@gmail.com', $(test_password)), ('eloirebollo@gmail.com', 'Thomas Hardy');
@@ -10,6 +9,14 @@ INSERT INTO Exercici ( Nom ,UserId , PR ,GrupMuscular1 ,GrupMuscular2 ,GrupMuscu
 DROP TABLE IF EXISTS Entreno;
 CREATE TABLE IF NOT EXISTS Entreno (EntrenoId INTEGER PRIMARY KEY AUTOINCREMENT, UserId INTEGER,Data INTEGER, CargaTotal INTEGER);
 INSERT INTO Entreno (EntrenoId,UserId,Data,CargaTotal ) VALUES (1,1,null,null);
+
+-- Añadir las nuevas columnas a la tabla Entreno
+ALTER TABLE Entreno ADD COLUMN Nom TEXT;
+ALTER TABLE Entreno ADD COLUMN Descripcio TEXT;
+ALTER TABLE Entreno ADD COLUMN Puntuacio INTEGER CHECK (Puntuacio >= 1 AND Puntuacio <= 5);
+
+-- Actualizar los registros existentes con valores por defecto
+UPDATE Entreno SET Nom = 'Entreno #1', Descripcio = '', Puntuacio = 3 WHERE EntrenoId = 1;
 
 DROP TABLE IF EXISTS GrupMuscular;
 CREATE TABLE IF NOT EXISTS GrupMuscular (GrupMuscularId INTEGER PRIMARY KEY AUTOINCREMENT, Nom TEXT UNIQUE);

@@ -2,6 +2,9 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import authService from '../services/auth';
+import { formatearTexto, guardarNuevoEjercicio } from '../utils/ejercicioUtils';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787'; // Usa la variable de entorno o el valor por defecto
 
 // Definir la interfaz para un ejercicio
 interface Ejercicio {
@@ -78,7 +81,7 @@ const loadEjercicios = async () => {
     const token = authService.getToken();
     
     // Hacer la solicitud a la API
-    const response = await fetch('http://localhost:8787/api/getExercicis', {
+    const response = await fetch(API_URL+'/api/getExercicis', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -118,7 +121,7 @@ const loadGruposMusculares = async () => {
   try {
     const token = authService.getToken();
     
-    const response = await fetch('http://localhost:8787/api/getGrupsMusculars', {
+    const response = await fetch(API_URL+'/api/getGrupsMusculars', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -164,60 +167,36 @@ const resetForm = () => {
   };
 };
 
-// Guardar un nuevo ejercicio
+// Función para guardar el nuevo ejercicio
 const guardarEjercicio = async () => {
-  if (!nuevoEjercicio.value.nombre.trim()) {
-    error.value = 'Por favor, introduce un nombre para el ejercicio';
-    return;
-  }
+  isLoading.value = true;
+  error.value = '';
   
-  if (nuevoEjercicio.value.gruposMusculares.length === 0) {
-    error.value = 'Por favor, selecciona al menos un grupo muscular';
-    return;
-  }
-  
-  try {
-    isLoading.value = true;
-    
-    const token = authService.getToken();
-    
-    // Preparar los datos para la solicitud
-    const requestData = {
-      token,
-      nom: nuevoEjercicio.value.nombre,
-      grupsMusculars: nuevoEjercicio.value.gruposMusculares.filter(gm => gm !== null)
-    };
-    
-    console.log('Datos a enviar:', requestData);
-    
-    // Hacer la solicitud a la API
-    const response = await fetch('http://localhost:8787/api/nouExercici', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestData)
-    });
-    
-    if (!response.ok) {
-      throw new Error('Error al guardar el ejercicio');
+  await guardarNuevoEjercicio(
+    {
+      Nom: nuevoEjercicio.value.nombre,
+      gruposMusculares: nuevoEjercicio.value.gruposMusculares.filter((gm): gm is number => gm !== null)
+    },
+    async (nuevoEjercicioGuardado) => {
+      // Recargar la lista de ejercicios
+      await loadEjercicios();
+      
+      // Resetear el formulario y ocultar
+      resetForm();
+      showForm.value = false;
+      
+      // Mostrar mensaje de éxito
+      error.value = '¡Ejercicio creado correctamente!';
+      setTimeout(() => {
+        error.value = '';
+      }, 3000);
+    },
+    (errorMessage) => {
+      error.value = errorMessage;
     }
-    
-    const data = await response.json();
-    console.log('Ejercicio guardado:', data);
-    
-    // Resetear el formulario y ocultar
-    resetForm();
-    showForm.value = false;
-    
-    // Recargar los ejercicios
-    await loadEjercicios();
-  } catch (err: any) {
-    error.value = err.message || 'Error al guardar el ejercicio';
-    console.error('Error al guardar ejercicio:', err);
-  } finally {
-    isLoading.value = false;
-  }
+  );
+  
+  isLoading.value = false;
 };
 
 // Volver a la lista de entrenos
@@ -280,14 +259,14 @@ const guardarEdicionEjercicio = async () => {
     const requestData = {
       token,
       exerciciId: editandoEjercicio.value.ExerciciId,
-      nom: ejercicioEditado.value.nombre,
+      nom: formatearTexto(ejercicioEditado.value.nombre),
       grupsMusculars: ejercicioEditado.value.gruposMusculares.filter(gm => gm !== null)
     };
     
     console.log('Datos a enviar para edición:', requestData);
     
     // Hacer la solicitud a la API
-    const response = await fetch('http://localhost:8787/api/editExercici', {
+    const response = await fetch(API_URL+'/api/editExercici', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -313,6 +292,11 @@ const guardarEdicionEjercicio = async () => {
   } finally {
     isLoading.value = false;
   }
+};
+
+// Ir al detalle de un ejercicio
+const verDetalleEjercicio = (ejercicioId: number) => {
+  router.push(`/ejercicio/${ejercicioId}`);
 };
 
 // Cargar los ejercicios al montar el componente
@@ -429,8 +413,8 @@ onMounted(() => {
     </div>
     
     <div v-else-if="ejercicios.length === 0" class="no-ejercicios">
-      <p>No tienes ejercicios registrados.</p>
-      <button @click="toggleForm" class="btn btn-primary">Crear tu primer ejercicio</button>
+      <p class="no-ejercicios-text">No tienes ejercicios registrados.</p>
+      <button @click="toggleForm" class="btn btn-primary btn-lg">Crear tu primer ejercicio</button>
     </div>
     
     <div v-else>
@@ -449,6 +433,7 @@ onMounted(() => {
           v-for="ejercicio in ejerciciosFiltrados" 
           :key="ejercicio.ExerciciId" 
           class="ejercicio-card"
+          @click="verDetalleEjercicio(ejercicio.ExerciciId)"
         >
           <!-- Modo visualización -->
           <div v-if="editandoEjercicio?.ExerciciId !== ejercicio.ExerciciId" class="ejercicio-info">
@@ -817,5 +802,25 @@ h2 {
 .ejercicio-card:has(.edit-mode) .ejercicio-actions {
   align-self: flex-end;
   margin-top: 1rem;
+}
+
+.no-ejercicios {
+  text-align: center;
+  padding: 3rem 2rem;
+  background-color: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin: 1.5rem 0;
+}
+
+.no-ejercicios-text {
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+}
+
+.btn-lg {
+  padding: 0.75rem 2rem;
+  font-size: 1.1rem;
 }
 </style> 

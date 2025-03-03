@@ -13,6 +13,24 @@ interface LoginData {
     password: string;
 }
 
+// Interfaz para los datos de registro
+interface RegisterData {
+    email: string;
+    password: string;
+}
+
+// Interfaz para la respuesta de registro
+interface RegisterResponse {
+    message: string;
+    token: string;
+}
+
+// Interfaz para la información del usuario
+interface UserInfo {
+    email: string;
+    UserId: number;
+}
+
 /**
  * Servicio para manejar la autenticación
  */
@@ -61,6 +79,32 @@ export const authService = {
     },
 
     /**
+     * Registrar un nuevo usuario
+     */
+    async register(data: RegisterData): Promise<RegisterResponse> {
+        try {
+            const response = await fetch(`${API_URL}/signup`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (!response.ok) {
+                const error = await response.text();
+                throw new Error(error);
+            }
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Error al registrar usuario:', error);
+            throw error;
+        }
+    },
+
+    /**
      * Cerrar sesión
      */
     logout(): void {
@@ -93,7 +137,7 @@ export const authService = {
     /**
      * Obtener información del usuario desde el token
      */
-    getUserInfo(): { email: string; UserId: number } | null {
+    getUserInfo(): UserInfo | null {
         const token = this.getToken();
         if (!token) return null;
 
