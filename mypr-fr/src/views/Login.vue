@@ -88,6 +88,9 @@ const handleLogin = async () => {
 </template>
 
 <style scoped>
+*{
+  overflow: hidden;
+}
 .login-card {
   width: 100%;
   max-width: 400px;

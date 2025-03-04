@@ -118,7 +118,7 @@ const ejercicioGrupoMap = computed(() => {
     if (ejercicio.GrupMuscular1) {
       const grupo = gruposMusculares.value.find(g => g.GrupMuscularId === ejercicio.GrupMuscular1);
       if (grupo) {
-        map.set(ejercicio.ExerciciId, grupo.Nom);
+        //map.set(ejercicio.ExerciciId, grupo.Nom); aplica el nom del primer grup muscular
       }
     }
   });

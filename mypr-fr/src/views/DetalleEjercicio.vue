@@ -409,7 +409,7 @@ onMounted(loadEjercicio);
 .pr-valor {
   font-size: 2.5rem;
   font-weight: bold;
-  color: var(--color-cobalt-blue);
+  color: var(--color-razzmatazz);
   margin: 0;
 }
 

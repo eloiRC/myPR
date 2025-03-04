@@ -94,10 +94,10 @@ const chartData = computed(() => {
     datasets: [
       {
         label: 'Carga Total (kg)',
-        backgroundColor: 'rgba(25, 86, 200, 0.2)',
-        borderColor: 'rgba(25, 86, 200, 1)',
+        backgroundColor: 'rgba(219, 48, 105, 1)',
+        borderColor: 'rgba(219, 48, 105, 1)',
         borderWidth: 2,
-        pointBackgroundColor: 'rgba(25, 86, 200, 1)',
+        pointBackgroundColor: 'rgba(219, 48, 105, 1)',
         data
       }
     ]
@@ -382,7 +382,7 @@ onMounted(() => {
           <div class="entreno-info">
             <h3>{{ entreno.Nom }}</h3>
             <p class="date">{{ formatDate(entreno.Data) }}</p>
-            <p class="carga">Carga total: <strong>{{ entreno.CargaTotal }} kg</strong></p>
+            <p class="carga">Carga total: <strong class="num-carga">{{ entreno.CargaTotal }} kg</strong></p>
           </div>
           <div class="entreno-actions">
             <button class="btn btn-secondary">Ver detalles</button>
@@ -475,6 +475,10 @@ onMounted(() => {
 .carga {
   font-size: 1rem;
   margin: 0.5rem 0;
+ 
+}
+.num-carga{
+  color: var(--color-cobalt-blue);
 }
 
 .loading, .error, .no-entrenos {

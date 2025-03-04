@@ -580,7 +580,7 @@ h2 {
 
 .pr-info {
   margin: 0.5rem 0;
-  color: var(--color-cobalt-blue);
+  color: var(--color-razzmatazz);
 }
 
 .grupos-musculares {

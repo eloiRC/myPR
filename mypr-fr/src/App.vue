@@ -23,7 +23,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="app-container" :class="{ 'with-footer': !nonFooter }">
+  <div class="app-container" :class="{ 'with-footer': nonFooter}">
     <router-view />
     <Footer v-if="nonFooter " />
   </div>
