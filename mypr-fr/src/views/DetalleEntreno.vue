@@ -252,7 +252,7 @@ const loadGruposMusculares = async () => {
 
 // Guardar una nueva serie
 const guardarSerie = async () => {
-  if (nuevaSerie.value.ejercicioId === 0 || nuevaSerie.value.kg <= 0 || nuevaSerie.value.reps <= 0) {
+  if (nuevaSerie.value.ejercicioId === 0 || nuevaSerie.value.kg < 0 || nuevaSerie.value.reps <= 0) {
     error.value = 'Por favor, completa todos los campos correctamente';
     return;
   }

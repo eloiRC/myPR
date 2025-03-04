@@ -3,16 +3,16 @@ POST http://localhost:8787/signup HTTP/1.1
 Content-Type: application/json
 
 {
-"email":"eloirebollo97@gmail.com",
+"email":"eloirebollo8@gmail.com",
 "password":"{{$dotenv %test_password}}"
 }
 
 ###
-POST http://localhost:8787/login HTTP/1.1
+POST https://mypr.eloirebollo97.workers.dev/login HTTP/1.1
 Content-Type: application/json
 
 {
-"email":"eloirebollo97@gmail.com",
+"email":"eloirebollo2@gmail.com",
 "password":"{{$dotenv %test_password}}"
 }
 
@@ -20,8 +20,7 @@ Content-Type: application/json
 POST http://localhost:8787/api/call HTTP/1.1
 Content-Type: application/json
 
-{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImVsb2lyZWJvbGxvOTdAZ21haWwuY29tIiwiVXNlcklkIjoxLCJleHAiOjE3NDA4NTg2MDV9.sxaJxaJedpKtlzVrqvxSWzlXhisavo8Z5aTlxVUK86M"
-}
+{"token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOjYsImVtYWlsIjoiZWxvaXJlYm9sbG84QGdtYWlsLmNvbSIsIm5iZiI6MTc0MTA0MzkxNywiZXhwIjoxNzQxNjQ1MTE3LCJpYXQiOjE3NDEwNDAzMTd9.N1d8VQ6OMHKb569FBQhThzTSC0j0PvJInrvssWimM04"}
 
 ###
 POST http://localhost:8787/api/nouExercici HTTP/1.1
@@ -46,8 +45,8 @@ Content-Type: application/json
 POST http://localhost:8787/api/nouEntreno HTTP/1.1
 Content-Type: application/json
 
-{"token":"{{$dotenv %token}}"
-}
+{"token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOjUsImVtYWlsIjoiZWxvaXJlYm9sbG8zQGdtYWlsLmNvbSIsIm5iZiI6MTc0MTA0NDIwNCwiZXhwIjoxNzQxNjQ1NDA0LCJpYXQiOjE3NDEwNDA2MDR9.cugRzuglfLKA6OeuDugyiYQJ5qPgvl1qnaS4DAcV2ew"}
+
 
 ###
 POST http://localhost:8787/api/novaSerie HTTP/1.1
@@ -81,11 +80,10 @@ Content-Type: application/json
 }
 
 ###
-GET http://localhost:8787/api/getExercicis HTTP/1.1
+POST http://localhost:8787/api/getExercicis HTTP/1.1
 Content-Type: application/json
 
-{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImVsb2lyZWJvbGxvOTdAZ21haWwuY29tIiwiVXNlcklkIjoxLCJleHAiOjE3NDA4NTg2MDV9.sxaJxaJedpKtlzVrqvxSWzlXhisavo8Z5aTlxVUK86M"
-}
+{"token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVc2VySWQiOjUsImV4cCI6MTc0MTY0NjAyNiwiaWF0IjoxNzQxMDQxMjI2fQ.xeq0v0tt-by_M6oh0q5NeW8oVsDKT9IU5t3JaChqLok"}
 
 ###
 POST http://localhost:8787/api/getEntreno HTTP/1.1

@@ -2,9 +2,11 @@ import { Context, Hono } from 'hono'
 import { logger } from 'hono/logger'
 import { zValidator } from '@hono/zod-validator'
 import { HTTPException } from 'hono/http-exception'
-import { verify, sign } from 'hono/jwt'
 import { cors } from 'hono/cors'
+import { jwt } from 'hono/jwt'
 import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars, getExercici, getPesosHistorial, nouEntreno, editEntreno, getCargaHistorial } from './schema'
+import { hashPassword, verifyPassword, generateJWT, verifyJWT } from './jwt'
+import { jwtVerify } from "jose";
 
 
 type Bindings = {
@@ -19,7 +21,7 @@ app.use(logger())
 
 // Configurar CORS
 app.use('*', cors({
-  origin: ['http://localhost:5173', 'https://myprfr.pages.dev'], // URL del frontend local y de Cloudflare Pages
+  origin: ['http://localhost:5175', 'https://myprfr.pages.dev'], // URL del frontend local y de Cloudflare Pages
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
   exposeHeaders: ['Content-Length'],
@@ -32,8 +34,10 @@ app.use('/api/*', async (c, next) => {
   const { token } = await c.req.json();
   console.log(token)
   try {
-    const decodedPayload = await verify(token, c.env.jwt_secret)
+    const decodedPayload = await verifyJWT(token, c.env.jwt_secret);
+
     c.set('jwtPayload', decodedPayload)
+    console.log(c.get('jwtPayload'))
     await next()
 
   } catch (error) {
@@ -341,98 +345,7 @@ app.post('/api/editEntreno', zValidator('json', editEntreno), async (c) => {
   }
 });
 
-// Funciones para encriptar y verificar contraseñas
-async function hashPassword(password: string): Promise<string> {
-  // Convertir la contraseña a un ArrayBuffer
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
 
-  // Generar un salt aleatorio
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-
-  // Derivar una clave usando PBKDF2
-  const key = await crypto.subtle.importKey(
-    'raw',
-    data,
-    { name: 'PBKDF2' },
-    false,
-    ['deriveBits']
-  );
-
-  const hash = await crypto.subtle.deriveBits(
-    {
-      name: 'PBKDF2',
-      salt: salt.buffer,
-      iterations: 100000,
-      hash: 'SHA-256'
-    },
-    key,
-    256
-  );
-
-  // Combinar salt y hash para almacenamiento
-  const hashArray = new Uint8Array(hash);
-  const result = new Uint8Array(salt.length + hashArray.length);
-  result.set(salt);
-  result.set(hashArray, salt.length);
-
-  // Convertir a base64 para almacenamiento
-  return btoa(String.fromCharCode(...result));
-}
-
-async function verifyPassword(storedHash: string, password: string): Promise<boolean> {
-  try {
-    // Decodificar el hash almacenado
-    const hashData = Uint8Array.from(atob(storedHash), c => c.charCodeAt(0));
-
-    // Extraer salt (primeros 16 bytes)
-    const salt = hashData.slice(0, 16);
-    const originalHash = hashData.slice(16);
-
-    // Convertir la contraseña a verificar
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-
-    // Importar la clave
-    const key = await crypto.subtle.importKey(
-      'raw',
-      data,
-      { name: 'PBKDF2' },
-      false,
-      ['deriveBits']
-    );
-
-    // Derivar bits con el mismo salt
-    const verifyHash = await crypto.subtle.deriveBits(
-      {
-        name: 'PBKDF2',
-        salt: salt.buffer,
-        iterations: 100000,
-        hash: 'SHA-256'
-      },
-      key,
-      256
-    );
-
-    // Comparar los hashes
-    const verifyHashArray = new Uint8Array(verifyHash);
-
-    if (originalHash.length !== verifyHashArray.length) {
-      return false;
-    }
-
-    // Comparación segura contra timing attacks
-    let result = 0;
-    for (let i = 0; i < originalHash.length; i++) {
-      result |= originalHash[i] ^ verifyHashArray[i];
-    }
-
-    return result === 0;
-  } catch (error) {
-    console.error('Error al verificar la contraseña:', error);
-    return false;
-  }
-}
 
 //new user
 app.post('/signup', zValidator('json', signup), async (c) => {
@@ -443,7 +356,10 @@ app.post('/signup', zValidator('json', signup), async (c) => {
     const hashedPassword = await hashPassword(password);
 
     const { results } = await c.env.DB.prepare('INSERT INTO Users (Email,Password) VALUES (?,?) RETURNING *').bind(email, hashedPassword).run()
-    const token = await generateToken(email, results[0].UserId, c)
+    //const token = await generateJWT({ email: email, UserId: results[0].UserId, exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60 }, c.env.jwt_secret)
+
+
+    const token = await generateJWT({ email: email, UserId: results[0].UserId, exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60 }, c.env.jwt_secret)
 
     return c.json({ message: 'signup succesfull', token: token })
   } catch (error: any) {
@@ -474,7 +390,9 @@ app.post('/login', zValidator('json', login), async (c) => {
     if (isPasswordValid) {
       console.log("log in succesfull")
 
-      const token = await generateToken(email, results[0].UserId, c)
+      const token = await generateJWT({ email: email, UserId: results[0].UserId, exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60 }, c.env.jwt_secret)
+      // Create a token
+
 
       //retornem el jwt token al client
       return c.json({ message: 'authorized', token: token })
@@ -484,7 +402,8 @@ app.post('/login', zValidator('json', login), async (c) => {
       throw new HTTPException(401, { message: 'Invalid credentials' })
     }
   } catch (error) {
-    throw new HTTPException(500, { message: 'error sql query' })
+    const message = "error " + error
+    throw new HTTPException(500, { message: message })
   }
 })
 
@@ -535,17 +454,4 @@ function updateCargaTotal(c: any, userId: any, entrenoId: any) {
   }
 
 
-}
-
-function generateToken(email: any, userId: any, c: any) {
-  const payload = {
-    email: email,
-    UserId: userId,
-    exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60// 7 dies 
-  }
-
-  //generem jwt token 
-  const token = sign(payload, c.env.jwt_secret)
-
-  return token
 }

@@ -9,7 +9,12 @@ import Footer from './components/Footer.vue';
 const route = useRoute();
 
 // Comprobar si estamos en la página de login
-const isLoginPage = computed(() => route.path === '/login');
+
+let nonFooter = true;
+
+if(computed(() => route.path === '/register') || computed(() => route.path === '/login')){
+  nonFooter = false
+}
 
 onMounted(() => {
   // Aplicar la clase dark al elemento html para activar el modo oscuro por defecto
@@ -18,9 +23,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="app-container" :class="{ 'with-footer': !isLoginPage }">
+  <div class="app-container" :class="{ 'with-footer': !nonFooter }">
     <router-view />
-    <Footer v-if="!isLoginPage" />
+    <Footer v-if="nonFooter " />
   </div>
 </template>
 

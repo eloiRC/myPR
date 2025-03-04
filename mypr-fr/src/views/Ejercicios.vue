@@ -177,7 +177,7 @@ const guardarEjercicio = async () => {
       Nom: nuevoEjercicio.value.nombre,
       gruposMusculares: nuevoEjercicio.value.gruposMusculares.filter((gm): gm is number => gm !== null)
     },
-    async (nuevoEjercicioGuardado) => {
+    async () => {
       // Recargar la lista de ejercicios
       await loadEjercicios();
       

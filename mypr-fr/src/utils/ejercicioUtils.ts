@@ -1,5 +1,7 @@
 import authService from '../services/auth';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787'; // Usa la variable de entorno o el valor por defecto
+
 // Función para formatear el texto (primera letra mayúscula, resto minúsculas)
 export const formatearTexto = (texto: string): string => {
     if (!texto) return '';
@@ -42,7 +44,7 @@ export const guardarNuevoEjercicio = async (
     try {
         const token = authService.getToken();
 
-        const response = await fetch('http://localhost:8787/api/nouExercici', {
+        const response = await fetch(API_URL + '/api/nouExercici', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

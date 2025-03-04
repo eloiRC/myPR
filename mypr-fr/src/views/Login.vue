@@ -91,6 +91,7 @@ const handleLogin = async () => {
 .login-card {
   width: 100%;
   max-width: 400px;
+  overflow: hidden;
 }
 
 .login-form {
@@ -114,5 +115,12 @@ label {
   color: var(--error);
   margin: 0.5rem 0;
   font-size: 0.875rem;
+  word-break: break-word;
 }
-</style> 
+
+/* Add container styles to prevent overflow */
+.min-h-screen {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+</style>
