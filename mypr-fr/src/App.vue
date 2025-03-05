@@ -1,31 +1,35 @@
 <script setup lang="ts">
 // No necesitamos importar componentes específicos aquí
 // ya que el router se encargará de mostrar el componente correcto
-import { onMounted, computed } from 'vue';
+import { onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import Footer from './components/Footer.vue';
 
 // Obtener la ruta actual
 const route = useRoute();
-
-// Comprobar si estamos en la página de login
-
-let nonFooter = true;
-
-if(computed(() => route.path === '/register') || computed(() => route.path === '/login')){
-  nonFooter = false
+function nonFooter(){
+  if(route.path === '/register' || route.path === '/login'){
+    return true
+  }else{
+    return false
+  }
 }
+
+
+
 
 onMounted(() => {
   // Aplicar la clase dark al elemento html para activar el modo oscuro por defecto
   document.documentElement.classList.add('dark');
 });
+
+
 </script>
 
 <template>
-  <div class="app-container" :class="{ 'with-footer': nonFooter}">
+  <div class="app-container" :class="{ 'with-footer': nonFooter()}">
     <router-view />
-    <Footer v-if="nonFooter " />
+    <Footer v-show="!nonFooter()" />
   </div>
 </template>
 
@@ -73,8 +77,9 @@ onMounted(() => {
 
 /* Variables CSS para acceder a los colores desde cualquier componente */
 :root {
-  --color-cobalt-blue: #1956C8;
+  --color-cobalt-blue: #1B70EE;
   --color-razzmatazz: #db3069;
+  --color-sandy-brown: #f4a259;
   --color-naples-yellow: #f5d547;
   --color-beige: #ebebd3;
   --color-delft-blue: #3a4569;
@@ -87,7 +92,8 @@ onMounted(() => {
   --border: #333333;
   --accent-primary: var(--color-cobalt-blue);
   --accent-secondary: var(--color-razzmatazz);
-  --accent-tertiary: var(--color-naples-yellow);
+  --accent-tertiary: var(--color-naples-yellow);  
+  --accent-quaternary: var(--color-sandy-brown);
   --error: #ff5252;
 }
 

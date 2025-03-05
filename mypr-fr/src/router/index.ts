@@ -32,7 +32,8 @@ const router = createRouter({
         {
             path: '/',
             name: 'home',
-            redirect: '/entrenos'
+            redirect: '/entrenos',
+            beforeEnter: requireAuth
         },
         {
             path: '/entrenos',

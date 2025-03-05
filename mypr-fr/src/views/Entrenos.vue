@@ -514,8 +514,8 @@ onMounted(() => {
 
 .btn-secondary {
   background-color: transparent;
-  border: 1px solid var(--color-cobalt-blue);
-  color: var(--color-cobalt-blue);
+  border: 1px solid var(--accent-secondary);
+  color: var(--accent-secondary);
 }
 
 .btn-secondary:hover {

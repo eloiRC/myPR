@@ -521,10 +521,11 @@ onMounted(loadEntreno);
 <template>
   <div class="detalle-entreno-container">
     <header class="header">
+      <h1 v-if="entreno" class="entreno-title">{{ formatDateTitle(entreno.Data) }}</h1>
       <button @click="volverAEntrenos" class="btn btn-secondary">
         &larr; Volver
       </button>
-      <h1 v-if="entreno" class="entreno-title">{{ formatDateTitle(entreno.Data) }}</h1>
+      
     </header>
     
     <div v-if="showPrAlert" class="pr-alert">
@@ -639,7 +640,7 @@ onMounted(loadEntreno);
                     {{ ejercicio.Nom }}
                   </option>
                 </select>
-                <button type="button" class="btn btn-secondary btn-sm ejercicio-btn" @click="abrirModalEjercicio" title="Crear nuevo ejercicio">+</button>
+                <button type="button" class="btn btn-primary btn-sm ejercicio-btn" @click="abrirModalEjercicio" title="Crear nuevo ejercicio">+</button>
               </div>
             </div>
             
@@ -860,10 +861,13 @@ onMounted(loadEntreno);
 .entreno-title {
   margin: 0;
   font-size: 1.25rem;
-  text-align: right;
+  text-align: left;
   flex: 1;
-}
 
+}
+.entreno-title:first-letter {
+  text-transform: uppercase;
+}
 @media (max-width: 480px) {
   .header {
     flex-direction: column;
@@ -1084,8 +1088,8 @@ h2 {
 
 .btn-secondary {
   background-color: transparent;
-  border: 1px solid var(--color-cobalt-blue);
-  color: var(--color-cobalt-blue);
+  border: 1px solid var(--accent-secondary);
+  color: var(--accent-secondary);
 }
 
 .btn-secondary:hover {

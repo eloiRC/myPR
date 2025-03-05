@@ -292,10 +292,14 @@ onMounted(loadEjercicio);
 <template>
   <div class="ejercicio-detalle-container">
     <header class="header">
-      <button @click="volverAEjercicios" class="btn btn-secondary">
+      <h1 class="ejercicio-title">{{ ejercicio?.Nom }}</h1>
+      <div class="header-buttons">
+        <button @click="volverAEjercicios" class="btn btn-secondary">
         &larr; Volver
       </button>
-      <h1 class="ejercicio-title">{{ ejercicio?.Nom }}</h1>
+      </div>
+      
+      
     </header>
     
     <div v-if="isLoading" class="loading">
@@ -372,9 +376,15 @@ onMounted(loadEjercicio);
 
 .header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 1rem;
   margin-bottom: 2rem;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
 }
 
 .ejercicio-title {
@@ -489,8 +499,8 @@ onMounted(loadEjercicio);
 
 .btn-secondary {
   background-color: transparent;
-  border: 1px solid var(--color-cobalt-blue);
-  color: var(--color-cobalt-blue);
+  border: 1px solid var(--accent-secondary);
+  color: var(--accent-secondary);
 }
 
 .btn-secondary:hover {

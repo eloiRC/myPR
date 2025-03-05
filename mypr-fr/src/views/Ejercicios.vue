@@ -313,17 +313,19 @@ onMounted(() => {
 <template>
   <div class="ejercicios-container">
     <header class="header">
+      <h1>Mis Ejercicios</h1>
+
+      <div class="header-buttons">
       <button @click="volverAEntrenos" class="btn btn-secondary">
         &larr; Volver
       </button>
-      <h1 class="ejercicios-title">Mis Ejercicios</h1>
-    </header>
-    
-    <div class="actions">
       <button @click="toggleForm" class="btn btn-primary">
         {{ showForm ? 'Cancelar' : 'Nuevo Ejercicio' }}
       </button>
-    </div>
+      </div>
+    </header>
+ 
+ 
     
     <!-- Filtro por grupo muscular -->
     <div class="filtro-container">
@@ -433,11 +435,12 @@ onMounted(() => {
           v-for="ejercicio in ejerciciosFiltrados" 
           :key="ejercicio.ExerciciId" 
           class="ejercicio-card"
-          @click="verDetalleEjercicio(ejercicio.ExerciciId)"
+          
+          
         >
           <!-- Modo visualización -->
-          <div v-if="editandoEjercicio?.ExerciciId !== ejercicio.ExerciciId" class="ejercicio-info">
-            <h3>{{ ejercicio.Nom }}</h3>
+          <div v-if="editandoEjercicio?.ExerciciId !== ejercicio.ExerciciId" class="ejercicio-info" @click="verDetalleEjercicio(ejercicio.ExerciciId)">
+            <h3  >{{ ejercicio.Nom }}</h3>
             <p v-if="ejercicio.PR > 0" class="pr-info">
               PR: <strong>{{ ejercicio.PR }} kg</strong>
             </p>
@@ -521,6 +524,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
+
 .ejercicios-container {
   max-width: 800px;
   margin: 0 auto;
@@ -530,14 +534,22 @@ onMounted(() => {
 
 .header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   margin-bottom: 2rem;
-  gap: 1rem;
 }
 
+.header-buttons {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.header h1 {
+  margin-bottom: 0;
+}
 .ejercicios-title {
-  margin-left: auto;
+  
   margin-bottom: 0;
 }
 
@@ -641,8 +653,8 @@ h2 {
 
 .btn-secondary {
   background-color: transparent;
-  border: 1px solid var(--color-cobalt-blue);
-  color: var(--color-cobalt-blue);
+  border: 1px solid var(--accent-secondary);
+  color: var(--accent-secondary);
 }
 
 .btn-secondary:hover {
