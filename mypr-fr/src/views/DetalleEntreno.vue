@@ -39,6 +39,7 @@ interface Ejercicio {
   GrupMuscular3: number | null;
   GrupMuscular4: number | null;
   GrupMuscular5: number | null;
+  Selected: string;
 }
 
 // Definir la interfaz para los grupos musculares
@@ -65,6 +66,8 @@ const showPrAlert = ref(false);
 const prMessage = ref('');
 const showEjercicioModal = ref(false);
 const showEjercicioAlert = ref(false);
+const showDeleteAlert = ref(false);
+const deleteAlertMessage = ref('');
 const ejercicioAlertMessage = ref('');
 const nuevoEjercicio = ref({
   Nom: '',
@@ -72,6 +75,7 @@ const nuevoEjercicio = ref({
 });
 const guardandoEjercicio = ref(false);
 const errorGuardado = ref('');
+let lastExercise = ref(0);
 
 // Estado del formulario
 const nuevaSerie = ref({
@@ -171,7 +175,11 @@ const loadEntreno = async () => {
     const data = await response.json();
     console.log('Datos del entreno recibidos:', data);
     entreno.value = data.entreno[0];
-    series.value = data.series;
+    if (entreno.value) {
+      entreno.value.CargaTotal = parseFloat((entreno.value.CargaTotal / 1000).toFixed(2));
+    }
+    
+    series.value = data.series.reverse();
     
     // Cargar los ejercicios
     await loadEjercicios();
@@ -207,11 +215,14 @@ const loadEjercicios = async () => {
     
     const data = await response.json();
     ejercicios.value = data;
-    
-    // Si hay ejercicios, seleccionar el primero por defecto
+    //Si hay ejercicios, seleccionar el primero por defecto
     if (ejercicios.value.length > 0) {
       nuevaSerie.value.ejercicioId = ejercicios.value[0].ExerciciId;
+      if(lastExercise.value != 0){
+      nuevaSerie.value.ejercicioId = lastExercise.value;
     }
+    }
+    
   } catch (err: any) {
     console.error('Error al cargar ejercicios:', err);
   }
@@ -279,7 +290,8 @@ const guardarSerie = async () => {
     if (!response.ok) {
       throw new Error('Error al guardar la serie');
     }
-    
+    lastExercise.value=nuevaSerie.value.ejercicioId
+
     const data = await response.json();
     console.log('Serie guardada:', data);
     
@@ -294,7 +306,7 @@ const guardarSerie = async () => {
     
     // Resetear el formulario
     nuevaSerie.value = {
-      ejercicioId: ejercicios.value.length > 0 ? ejercicios.value[0].ExerciciId : 0,
+      ejercicioId: ejercicios.value.length > 0 ? ejercicios.value[0].ExerciciId : lastExercise.value,
       kg: 0,
       reps: 0
     };
@@ -357,18 +369,13 @@ const guardarNuevoEjercicioHandler = async () => {
   
   await guardarNuevoEjercicio(
     nuevoEjercicio.value,
-    async (nuevoEjercicioGuardado) => {
+    async (ejercicioId) => {
       // Recargar la lista de ejercicios
       await loadEjercicios();
+
+        lastExercise.value=ejercicioId
+        serieEditada.value.ejercicioId = lastExercise.value;
       
-      // Seleccionar automáticamente el nuevo ejercicio
-      if (editandoSerie.value) {
-        // Si estamos editando una serie, actualizar el ejercicio en la edición
-        serieEditada.value.ejercicioId = nuevoEjercicioGuardado.ExerciciId;
-      } else {
-        // Si estamos creando una nueva serie, actualizar el ejercicio en el formulario
-        nuevaSerie.value.ejercicioId = nuevoEjercicioGuardado.ExerciciId;
-      }
       
       // Cerrar el modal
       cerrarModalEjercicio();
@@ -514,6 +521,45 @@ const guardarCambiosEntreno = async () => {
   }
 };
 
+//todo eliminar serie
+//api/deleteSerie
+//token
+//serieID
+const eliminarSerie = async (serieId: number) => {
+  if (!entreno.value) return;
+
+  try {
+    const token = authService.getToken();
+    
+    const response = await fetch(API_URL+'/api/deleteSerie', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        token,
+        serieId: serieId
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Error al eliminar la serie');
+    }
+    deleteAlertMessage.value = '¡Serie eliminada!';
+    showDeleteAlert.value = true;
+    setTimeout(() => {
+        showDeleteAlert.value = false;
+      }, 5000);
+
+    // Recargar los datos del entreno
+    await loadEntreno();
+    editandoEntreno.value = false;
+  } catch (err: any) {
+    error.value = err.message || 'Error al eliminar la serie';
+    console.error('Error al eliminar la serie:', err);
+  }
+};
+
 // Cargar los detalles al montar el componente
 onMounted(loadEntreno);
 </script>
@@ -534,6 +580,10 @@ onMounted(loadEntreno);
     
     <div v-if="showEjercicioAlert" class="ejercicio-alert">
       {{ ejercicioAlertMessage }}
+    </div>
+
+    <div v-if="showDeleteAlert" class="delete-alert">
+      {{ deleteAlertMessage }}
     </div>
     
     <div v-if="isLoading" class="loading">
@@ -593,7 +643,7 @@ onMounted(loadEntreno);
               <button 
                 v-for="i in 5" 
                 :key="i" 
-                class="star-btn"
+                class="star-btn btn btn-secondary"
                 :class="{ filled: i <= entrenoEditado.puntuacio }"
                 @click="entrenoEditado.puntuacio = i"
               >★</button>
@@ -607,8 +657,8 @@ onMounted(loadEntreno);
         </div>
         
         <div class="info-row">
-          <span class="label">Carga total:</span>
-          <span class="value">{{ entreno.CargaTotal }} kg</span>
+          <span class="label">Peso total:</span>
+          <span class="value">{{ entreno.CargaTotal }} Tn</span>
         </div>
         <div class="info-row">
           <span class="label">Series:</span>
@@ -636,7 +686,7 @@ onMounted(loadEntreno);
               <div class="input-with-button">
                 <select v-model="nuevaSerie.ejercicioId" id="ejercicio" class="form-control" required>
                   <option value="" disabled>Selecciona un ejercicio</option>
-                  <option v-for="ejercicio in ejercicios" :key="ejercicio.ExerciciId" :value="ejercicio.ExerciciId">
+                  <option v-for="ejercicio in ejercicios" :key="ejercicio.ExerciciId" :value="ejercicio.ExerciciId" >
                     {{ ejercicio.Nom }}
                   </option>
                 </select>
@@ -781,7 +831,7 @@ onMounted(loadEntreno);
             </div>
             <div class="serie-actions">
               <button class="btn btn-secondary btn-sm" @click="iniciarEdicionSerie(serie)">Editar</button>
-              <button class="btn btn-danger btn-sm">Eliminar</button>
+              <button class="btn btn-danger btn-sm" @click="eliminarSerie(serie.SerieId)">Eliminar</button>
             </div>
           </div>
         </div>
@@ -932,7 +982,7 @@ h2 {
   margin: 0 0 0.5rem;
   font-size: 1.1rem;
   color: var(--color-cobalt-blue);
-  border-bottom: 2px solid rgba(25, 86, 200, 0.3);
+  
   padding-bottom: 0.5rem;
   width: 100%;
 }
@@ -1372,18 +1422,7 @@ h2 {
   }
 }
 
-.pr-alert {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background-color: var(--color-razzmatazz);
-  color: white;
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
-  animation: slideIn 0.3s ease-out;
-}
+
 
 @keyframes slideIn {
   from {
@@ -1425,6 +1464,18 @@ textarea.form-control {
   resize: vertical;
   min-height: 100px;
 }
+.star-btn{
+  color:grey;
+  border-color: grey;
+  margin-right: 0.3rem;
+}
+
+.filled{
+  color: var(--color-sandy-brown);
+  border-color: var(--color-sandy-brown);
+}
+
+
 
 .w-100 {
   width: 100%;
@@ -1455,12 +1506,41 @@ textarea.form-control {
   }
 }
 
+.pr-alert {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: var(--color-razzmatazz);
+  color: white;
+  font-weight: bold;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  animation: slideIn 0.3s ease-out;
+}
+
 .ejercicio-alert {
   position: fixed;
   top: 20px;
   right: 20px;
   background-color: var(--color-cobalt-blue);
   color: white;
+  font-weight: bold;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  animation: slideIn 0.3s ease-out;
+}
+
+.delete-alert {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: var(--color-sandy-brown);
+  color: black;
+  font-weight: bold;
   padding: 1rem;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);

@@ -9,6 +9,9 @@ const password = ref('');
 const errorMessage = ref('');
 const isLoading = ref(false);
 
+if(authService.isAuthenticated()){
+  router.push('/entrenos');
+}
 const handleLogin = async () => {
   if (!email.value || !password.value) {
     errorMessage.value = 'Por favor, completa todos los campos';
@@ -77,7 +80,7 @@ const handleLogin = async () => {
           {{ isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión' }}
         </button>
 
-        <div class="text-center mt-4">
+        <div class="text-center link-under-button">
           <router-link to="/register" class="text-primary hover:underline">
             ¿No tienes una cuenta? Regístrate
           </router-link>
@@ -99,6 +102,13 @@ const handleLogin = async () => {
 
 .login-form {
   margin-top: 1.5rem;
+}
+.link-under-button {
+  margin-top: 1rem;
+  
+}
+a{
+  color: grey!important;
 }
 
 label {

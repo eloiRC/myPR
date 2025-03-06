@@ -26,8 +26,8 @@ Content-Type: application/json
 POST http://localhost:8787/api/nouExercici HTTP/1.1
 Content-Type: application/json
 
-{"token":"{{$dotenv %token}}",
-"nom":"dominades",
+{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImVsb2lAZ21haWwuY29tIiwiVXNlcklkIjoxMywiZXhwIjoxNzQxODEyNDkzfQ.3UiPaXLZr7_qZVWLo5hOxFAvDI0lTPBt2wBSlizbBSc",
+"nom":"rast",
 "grupsMusculars":[5,4,3,6]
 }
 

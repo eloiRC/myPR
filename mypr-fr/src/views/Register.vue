@@ -109,7 +109,7 @@ const handleRegister = async () => {
           {{ isLoading ? 'Registrando...' : 'Registrarse' }}
         </button>
 
-        <div class="text-center mt-4">
+        <div class="text-center link-under-button">
           <router-link to="/login" class="text-primary hover:underline">
             ¿Ya tienes una cuenta? Inicia sesión
           </router-link>
@@ -120,6 +120,13 @@ const handleRegister = async () => {
 </template>
 
 <style scoped>
+.link-under-button {
+  margin-top: 1rem;
+  
+}
+a{
+  color: grey!important;
+}
 .register-card {
   width: 100%;
   max-width: 400px;

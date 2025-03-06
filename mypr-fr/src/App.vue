@@ -27,7 +27,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="app-container" :class="{ 'with-footer': nonFooter()}">
+  <div class="app-container" :class="{ 'with-footer': !nonFooter()}">
     <router-view />
     <Footer v-show="!nonFooter()" />
   </div>
@@ -47,9 +47,7 @@ onMounted(() => {
   color: var(--text-primary);
 }
 
-.with-footer {
-  padding-bottom: 60px; /* Espacio para el footer */
-}
+
 
 /* Estilos para scrollbar personalizados para tema oscuro */
 ::-webkit-scrollbar {

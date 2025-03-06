@@ -73,10 +73,10 @@ const chartData = computed(() => {
     datasets: [
       {
         label: 'Peso Máximo (kg)',
-        backgroundColor: 'rgba(25, 86, 200, 0.2)',
-        borderColor: 'rgba(25, 86, 200, 1)',
+        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        borderColor: 'rgba(255, 99, 132, 1)',
         borderWidth: 2,
-        pointBackgroundColor: 'rgba(25, 86, 200, 1)',
+        pointBackgroundColor: 'rgba(255, 99, 132, 1)',
         data
       }
     ]
@@ -105,10 +105,10 @@ const chartDataCarga = computed(() => {
     datasets: [
       {
         label: 'Carga Total (kg)',
-        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-        borderColor: 'rgba(255, 99, 132, 1)',
+        backgroundColor: 'rgba(25, 86, 200, 0.2)',
+        borderColor: 'rgba(25, 86, 200, 1)',
         borderWidth: 2,
-        pointBackgroundColor: 'rgba(255, 99, 132, 1)',
+        pointBackgroundColor: 'rgba(25, 86, 200, 1)',
         data
       }
     ]

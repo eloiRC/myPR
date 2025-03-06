@@ -93,7 +93,7 @@ const chartData = computed(() => {
     labels,
     datasets: [
       {
-        label: 'Carga Total (kg)',
+        label: 'Peso total: (Tn)',
         backgroundColor: 'rgba(219, 48, 105, 1)',
         borderColor: 'rgba(219, 48, 105, 1)',
         borderWidth: 2,
@@ -113,7 +113,7 @@ const chartOptions = {
       beginAtZero: true,
       title: {
         display: true,
-        text: 'Carga (kg)'
+        text: 'Peso (Tn)'
       }
     },
     x: {
@@ -221,8 +221,14 @@ const loadEntrenos = async () => {
     // Asegurarnos de que los datos recibidos sean un array
     if (Array.isArray(data)) {
       entrenos.value = data;
+      for (let i = 0; i < entrenos.value.length; i++) {
+        entrenos.value[i].CargaTotal = parseFloat((entrenos.value[i].CargaTotal / 1000).toFixed(2));
+      }
     } else if (data && typeof data === 'object') {
       entrenos.value = data.results || [];
+      for (let i = 0; i < entrenos.value.length; i++) {
+        entrenos.value[i].CargaTotal = parseFloat((entrenos.value[i].CargaTotal / 1000).toFixed(2));
+      }
     } else {
       entrenos.value = [];
     }
@@ -382,11 +388,9 @@ onMounted(() => {
           <div class="entreno-info">
             <h3>{{ entreno.Nom }}</h3>
             <p class="date">{{ formatDate(entreno.Data) }}</p>
-            <p class="carga">Carga total: <strong class="num-carga">{{ entreno.CargaTotal }} kg</strong></p>
+            <p class="carga">Peso total: <strong class="num-carga">{{ entreno.CargaTotal }} Tn</strong></p>
           </div>
-          <div class="entreno-actions">
-            <button class="btn btn-secondary">Ver detalles</button>
-          </div>
+          
         </div>
       </div>
     </div>

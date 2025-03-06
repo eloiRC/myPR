@@ -40,7 +40,7 @@ export const guardarNuevoEjercicio = async (
         onError('El nombre del ejercicio no puede estar vacío');
         return;
     }
-
+    //podriam comprobar si ese nombre de ejercicio ya existe
     try {
         const token = authService.getToken();
 
@@ -61,7 +61,9 @@ export const guardarNuevoEjercicio = async (
         }
 
         const ejercicioGuardado = await response.json();
-        onSuccess(ejercicioGuardado);
+        localStorage.setItem('lastExercici', ejercicioGuardado.exerciciId);
+        onSuccess(ejercicioGuardado.exerciciId);
+
     } catch (error) {
         console.error('Error al guardar el ejercicio:', error);
         onError('Error al guardar el ejercicio. Inténtalo de nuevo.');

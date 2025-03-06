@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --port 5175",
+    "dev": "vite --port 5175 ",
     "build": "vue-tsc -b && vite build",
-    "deploy": "vue-tsc -b && vite build && npx wrangler pages deployment create ./dist",
+    "deploy": "vue-tsc -b && vite build && npx wrangler pages deployment create ./dist && cd.. &&  wrangler deploy --minify",
     "preview": "vite preview"
   },
   "dependencies": {
