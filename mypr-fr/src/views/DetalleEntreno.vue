@@ -66,8 +66,8 @@ const showPrAlert = ref(false);
 const prMessage = ref('');
 const showEjercicioModal = ref(false);
 const showEjercicioAlert = ref(false);
-const showDeleteAlert = ref(false);
-const deleteAlertMessage = ref('');
+const showAlert = ref(false);
+const alertMessage = ref('');
 const ejercicioAlertMessage = ref('');
 const nuevoEjercicio = ref({
   Nom: '',
@@ -264,7 +264,12 @@ const loadGruposMusculares = async () => {
 // Guardar una nueva serie
 const guardarSerie = async () => {
   if (nuevaSerie.value.ejercicioId === 0 || nuevaSerie.value.kg < 0 || nuevaSerie.value.reps <= 0) {
-    error.value = 'Por favor, completa todos los campos correctamente';
+    alertMessage.value = `Por favor, completa todos los campos correctamente'`;
+      showAlert.value = true;
+      
+      setTimeout(() => {
+        showAlert.value = false;
+      }, 5000);
     return;
   }
   
@@ -299,6 +304,7 @@ const guardarSerie = async () => {
       const ejercicio = ejercicios.value.find(e => e.ExerciciId === nuevaSerie.value.ejercicioId);
       prMessage.value = `¡Felicidades! Has conseguido un nuevo PR en ${ejercicio?.Nom || 'el ejercicio'} con ${nuevaSerie.value.kg}kg`;
       showPrAlert.value = true;
+
       setTimeout(() => {
         showPrAlert.value = false;
       }, 5000);
@@ -375,6 +381,7 @@ const guardarNuevoEjercicioHandler = async () => {
 
         lastExercise.value=ejercicioId
         serieEditada.value.ejercicioId = lastExercise.value;
+        nuevaSerie.value.ejercicioId = lastExercise.value;
       
       
       // Cerrar el modal
@@ -545,10 +552,10 @@ const eliminarSerie = async (serieId: number) => {
     if (!response.ok) {
       throw new Error('Error al eliminar la serie');
     }
-    deleteAlertMessage.value = '¡Serie eliminada!';
-    showDeleteAlert.value = true;
+    alertMessage.value = '¡Serie eliminada!';
+    showAlert.value = true;
     setTimeout(() => {
-        showDeleteAlert.value = false;
+        showAlert.value = false;
       }, 5000);
 
     // Recargar los datos del entreno
@@ -582,8 +589,8 @@ onMounted(loadEntreno);
       {{ ejercicioAlertMessage }}
     </div>
 
-    <div v-if="showDeleteAlert" class="delete-alert">
-      {{ deleteAlertMessage }}
+    <div v-if="showAlert" class="alert">
+      {{ alertMessage }}
     </div>
     
     <div v-if="isLoading" class="loading">
@@ -1534,7 +1541,7 @@ textarea.form-control {
   animation: slideIn 0.3s ease-out;
 }
 
-.delete-alert {
+.alert {
   position: fixed;
   top: 20px;
   right: 20px;
@@ -1546,5 +1553,9 @@ textarea.form-control {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   z-index: 1000;
   animation: slideIn 0.3s ease-out;
+}
+
+.error-message {
+  color: var(--color-razzmatazz);
 }
 </style> 

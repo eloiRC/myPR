@@ -6,7 +6,6 @@ import { cors } from 'hono/cors'
 import { jwt } from 'hono/jwt'
 import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars, getExercici, getPesosHistorial, nouEntreno, editEntreno, getCargaHistorial } from './schema'
 import { hashPassword, verifyPassword, generateJWT, verifyJWT } from './jwt'
-import { jwtVerify } from "jose";
 
 
 type Bindings = {
@@ -136,7 +135,7 @@ app.post('/api/editSerie', zValidator('json', editSerie), async (c) => {
 
 
     //actualitzem la serie
-    const updateSerie = await c.env.DB.prepare('UPDATE Series SET Kg=?,Reps=?,Carga=? WHERE UserID=? AND SerieId=?  RETURNING *').bind(kg, reps, carga, userId, serieId).run()
+    const updateSerie = await c.env.DB.prepare('UPDATE Series SET ExerciciId=?,Kg=?,Reps=?,Carga=? WHERE UserID=? AND SerieId=?  RETURNING *').bind(exerciciId, kg, reps, carga, userId, serieId).run()
 
     //actualitzem el pr
     const updatePr = await checkPr(c, userId, exerciciId, kg)
@@ -254,6 +253,7 @@ app.post('/api/getExercici', zValidator('json', getExercici), async (c) => {
     throw new HTTPException(500, { message: 'Error al obtener el ejercicio' });
   }
 });
+
 
 // Obtener historial de pesos de un ejercicio
 app.post('/api/getPesosHistorial', zValidator('json', getPesosHistorial), async (c) => {

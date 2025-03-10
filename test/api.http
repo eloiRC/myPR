@@ -63,12 +63,12 @@ Content-Type: application/json
 POST http://localhost:8787/api/editSerie HTTP/1.1
 Content-Type: application/json
 
-{"token":"{{$dotenv %token}}",
-"serieId":20,
-"entrenoId":3,
-"exerciciId":2,
-"kg":140,
-"reps":3
+{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImVsb2lAZ21haWwuY29tIiwiVXNlcklkIjoxMywiZXhwIjoxNzQxODEyNDkzfQ.3UiPaXLZr7_qZVWLo5hOxFAvDI0lTPBt2wBSlizbBSc",
+"serieId":69,
+"entrenoId":10,
+"exerciciId":3,
+"kg":55,
+"reps":12
 }
 
 ###

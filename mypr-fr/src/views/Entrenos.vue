@@ -40,25 +40,14 @@ const chartData = computed(() => {
   // Crear un mapa para agrupar entrenos por día
   const entrenosPorDia = new Map<string, number>();
   
-  // Obtener el rango de fechas según el preset seleccionado
-  const now = new Date();
-  let diasAMostrar = 7; // Por defecto 7 días
-  
-  switch (rangoSeleccionado.value) {
-    case '30d':
-      diasAMostrar = 30;
-      break;
-    case '90d':
-      diasAMostrar = 90;
-      break;
-  }
+  let entenosAMostrar = entrenos.value.length
   
   // Calcular las fechas para mostrar
-  const fechas = Array.from({ length: diasAMostrar }, (_, i) => {
-    const fecha = new Date(now);
-    fecha.setDate(now.getDate() - (diasAMostrar - 1 - i));
+  const fechas = Array.from({ length: entenosAMostrar }, (_, i) => {
+    const fecha = new Date(entrenos.value[i].Data*1000);
     return fecha;
   });
+  
   
   // Inicializar el mapa con las fechas y carga 0
   fechas.forEach(fecha => {
@@ -99,6 +88,7 @@ const chartData = computed(() => {
         borderWidth: 2,
         pointBackgroundColor: 'rgba(219, 48, 105, 1)',
         data
+        
       }
     ]
   };

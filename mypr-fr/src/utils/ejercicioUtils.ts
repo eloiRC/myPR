@@ -17,6 +17,7 @@ export interface NuevoEjercicio {
     gruposMusculares: number[];
 }
 
+//todo verificar que el nombre del ejerccio no se duplica
 // Función para guardar un nuevo ejercicio
 export const guardarNuevoEjercicio = async (
     nuevoEjercicio: NuevoEjercicio,

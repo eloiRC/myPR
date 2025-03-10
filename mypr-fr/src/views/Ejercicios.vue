@@ -835,4 +835,8 @@ h2 {
   padding: 0.75rem 2rem;
   font-size: 1.1rem;
 }
+
+.error-message {
+  color: var(--color-razzmatazz);
+}
 </style> 
