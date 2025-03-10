@@ -21,7 +21,7 @@ CREATE TABLE GrupMuscular (
     GrupMuscularId INTEGER PRIMARY KEY AUTOINCREMENT, 
     Nom TEXT UNIQUE
 );
-INSERT INTO GrupMuscular VALUES(1,'Pectoral');
+INSERT INTO GrupMuscular VALUES(1,'Pectoral'); 
 INSERT INTO GrupMuscular VALUES(2,'Hombros');
 INSERT INTO GrupMuscular VALUES(3,'Biceps');
 INSERT INTO GrupMuscular VALUES(4,'Triceps');
