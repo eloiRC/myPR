@@ -62,7 +62,6 @@ export const guardarNuevoEjercicio = async (
         }
 
         const ejercicioGuardado = await response.json();
-        localStorage.setItem('lastExercici', ejercicioGuardado.exerciciId);
         onSuccess(ejercicioGuardado.exerciciId);
 
     } catch (error) {

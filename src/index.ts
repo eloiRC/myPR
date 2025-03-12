@@ -40,7 +40,9 @@ app.use('/api/*', async (c, next) => {
     await next()
 
   } catch (error) {
-    return c.json({ message: 'invalid token' })
+    return c.text('invalid token', 401)
+
+
 
   }
 
@@ -382,7 +384,7 @@ app.post('/login', zValidator('json', login), async (c) => {
     const { results } = await c.env.DB.prepare('SELECT * FROM Users WHERE Email=?').bind(email).run();
 
     if (results.length === 0) {
-      throw new HTTPException(401, { message: 'Invalid credentials' });
+      return c.text('invalid credentials', 401)
     }
 
     // Verificar la contraseña
@@ -400,7 +402,7 @@ app.post('/login', zValidator('json', login), async (c) => {
 
     }
     else {
-      throw new HTTPException(401, { message: 'Invalid credentials' })
+      return c.text('invalid credentials', 401)
     }
   } catch (error) {
     const message = "error " + error

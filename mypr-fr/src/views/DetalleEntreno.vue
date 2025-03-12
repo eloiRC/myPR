@@ -179,6 +179,7 @@ const loadEntreno = async () => {
       entreno.value.CargaTotal = parseFloat((entreno.value.CargaTotal / 1000).toFixed(2));
     }
     
+    
     series.value = data.series.reverse();
     
     // Cargar los ejercicios
@@ -263,13 +264,17 @@ const loadGruposMusculares = async () => {
 
 // Guardar una nueva serie
 const guardarSerie = async () => {
-  if (nuevaSerie.value.ejercicioId === 0 || nuevaSerie.value.kg < 0 || nuevaSerie.value.reps <= 0) {
-    alertMessage.value = `Por favor, completa todos los campos correctamente'`;
-      showAlert.value = true;
+  if (nuevaSerie.value.ejercicioId === 0 || nuevaSerie.value.kg <= 0 || nuevaSerie.value.reps <= 0) {
+    
+    
+    if(nuevaSerie.value.kg <= 0){
+      alertWindow('Por favor, completa todos los campos correctament, el peso minimo es 1 kg')
+    }
+    else{
+      alertWindow('Por favor, completa todos los campos correctamente');
+    }
       
-      setTimeout(() => {
-        showAlert.value = false;
-      }, 5000);
+      
     return;
   }
   
@@ -368,10 +373,33 @@ const cargarGruposMusculares = async () => {
   }
 };
 
+function capitalize(s:string){
+  return s.replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
+
+}
+const newExercici = async () => {
+  
+  const newName= capitalize(nuevoEjercicio.value.Nom)
+  var duplicated = false
+  console.log(newName)
+ejercicios.value.forEach(value => {
+  const nom = value.Nom
+  if(nom==newName){
+    console.log(true)
+    alertWindow('Este nombre de ejercicio ya existe')
+    duplicated=true
+  }
+});
+if(!duplicated){
+  guardarNuevoEjercicioHandler()
+}
+}
+
 // Función para guardar el nuevo ejercicio
 const guardarNuevoEjercicioHandler = async () => {
   guardandoEjercicio.value = true;
   errorGuardado.value = '';
+  
   
   await guardarNuevoEjercicio(
     nuevoEjercicio.value,
@@ -552,11 +580,7 @@ const eliminarSerie = async (serieId: number) => {
     if (!response.ok) {
       throw new Error('Error al eliminar la serie');
     }
-    alertMessage.value = '¡Serie eliminada!';
-    showAlert.value = true;
-    setTimeout(() => {
-        showAlert.value = false;
-      }, 5000);
+    alertWindow('¡Serie eliminada!');
 
     // Recargar los datos del entreno
     await loadEntreno();
@@ -566,6 +590,15 @@ const eliminarSerie = async (serieId: number) => {
     console.error('Error al eliminar la serie:', err);
   }
 };
+
+function alertWindow(message:string){
+  alertMessage.value = message
+  showAlert.value = true;
+
+  setTimeout(() => {
+        showAlert.value = false;
+      }, 5000);
+}
 
 // Cargar los detalles al montar el componente
 onMounted(loadEntreno);
@@ -855,7 +888,7 @@ onMounted(loadEntreno);
       </div>
       
       <div class="modal-body">
-        <form @submit.prevent="guardarNuevoEjercicioHandler" class="ejercicio-form">
+        <form @submit.prevent="newExercici" class="ejercicio-form">
           <div class="form-group">
             <label for="nombre">Nombre del ejercicio:</label>
             <input 
@@ -1551,7 +1584,7 @@ textarea.form-control {
   padding: 1rem;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
+  z-index: 9999;
   animation: slideIn 0.3s ease-out;
 }
 

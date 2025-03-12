@@ -69,6 +69,9 @@ export const authService = {
                 if (payload.UserId) {
                     localStorage.setItem('userId', payload.UserId.toString());
                 }
+                if (payload.exp) {
+                    localStorage.setItem('exp', payload.exp)
+                }
             }
 
             return responseData;
@@ -116,7 +119,15 @@ export const authService = {
      * Verificar si el usuario está autenticado
      */
     isAuthenticated(): boolean {
-        return !!localStorage.getItem('token');
+        if (!!localStorage.getItem('token')) {
+            if (parseInt(localStorage.getItem('exp') || '0') < (Math.floor(Date.now() / 1000))) {
+                return false
+            }
+            else {
+                return true
+            }
+        }
+        return false
     },
 
     /**

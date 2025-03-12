@@ -27,7 +27,7 @@ const error = ref('');
 // Estado para el rango de fechas
 let fechaInicio = 0;
 let fechaFin = 0;
-const rangoSeleccionado = ref<'7d' | '30d' | '90d'>('7d');
+const rangoSeleccionado = ref<'7d' | '30d' | '90d'>('30d');
 const diasDesplazamiento = ref<number>(0);
 
 // Ordenar entrenos por fecha (más recientes primero)
@@ -143,11 +143,11 @@ const formatDate = (timestamp: number): string => {
 // Función para actualizar el rango de fechas según el preset seleccionado
 const actualizarRangoFechas = (preset: '7d' | '30d' | '90d', desplazamiento: number = 0) => {
   const now = Math.floor(Date.now() / 1000);
-  let dias = 7; // Por defecto 7 días
+  let dias = 30; // Por defecto 30 días
   
   switch (preset) {
-    case '30d':
-      dias = 30;
+    case '7d':
+      dias = 7;
       break;
     case '90d':
       dias = 90;
@@ -275,7 +275,7 @@ const crearNuevoEntreno = async () => {
 
 // Inicializar el rango de fechas al montar el componente
 onMounted(() => {
-  actualizarRangoFechas('7d');
+  actualizarRangoFechas('30d');
 });
 </script>
 

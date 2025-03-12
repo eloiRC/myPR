@@ -77,7 +77,7 @@ INSERT INTO Users (Email, Password) VALUES
 INSERT INTO GrupMuscular (Nom) VALUES 
     ('Pectoral'),('Hombros'),('Biceps'),('Triceps'),('Dorsals'),
     ('Trapezi'),('Core'),('Gltuis'),('Quadriceps'),('Lumbars'),
-    ('Femoral'),('Bessons');
+    ('Femoral'),('Bessons'),('Abductors'),('Deltoides');
 
 -- Ahora inserta en las tablas que tienen referencias
 INSERT INTO Exercici (Nom, UserId, PR, GrupMuscular1) VALUES 

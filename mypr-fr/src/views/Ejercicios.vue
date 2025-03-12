@@ -25,6 +25,10 @@ interface GrupoMuscular {
   Nom: string;
 }
 
+const showEjercicioAlert = ref(false);
+const showAlert = ref(false);
+const alertMessage = ref('');
+const ejercicioAlertMessage = ref('');
 const router = useRouter();
 const route = useRoute();
 const ejercicios = ref<Ejercicio[]>([]);
@@ -166,6 +170,27 @@ const resetForm = () => {
     gruposMusculares: []
   };
 };
+function capitalize(s:string){
+  return s.replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
+
+}
+const newExercici = async () => {
+  
+  const newName= capitalize(nuevoEjercicio.value.nombre)
+  var duplicated = false
+  console.log(newName)
+ejercicios.value.forEach(value => {
+  const nom = value.Nom
+  if(nom==newName){
+    console.log(true)
+    alertWindow('Este nombre de ejercicio ya existe')
+    duplicated=true
+  }
+});
+if(!duplicated){
+  guardarEjercicio()
+}
+}
 
 // Función para guardar el nuevo ejercicio
 const guardarEjercicio = async () => {
@@ -186,9 +211,11 @@ const guardarEjercicio = async () => {
       showForm.value = false;
       
       // Mostrar mensaje de éxito
-      error.value = '¡Ejercicio creado correctamente!';
+      // Mostrar mensaje de éxito
+      ejercicioAlertMessage.value = '¡Ejercicio creado correctamente!';
+      showEjercicioAlert.value = true;
       setTimeout(() => {
-        error.value = '';
+        showEjercicioAlert.value = false;
       }, 3000);
     },
     (errorMessage) => {
@@ -308,6 +335,16 @@ onMounted(() => {
     showForm.value = true;
   }
 });
+
+function alertWindow(message:string){
+  alertMessage.value = message
+  showAlert.value = true;
+
+  setTimeout(() => {
+        showAlert.value = false;
+      }, 5000);
+}
+
 </script>
 
 <template>
@@ -324,6 +361,14 @@ onMounted(() => {
       </button>
       </div>
     </header>
+
+    <div v-if="showEjercicioAlert" class="ejercicio-alert">
+      {{ ejercicioAlertMessage }}
+    </div>
+
+    <div v-if="showAlert" class="alert">
+      {{ alertMessage }}
+    </div>
  
  
     
@@ -353,7 +398,7 @@ onMounted(() => {
     <!-- Formulario para añadir nuevo ejercicio -->
     <div v-if="showForm" class="form-container">
       <h2>Nuevo Ejercicio</h2>
-      <form @submit.prevent="guardarEjercicio" class="ejercicio-form">
+      <form @submit.prevent="newExercici" class="ejercicio-form">
         <div class="form-group">
           <label for="nombre">Nombre del ejercicio:</label>
           <input 
@@ -838,5 +883,33 @@ h2 {
 
 .error-message {
   color: var(--color-razzmatazz);
+}
+
+.alert {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: var(--color-sandy-brown);
+  color: black;
+  font-weight: bold;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+  animation: slideIn 0.3s ease-out;
+}
+
+.ejercicio-alert {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: var(--color-cobalt-blue);
+  color: white;
+  font-weight: bold;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  animation: slideIn 0.3s ease-out;
 }
 </style> 
