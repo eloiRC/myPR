@@ -80,10 +80,12 @@ Content-Type: application/json
 }
 
 ###
-POST http://localhost:8787/api/getExercicis HTTP/1.1
+POST http://localhost:8787/api/getExercici HTTP/1.1
 Content-Type: application/json
 
-{"token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVc2VySWQiOjUsImV4cCI6MTc0MTY0NjAyNiwiaWF0IjoxNzQxMDQxMjI2fQ.xeq0v0tt-by_M6oh0q5NeW8oVsDKT9IU5t3JaChqLok"}
+{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImVsb2lAZ21haWwuY29tIiwiVXNlcklkIjoxMywiZXhwIjoxNzQzMjczNzc5fQ.Nw8T92xBPsUPlLkhXDRa_jP11R5C-WH19HRUbGKIfp0",
+"exerciciId":13
+}
 
 ###
 POST http://localhost:8787/api/getEntreno HTTP/1.1

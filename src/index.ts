@@ -64,7 +64,6 @@ app.post('/api/nouExercici', zValidator('json', nouExercici), async (c) => {
   }
 })
 
-//todo edit exercici
 app.post('/api/editExercici', zValidator('json', editExercici), async (c) => {
   const { exerciciId, nom, grupsMusculars } = await c.req.json()
 
@@ -244,13 +243,17 @@ app.post('/api/getExercici', zValidator('json', getExercici), async (c) => {
   const userId = await c.get('jwtPayload').UserId;
 
   try {
-    const results = await c.env.DB.prepare('SELECT * FROM Exercici WHERE ExerciciId = ? AND UserId = ?').bind(exerciciId, userId).all();
+    const exercici = await c.env.DB.prepare('SELECT * FROM Exercici WHERE ExerciciId = ? AND UserId = ?').bind(exerciciId, userId).all();
+    //retorna l'entreno la serie amb l'exercici te le pr 
+    const entrenoPr = await c.env.DB.prepare('SELECT * FROM Entreno WHERE (EntrenoId) IN (SELECT EntrenoId FROM Series WHERE ExerciciId=? AND PR=true ) AND UserId=?').bind(exerciciId, userId).all();
+    let response = exercici.results[0]
+    response.entrenoPr = entrenoPr.results[0]
 
-    if (results.results.length === 0) {
+    console.log(entrenoPr.results[0])
+    if (exercici.results.length === 0 || entrenoPr.results.length === 0) {
       throw new HTTPException(404, { message: 'Ejercicio no encontrado' });
     }
-
-    return c.json(results.results[0]);
+    return c.json(response);
   } catch (error) {
     throw new HTTPException(500, { message: 'Error al obtener el ejercicio' });
   }

@@ -637,7 +637,7 @@ h2 {
 
 .pr-info {
   margin: 0.5rem 0;
-  color: var(--color-razzmatazz);
+  color: var(--color-cobalt-blue);
 }
 
 .grupos-musculares {
@@ -693,7 +693,7 @@ h2 {
 }
 
 .btn-primary:hover {
-  background-color: #1648a0;
+  background-color: var(--color-cobalt-blue-dark);
 }
 
 .btn-secondary {

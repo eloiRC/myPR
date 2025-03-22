@@ -75,11 +75,12 @@ onMounted(() => {
 
 /* Variables CSS para acceder a los colores desde cualquier componente */
 :root {
-  --color-cobalt-blue: #1B70EE;
-  --color-razzmatazz: #db3069;
-  --color-sandy-brown: #f4a259;
-  --color-naples-yellow: #f5d547;
-  --color-beige: #ebebd3;
+  --color-cobalt-blue: #0F8B8D;
+  --color-cobalt-blue-dark: #0a4f50;
+  --color-razzmatazz: #FF8D67;
+  --color-sandy-brown: #B91372;
+  --color-naples-yellow: #143642;
+  --color-beige: #DAD2D8;
   --color-delft-blue: #3a4569;
 
   /* Tema oscuro por defecto */
@@ -89,6 +90,7 @@ onMounted(() => {
   --text-secondary: #b3b3b3;
   --border: #333333;
   --accent-primary: var(--color-cobalt-blue);
+  --accent-primary-dark:var(--color-cobalt-blue-dark);
   --accent-secondary: var(--color-razzmatazz);
   --accent-tertiary: var(--color-naples-yellow);  
   --accent-quaternary: var(--color-sandy-brown);

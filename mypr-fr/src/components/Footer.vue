@@ -69,9 +69,9 @@ const cerrarSesion = () => {
 }
 
 .btn-logout:hover {
-  background-color: var(--color-razzmatazz);
+  background-color: var(--color-sandy-brown);
   color: white;
-  border-color: var(--color-razzmatazz);
+  border-color: var(--color-sandy-brown);
 }
 
 .icon {

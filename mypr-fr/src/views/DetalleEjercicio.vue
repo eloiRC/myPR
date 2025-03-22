@@ -22,6 +22,15 @@ interface Ejercicio {
   GrupMuscular3: number | null;
   GrupMuscular4: number | null;
   GrupMuscular5: number | null;
+  entrenoPr: {
+    EntrenoId: number ;
+    UserId: number ;
+    Data: number ;
+    CargaTotal: number;
+    Nom: string;
+    Descripcio: string;
+    Puntuacio: number ;
+  }
 }
 
 // Definir la interfaz para los grupos musculares
@@ -73,10 +82,10 @@ const chartData = computed(() => {
     datasets: [
       {
         label: 'Peso Máximo (kg)',
-        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-        borderColor: 'rgba(255, 99, 132, 1)',
+        backgroundColor: '#FF8D67',
+        borderColor: '#FF8D67',
         borderWidth: 2,
-        pointBackgroundColor: 'rgba(255, 99, 132, 1)',
+        pointBackgroundColor: '#FF8D67',
         data
       }
     ]
@@ -105,10 +114,10 @@ const chartDataCarga = computed(() => {
     datasets: [
       {
         label: 'Carga Total (kg)',
-        backgroundColor: 'rgba(25, 86, 200, 0.2)',
-        borderColor: 'rgba(25, 86, 200, 1)',
+        backgroundColor: '#0F8B8D',
+        borderColor: '#0F8B8D',
         borderWidth: 2,
-        pointBackgroundColor: 'rgba(25, 86, 200, 1)',
+        pointBackgroundColor: '#0F8B8D',
         data
       }
     ]
@@ -284,6 +293,19 @@ const getNombreGrupoMuscular = (id: number | null): string => {
 const volverAEjercicios = () => {
   router.push('/ejercicios');
 };
+// Formatear la fecha para mostrarla en formato legible
+const formatDate = (timestamp: number): string => {
+  if (!timestamp) return '-';
+  
+  const date = new Date(timestamp * 1000);
+  if (isNaN(date.getTime())) return '-';
+  
+  return date.toLocaleDateString('es-ES', {
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+  });
+};
 
 // Cargar los datos al montar el componente
 onMounted(loadEjercicio);
@@ -338,6 +360,16 @@ onMounted(loadEjercicio);
               {{ getNombreGrupoMuscular(ejercicio.GrupMuscular5) }}
             </span>
           </div>
+        </div>
+      </div>
+      <div class="entrenos-list">
+        <div class="entreno-card">
+          <div class="entreno-info">
+            <h3>{{ ejercicio.entrenoPr.Nom }}</h3>
+            <p class="date">{{ formatDate(ejercicio.entrenoPr.Data) }}</p>
+            <p class="carga">Peso total: <strong class="num-carga">{{ ejercicio.entrenoPr.CargaTotal }} Tn</strong></p>
+          </div>
+          
         </div>
       </div>
       
@@ -419,7 +451,7 @@ onMounted(loadEjercicio);
 .pr-valor {
   font-size: 2.5rem;
   font-weight: bold;
-  color: var(--color-razzmatazz);
+  color: var(--color-cobalt-blue);
   margin: 0;
 }
 
@@ -505,5 +537,46 @@ onMounted(loadEjercicio);
 
 .btn-secondary:hover {
   background-color: rgba(25, 86, 200, 0.1);
+}
+.entreno-card {
+  background-color: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid var(--border);
+}
+
+.entreno-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.entreno-info {
+  flex: 1;
+}
+
+.entreno-info h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.date {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 0.5rem 0;
+}
+
+.carga {
+  font-size: 1rem;
+  margin: 0.5rem 0;
+ 
+}
+.num-carga{
+  color: var(--color-cobalt-blue);
 }
 </style>

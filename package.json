@@ -17,6 +17,6 @@
 		"@cloudflare/workers-types": "^4.20250214.0",
 		"@vue/tsconfig": "^0.7.0",
 		"terser": "^5.39.0",
-		"wrangler": "^3.110.0"
+		"wrangler": "^4.1.0"
 	}
 }

@@ -556,10 +556,7 @@ const guardarCambiosEntreno = async () => {
   }
 };
 
-//todo eliminar serie
-//api/deleteSerie
-//token
-//serieID
+
 const eliminarSerie = async (serieId: number) => {
   if (!entreno.value) return;
 
@@ -1076,7 +1073,7 @@ h2 {
 
 .pr-badge {
   display: inline-block;
-  background-color: var(--color-razzmatazz);
+  background-color: var(--color-cobalt-blue);
   color: white;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
@@ -1102,7 +1099,7 @@ h2 {
 }
 
 .btn-danger {
-  background-color: var(--color-razzmatazz);
+  background-color: var(--color-delft-blue);
   color: white;
   border: none;
 }
@@ -1134,7 +1131,7 @@ h2 {
 }
 
 .add-serie button:hover {
-  background-color: #1648a0;
+  background-color: var(--accent-primary-dark);
 }
 
 .new-serie-card {
@@ -1178,8 +1175,8 @@ h2 {
 
 .btn-secondary {
   background-color: transparent;
-  border: 1px solid var(--accent-secondary);
-  color: var(--accent-secondary);
+  border: 1px solid var(--color-razzmatazz);
+  color: var(--color-razzmatazz);
 }
 
 .btn-secondary:hover {
@@ -1511,8 +1508,8 @@ textarea.form-control {
 }
 
 .filled{
-  color: var(--color-sandy-brown);
-  border-color: var(--color-sandy-brown);
+  color: var(--color-cobalt-blue);
+  border-color: var(--color-cobalt-blue);
 }
 
 
@@ -1579,7 +1576,7 @@ textarea.form-control {
   top: 20px;
   right: 20px;
   background-color: var(--color-sandy-brown);
-  color: black;
+  color: white;
   font-weight: bold;
   padding: 1rem;
   border-radius: 8px;

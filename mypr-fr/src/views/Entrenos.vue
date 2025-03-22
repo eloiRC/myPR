@@ -83,10 +83,10 @@ const chartData = computed(() => {
     datasets: [
       {
         label: 'Peso total: (Tn)',
-        backgroundColor: 'rgba(219, 48, 105, 1)',
-        borderColor: 'rgba(219, 48, 105, 1)',
+        backgroundColor: '#FF8D67',
+        borderColor: '#FF8D67',
         borderWidth: 2,
-        pointBackgroundColor: 'rgba(219, 48, 105, 1)',
+        pointBackgroundColor: '#FF8D67',
         data
         
       }
