@@ -217,7 +217,7 @@ const loadEjercicio = async () => {
 
     const data = await response.json();
     ejercicio.value = data;
-
+    
     // Cargar historial de pesos
     const responseHistorial = await fetch(API_URL+'/api/getPesosHistorial', {
       method: 'POST',
@@ -250,12 +250,18 @@ const loadEjercicio = async () => {
 
     // Cargar grupos musculares
     await loadGruposMusculares();
+    
   } catch (err: any) {
     error.value = err.message || 'Error al cargar los datos';
     console.error('Error:', err);
   } finally {
     isLoading.value = false;
   }
+};
+
+// Ir al detalle de un entreno
+const verDetalleEntreno = (entrenoId: number) => {
+  router.push(`/entreno/${entrenoId}`);
 };
 
 // Cargar los grupos musculares
@@ -363,7 +369,10 @@ onMounted(loadEjercicio);
         </div>
       </div>
       <div class="entrenos-list">
-        <div class="entreno-card">
+        <div 
+        class="entreno-card"
+        @click="verDetalleEntreno(ejercicio.entrenoPr.EntrenoId)">
+          
           <div class="entreno-info">
             <h3>{{ ejercicio.entrenoPr.Nom }}</h3>
             <p class="date">{{ formatDate(ejercicio.entrenoPr.Data) }}</p>
