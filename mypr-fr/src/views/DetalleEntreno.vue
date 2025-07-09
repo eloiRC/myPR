@@ -435,6 +435,11 @@ const volverAEntrenos = () => {
   router.push('/entrenos');
 };
 
+// Ir al detalle de un entreno
+const verDetalleEjercicio = (ejercicioId: number) => {
+  router.push(`/ejercicio/${ejercicioId}`);
+};
+
 // Iniciar edición de serie
 const iniciarEdicionSerie = (serie: Serie) => {
   editandoSerie.value = serie;
@@ -784,7 +789,10 @@ onMounted(loadEntreno);
         <div v-for="serie in series" :key="serie.SerieId" class="serie-card" :class="{ 'editing': editandoSerie?.SerieId === serie.SerieId }">
           <div class="serie-info">
             <h3>
-              {{ ejercicios.find(e => e.ExerciciId === serie.ExerciciId)?.Nom || `Ejercicio desconocido` }}
+              <div @click="verDetalleEjercicio(serie.ExerciciId)">
+{{ ejercicios.find(e => e.ExerciciId === serie.ExerciciId)?.Nom || `Ejercicio desconocido` }}
+              </div>
+              
             </h3>
             
             <!-- Modo visualización -->

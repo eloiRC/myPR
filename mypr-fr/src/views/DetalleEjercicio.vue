@@ -27,6 +27,7 @@ interface Ejercicio {
     UserId: number ;
     Data: number ;
     CargaTotal: number;
+    CargaTotalN:string
     Nom: string;
     Descripcio: string;
     Puntuacio: number ;
@@ -369,6 +370,8 @@ onMounted(loadEjercicio);
         </div>
       </div>
       <div class="entrenos-list">
+        <h2>Entreno del PR</h2>
+        <br>
         <div 
         class="entreno-card"
         @click="verDetalleEntreno(ejercicio.entrenoPr.EntrenoId)">
@@ -376,7 +379,7 @@ onMounted(loadEjercicio);
           <div class="entreno-info">
             <h3>{{ ejercicio.entrenoPr.Nom }}</h3>
             <p class="date">{{ formatDate(ejercicio.entrenoPr.Data) }}</p>
-            <p class="carga">Peso total: <strong class="num-carga">{{ ejercicio.entrenoPr.CargaTotal }} Tn</strong></p>
+            <p class="carga">Peso total: <strong class="num-carga">{{ejercicio.entrenoPr.CargaTotal}} Kg</strong></p>
           </div>
           
         </div>
