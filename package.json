@@ -3,6 +3,7 @@
 	"scripts": {
 		"dev": "wrangler dev ",
 		"deploy": "wrangler deploy --minify",
+		"deploy-front":"cd ./mypr-fr/ && npm run build && cd.. && wrangler pages deploy ./mypr-fr/dist/  ",
 		"update-db": "wrangler d1 export mypr --remote --output=./database.sql && wrangler d1 execute  mypr --local --file=./drop.sql && wrangler d1 execute  mypr --local --file=./database.sql",
 		"cf-typegen": "wrangler types --env-interface CloudflareBindings"
 	},
