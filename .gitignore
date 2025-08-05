@@ -19,6 +19,7 @@ node_modules/
 .env
 .env.production
 .dev.vars
+wrangler.jsonc
 
 # logs
 logs/
@@ -33,3 +34,4 @@ lerna-debug.log*
 .DS_Store
 database.sql
 ./*.sql
+wrangler.jsonc

@@ -4,14 +4,16 @@ import { zValidator } from '@hono/zod-validator'
 import { HTTPException } from 'hono/http-exception'
 import { cors } from 'hono/cors'
 import { jwt } from 'hono/jwt'
-import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars, getExercici, getPesosHistorial, nouEntreno, editEntreno, getCargaHistorial } from './schema'
+import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars, getExercici, getPesosHistorial, nouEntreno, editEntreno, getCargaHistorial, chatGPT } from './schema'
 import { hashPassword, verifyPassword, generateJWT, verifyJWT } from './jwt'
+import OpenAI from 'openai'
 
 
 type Bindings = {
   DB: D1Database;
   test_password: string;
   jwt_secret: string;
+  OPENAI_API_KEY: string;
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
@@ -413,6 +415,166 @@ app.post('/login', zValidator('json', login), async (c) => {
   }
 })
 
+// Endpoint simple para probar la conexión con OpenAI
+app.post('/api/test-openai', async (c) => {
+  try {
+    console.log('🧪 Probando conexión básica con OpenAI...');
+
+    const openai = new OpenAI({
+      apiKey: c.env.OPENAI_API_KEY,
+    });
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        {
+          role: 'user',
+          content: 'Di "Hola, la conexión funciona correctamente"'
+        }
+      ],
+      max_tokens: 50,
+      temperature: 0.7
+    });
+
+    const response = completion.choices[0].message.content;
+    console.log('✅ Conexión exitosa:', response);
+
+    return c.json({
+      success: true,
+      message: 'Conexión con OpenAI establecida correctamente',
+      response: response
+    });
+  } catch (error: any) {
+    console.error('❌ Error en prueba de conexión:', error);
+    return c.json({
+      success: false,
+      message: `Error de conexión: ${error.message}`,
+      details: {
+        name: error?.name,
+        status: error?.status,
+        type: error?.type
+      }
+    }, 500);
+  }
+});
+
+
+//todo: crear un historial de chat per usuari a la bd
+//anadir una columna "chatHistory" a la taula "Users"
+//guardar el historial de chat en formato JSON en la columna "chatHistory" de la taula "Users"
+//cada vegada que es fa una peticio a l'endpoint de ChatGPT, s'afegeix el missatge al historial
+//es demana el historial de chat al front end per mostrar-lo cuan es carrega la pagina
+
+
+//todo: endpoint para borrar el historial de chat
+
+
+
+// Endpoint para ChatGPT
+app.post('/api/chatgpt', zValidator('json', chatGPT), async (c) => {
+  const { message, currentTraining, isFirstMessage, chatId } = await c.req.json();
+
+  const seriesCurrentTraining = await getFullSeriesListFromTraining(currentTraining.entreno.EntrenoId, c)
+  //remove grupos musculares de los ejercicios
+  currentTraining.ejercicios = currentTraining.ejercicios.map((ejercicio: any) => {
+    const { UserID, GrupMuscular1, GrupMuscular2, GrupMuscular3, GrupMuscular4, GrupMuscular5, ...rest } = ejercicio;
+    return rest;
+  });
+
+  const ejercicios = JSON.stringify(currentTraining.ejercicios);
+
+  console.log('Ejercicios del entrenamiento actual:', ejercicios);
+  try {
+    // Construir el contexto para ChatGPT
+    var contexto = '';
+
+    if (isFirstMessage) {
+
+
+      const history = await getFullHistory(currentTraining.entreno.UserId, c)
+      contexto = contexto + "Historial de entrenos del usuario en json: '''" + history + "'''";
+    }
+
+    // Llamada real a la API de OpenAI usando el nuevo formato
+    const openai = new OpenAI({
+      apiKey: c.env.OPENAI_API_KEY,
+    });
+
+    contexto = `${contexto} 
+INFORMACIÓN DEL USUARIO:
+- ID de Usuario: ${currentTraining.entreno.UserId}
+- Entrenamiento actual: ${currentTraining.entreno.Nom} (${currentTraining.entreno.CargaTotal}kg total)
+- Series realizadas: ${currentTraining.series.length}
+- PRs logrados en este entrenamiento: ${currentTraining.series.filter((serie: any) => serie.PR).length}
+
+Entreno actual para que puedas ver que el usuario ha hecho un entreno:
+JSON: '''${seriesCurrentTraining}'''
+
+Lista de ejercicios del usuario con sus pr y grupos musculares:
+JSON: '''${ejercicios}'''
+
+CONTEXTO ADICIONAL:
+- Fecha actual: ${new Date().toLocaleDateString('es-ES')}
+- Hora actual: ${new Date().toLocaleTimeString('es-ES')}
+- Día de la semana: ${new Date().toLocaleDateString('es-ES', { weekday: 'long' })}
+- Es el primer mensaje: ${isFirstMessage ? 'SÍ' : 'NO'}
+
+
+
+MENSAJE DEL USUARIO:
+${message}`;
+
+    console.log('🔍 Iniciando llamada a OpenAI...');
+    console.log('📝 Prompt ID:', "pmpt_688f9785fee48190b0da02dd3234ca8e0bfd3e2a9012ba01");
+
+
+
+
+    try {
+      // Intentar entrar les dades per un altre input?
+
+      console.log(contexto);
+
+      console.log('🔄 Intentando API de responses...');
+      const openaiResponse = await openai.responses.create({
+        prompt: {
+          "id": "pmpt_688f9785fee48190b0da02dd3234ca8e0bfd3e2a9012ba01",
+          "version": "6"
+        },
+        input: contexto,
+        previous_response_id: chatId || null,
+        text: {
+          "format": {
+            "type": "text"
+          }
+        },
+        reasoning: {},
+        max_output_tokens: 2048,
+        store: true,
+        temperature: 0.7,
+        top_p: 1,
+        tool_choice: "auto",
+      });
+
+      // fer que el front end guardi la conversa per seguir hitorial?
+      // te que haber una forma mes facil
+      console.log('✅ Respuesta recibida de OpenAI Responses API');
+      console.log('📄 Respuesta:', openaiResponse);
+
+      let responseId = openaiResponse.id
+      let response = typeof openaiResponse.output_text === 'string' ? openaiResponse.output_text : 'Respuesta no válida';
+      return c.json({ response, responseId });
+    } catch (error) {
+      const message = "error " + error
+      throw new HTTPException(500, { message: message })
+
+
+    }
+  } catch (error) {
+    // Si es un error de OpenAI, dar más detalles
+    return c.text('error sql query', 500)
+  }
+});
 
 app.onError((err, c) => {
   console.error(`${err}`)
@@ -461,3 +623,72 @@ function updateCargaTotal(c: any, userId: any, entrenoId: any) {
 
 
 }
+async function getFullHistory(userId: any, c: any) {
+  try {
+    const { results } = await c.env.DB.prepare(`
+    SELECT
+        T1.EntrenoId,
+        T1.Nom AS NombreEntreno,
+        T1.Descripcio AS DescripcionEntreno,
+        T1.Puntuacio AS PuntuacionEntreno,
+        T1.CargaTotal,
+        DATE(T1.Data, 'unixepoch') AS FechaEntreno,
+        T2.SerieId,
+        T2.Kg,
+        T2.Reps,
+        T3.Nom AS NombreEjercicio
+    FROM
+        Entreno AS T1
+    LEFT JOIN
+        Series AS T2 ON T1.EntrenoId = T2.EntrenoId
+    LEFT JOIN
+        Exercici AS T3 ON T2.ExerciciId = T3.ExerciciId
+    WHERE
+        T1.UserId = ?
+    ORDER BY
+        FechaEntreno DESC,
+        T1.EntrenoId,
+        T2.SerieId ASC;
+`).bind(userId).all();
+
+
+
+    return JSON.stringify(results)
+  } catch (error) {
+    console.error("Error retrieving full history:", error);
+    // You might want to throw a specific error or return an empty string/array
+    return JSON.stringify([]); // Return empty array on error
+  }
+}
+
+async function getFullSeriesListFromTraining(EntrenoId: any, c: any) {
+  try {
+    const { results } = await c.env.DB.prepare(`
+   SELECT 
+    Series.SerieId,
+    Series.EntrenoId,
+    Series.ExerciciId,
+    Exercici.Nom AS NomExercici,
+    Series.Kg,
+    Series.Reps,
+    Series.Data,
+    Series.Carga,
+    Series.PR
+FROM 
+    Series
+JOIN 
+    Exercici ON Series.ExerciciId = Exercici.ExerciciId
+WHERE 
+    Series.EntrenoId = ?;
+`).bind(EntrenoId).all();
+
+
+
+    return JSON.stringify(results)
+  } catch (error) {
+    console.error("Error retrieving full history:", error);
+    // You might want to throw a specific error or return an empty string/array
+    return JSON.stringify([]); // Return empty array on error
+  }
+}
+

@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import authService from '../services/auth';
 import {  guardarNuevoEjercicio } from '../utils/ejercicioUtils';
+import Chatbot from '../components/Chatbot.vue';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787'; // Usa la variable de entorno o el valor por defecto
 
@@ -934,6 +935,14 @@ onMounted(loadEntreno);
       </div>
     </div>
   </div>
+  
+  <!-- Componente del chatbot -->
+  <Chatbot 
+    :entreno-id="entrenoId" 
+    :entreno-data="entreno" 
+    :series="series"
+    :ejercicios="ejercicios"
+  />
 </template>
 
 <style scoped>

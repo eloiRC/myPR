@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { nullable, string } from 'zod/v4';
 
 export const login = z.object({
     email: z.string().email(),
@@ -95,5 +96,78 @@ export const getPesosHistorial = z.object({
 export const getCargaHistorial = z.object({
     token: z.string().min(10),
     exerciciId: z.number().min(1)
+})
+
+export const chatGPT = z.object({
+    token: z.string().min(10),
+    message: z.string().min(1),
+    currentTraining: z.object({
+        entreno: z.object({
+            EntrenoId: z.number(),
+            UserId: z.number(),
+            Data: z.number(),
+            CargaTotal: z.number(),
+            Nom: z.string(),
+            Descripcio: z.string().nullish(),
+            Puntuacio: z.number().nullish()
+        }),
+        series: z.array(z.object({
+            SerieId: z.number(),
+            UserId: z.number(),
+            EntrenoId: z.number(),
+            ExerciciId: z.number(),
+            Kg: z.number(),
+            Reps: z.number(),
+            Carga: z.number(),
+            PR: z.number(),
+            Data: z.number()
+        })).nullish(),
+        ejercicios: z.array(z.object({
+            ExerciciId: z.number(),
+            Nom: z.string(),
+            UserId: z.number(),
+            PR: z.number(),
+            GrupMuscular1: z.number().nullable(),
+            GrupMuscular2: z.number().nullable(),
+            GrupMuscular3: z.number().nullable(),
+            GrupMuscular4: z.number().nullable(),
+            GrupMuscular5: z.number().nullable(),
+
+        })).nullish()
+    }),
+    previousTrainings: z.array(z.object({
+        EntrenoId: z.number(),
+        UserId: z.number(),
+        Data: z.number(),
+        CargaTotal: z.number(),
+        Nom: z.string(),
+        Descripcio: z.string().nullish(),
+        Puntuacio: z.number().nullish(),
+        series: z.array(z.object({
+            SerieId: z.number(),
+            UserId: z.number(),
+            EntrenoId: z.number(),
+            ExerciciId: z.number(),
+            Kg: z.number(),
+            Reps: z.number(),
+            Carga: z.number(),
+            PR: z.number(),
+            Data: z.number()
+        })).nullish(),
+        ejercicios: z.array(z.object({
+            ExerciciId: z.number(),
+            Nom: z.string(),
+            UserId: z.number(),
+            PR: z.number(),
+            GrupMuscular1: z.number().nullable(),
+            GrupMuscular2: z.number().nullable(),
+            GrupMuscular3: z.number().nullable(),
+            GrupMuscular4: z.number().nullable(),
+            GrupMuscular5: z.number().nullable(),
+
+        })).nullish()
+    })).nullish(),
+    isFirstMessage: z.boolean(),
+    chatId: z.string().nullish()
 })
 
