@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'; // Añadir onUnmounted
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'; // Añadir onUnmounted
 import chatGPTService from '../services/chatgpt';
 
 // Props
@@ -23,6 +23,7 @@ const messages = ref<Array<{id: number, text: string, isUser: boolean, timestamp
 const newMessage = ref('');
 const isLoading = ref(false);
 const isFirstMessage = ref(true);
+const messagesContainer = ref<HTMLElement | null>(null);
 
 
 // Mensaje de bienvenida
@@ -34,12 +35,17 @@ const welcomeMessage = computed(() => {
 const toggleChat = () => {
   isOpen.value = !isOpen.value;
   
-  if (isOpen.value && messages.value.length === 0) {
-    messages.value.push({
-      id: Date.now(),
-      text: welcomeMessage.value,
-      isUser: false,
-      timestamp: new Date()
+  if (isOpen.value) {
+    if (messages.value.length === 0) {
+      messages.value.push({
+        id: Date.now(),
+        text: welcomeMessage.value,
+        isUser: false,
+        timestamp: new Date()
+      });
+    }
+    nextTick(() => {
+      scrollToBottom();
     });
   }
 };
@@ -111,7 +117,11 @@ const handleKeyPress = (event: KeyboardEvent) => {
   }
 };
 
-
+const scrollToBottom = () => {
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+  }
+};
 
 // Cargar mensajes al montar el componente
 onMounted(() => {
@@ -129,6 +139,13 @@ onUnmounted(() => {
 // Modificar el watch de messages
 watch([messages, isFirstMessage], () => {
   chatGPTService.saveMessages(messages.value, isFirstMessage.value);
+}, { deep: true });
+
+// Modificar toggleChat
+watch(messages, () => {
+  nextTick(() => {
+    scrollToBottom();
+  });
 }, { deep: true });
 
 const resetConversation = () => {
@@ -189,28 +206,30 @@ const handleClickOutside = (event: MouseEvent) => {
       
 
     
-      <div class="chatbot-messages">
-        <div 
-          v-for="message in messages" 
-          :key="message.id"
-          class="message"
-          :class="{ 'user-message': message.isUser, 'bot-message': !message.isUser }"
-        >
-          <div class="message-content">
-            <div class="message-text">{{ message.text }}</div>
-            <div class="message-time">
-              {{ message.timestamp.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) }}
+      <div class="chatbot-messages" ref="messagesContainer">
+        <div class="messages-wrapper">
+          <div 
+            v-for="message in messages" 
+            :key="message.id"
+            class="message"
+            :class="{ 'user-message': message.isUser, 'bot-message': !message.isUser }"
+          >
+            <div class="message-content">
+              <div class="message-text">{{ message.text }}</div>
+              <div class="message-time">
+                {{ message.timestamp.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) }}
+              </div>
             </div>
           </div>
-        </div>
-        
-        <!-- Indicador de carga -->
-        <div v-if="isLoading" class="message bot-message">
-          <div class="message-content">
-            <div class="typing-indicator">
-              <span></span>
-              <span></span>
-              <span></span>
+          
+          <!-- Indicador de carga -->
+          <div v-if="isLoading" class="message bot-message">
+            <div class="message-content">
+              <div class="typing-indicator">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
             </div>
           </div>
         </div>
@@ -441,11 +460,18 @@ const handleClickOutside = (event: MouseEvent) => {
 
 .chatbot-messages {
   flex: 1;
-  padding: 1rem;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  scroll-behavior: auto; /* Cambiar de smooth a auto */
+}
+
+.messages-wrapper {
+  display: flex;
+  flex-direction: column;
   gap: 0.75rem;
+  padding: 1rem;
+  margin-top: auto; /* Esto empuja los mensajes hacia abajo */
 }
 
 .message {

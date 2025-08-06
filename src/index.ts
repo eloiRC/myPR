@@ -7,6 +7,7 @@ import { jwt } from 'hono/jwt'
 import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars, getExercici, getPesosHistorial, nouEntreno, editEntreno, getCargaHistorial, chatGPT } from './schema'
 import { hashPassword, verifyPassword, generateJWT, verifyJWT } from './jwt'
 import OpenAI from 'openai'
+import { startsWith } from 'zod/v4'
 
 
 type Bindings = {
@@ -473,6 +474,10 @@ app.post('/api/test-openai', async (c) => {
 // Endpoint para ChatGPT
 app.post('/api/chatgpt', zValidator('json', chatGPT), async (c) => {
   const { message, currentTraining, isFirstMessage, chatId } = await c.req.json();
+  let promptId = 'pmpt_688f9785fee48190b0da02dd3234ca8e0bfd3e2a9012ba01';
+  const userId = await c.get('jwtPayload').UserId;
+  //si el usario es el 13 y el primer caracter del mensaje es + se una un promptId diferente 
+  if (userId == 13 && startsWith(message, '+')) promptId = 'pmpt_6893adeca5148197a5d16728f6f8515d092829a17abd6cec';
 
   const seriesCurrentTraining = await getFullSeriesListFromTraining(currentTraining.entreno.EntrenoId, c)
   //remove grupos musculares de los ejercicios
@@ -538,8 +543,7 @@ ${message}`;
       console.log('🔄 Intentando API de responses...');
       const openaiResponse = await openai.responses.create({
         prompt: {
-          "id": "pmpt_688f9785fee48190b0da02dd3234ca8e0bfd3e2a9012ba01",
-          "version": "6"
+          "id": promptId
         },
         input: contexto,
         previous_response_id: chatId || null,
@@ -551,7 +555,7 @@ ${message}`;
         reasoning: {},
         max_output_tokens: 2048,
         store: true,
-        temperature: 0.7,
+        temperature: 1,
         top_p: 1,
         tool_choice: "auto",
       });
