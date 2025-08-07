@@ -28,7 +28,7 @@ const messagesContainer = ref<HTMLElement | null>(null);
 
 // Mensaje de bienvenida
 const welcomeMessage = computed(() => {
-  return '¡Hola! Soy tu entrenador virtual. ¿En qué puedo ayudarte?';
+  return '¡Hola! Soy tu entrenador virtual. ¿En qué puedo ayudarte? Tengo acceso a tus entrenos, así que puedo ayudarte con recomendaciones personalizadas para que mejores tus resultados. ¿Listo para empezar?';
 });
 
 // Función para abrir/cerrar el chat
@@ -212,8 +212,7 @@ const handleClickOutside = (event: MouseEvent) => {
             v-for="message in messages" 
             :key="message.id"
             class="message"
-            :class="{ 'user-message': message.isUser, 'bot-message': !message.isUser }"
-          >
+            :class="{ 'user-message': message.isUser, 'bot-message': !message.isUser }">
             <div class="message-content">
               <div class="message-text">{{ message.text }}</div>
               <div class="message-time">

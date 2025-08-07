@@ -488,7 +488,6 @@ app.post('/api/chatgpt', zValidator('json', chatGPT), async (c) => {
 
   const ejercicios = JSON.stringify(currentTraining.ejercicios);
 
-  console.log('Ejercicios del entrenamiento actual:', ejercicios);
   try {
     // Construir el contexto para ChatGPT
     var contexto = '';
@@ -498,6 +497,7 @@ app.post('/api/chatgpt', zValidator('json', chatGPT), async (c) => {
 
       const history = await getFullHistory(currentTraining.entreno.UserId, c)
       contexto = contexto + "Historial de entrenos del usuario en json: '''" + history + "'''";
+      contexto = contexto + " Lista de ejercicios del usuario con sus pr y grupos musculares en json: '''" + ejercicios + "''' estos son los tiene guardados pero puedes proponer nuevos ejercicios si lo crees necesario";
     }
 
     // Llamada real a la API de OpenAI usando el nuevo formato
@@ -507,16 +507,14 @@ app.post('/api/chatgpt', zValidator('json', chatGPT), async (c) => {
 
     contexto = `${contexto} 
 INFORMACIÓN DEL USUARIO:
-- ID de Usuario: ${currentTraining.entreno.UserId}
 - Entrenamiento actual: ${currentTraining.entreno.Nom} (${currentTraining.entreno.CargaTotal}kg total)
 - Series realizadas: ${currentTraining.series.length}
 - PRs logrados en este entrenamiento: ${currentTraining.series.filter((serie: any) => serie.PR).length}
 
-Entreno actual para que puedas ver que el usuario ha hecho un entreno:
+Entreno actual para que puedas ver los ejercicios y series realizadas en este entreno:
 JSON: '''${seriesCurrentTraining}'''
 
-Lista de ejercicios del usuario con sus pr y grupos musculares:
-JSON: '''${ejercicios}'''
+
 
 CONTEXTO ADICIONAL:
 - Fecha actual: ${new Date().toLocaleDateString('es-ES')}
