@@ -4,9 +4,9 @@ import { zValidator } from '@hono/zod-validator'
 import { HTTPException } from 'hono/http-exception'
 import { cors } from 'hono/cors'
 import { jwt } from 'hono/jwt'
-import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars, getExercici, getPesosHistorial, nouEntreno, editEntreno, getCargaHistorial, chatGPT } from './schema'
+import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars, getExercici, getPesosHistorial, nouEntreno, editEntreno, getCargaHistorial, chatGPT, updateUser, getUser } from './schema'
 import { hashPassword, verifyPassword, generateJWT, verifyJWT } from './jwt'
-import OpenAI from 'openai'
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai'
 import { startsWith } from 'zod/v4'
 
 
@@ -14,7 +14,7 @@ type Bindings = {
   DB: D1Database;
   test_password: string;
   jwt_secret: string;
-  OPENAI_API_KEY: string;
+  GEMINI_API_KEY: string;
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
@@ -34,22 +34,17 @@ app.use('*', cors({
 
 app.use('/api/*', async (c, next) => {
   const { token } = await c.req.json();
-  console.log(token)
+  // console.log(token)
   try {
     const decodedPayload = await verifyJWT(token, c.env.jwt_secret);
 
     c.set('jwtPayload', decodedPayload)
-    console.log(c.get('jwtPayload'))
+    // console.log(c.get('jwtPayload'))
     await next()
 
   } catch (error) {
     return c.text('invalid token', 401)
-
-
-
   }
-
-
 })
 
 //crear un exercisi nou, requerim nom y grup muscular(id del grup)
@@ -136,8 +131,6 @@ app.post('/api/editSerie', zValidator('json', editSerie), async (c) => {
   let newPr = false
 
   try {
-
-
     //actualitzem la serie
     const updateSerie = await c.env.DB.prepare('UPDATE Series SET ExerciciId=?,Kg=?,Reps=?,Carga=? WHERE UserID=? AND SerieId=?  RETURNING *').bind(exerciciId, kg, reps, carga, userId, serieId).run()
 
@@ -199,6 +192,39 @@ app.post('/api/getEntrenos', zValidator('json', getEntrenos), async (c) => {
   }
 
 })
+
+// Descargar historial completo de entrenos del usuario
+app.post('/api/downloadHistorial', zValidator('json', petition), async (c) => {
+  const userId = await c.get('jwtPayload').UserId;
+
+  try {
+    const { results } = await c.env.DB.prepare(`
+      SELECT
+        T1.EntrenoId,
+        DATE(T1.Data, 'unixepoch') AS FechaEntreno,
+        T3.Nom AS NombreEjercicio,
+        T2.Kg,
+        T2.Reps
+      FROM
+        Entreno AS T1
+      LEFT JOIN
+        Series AS T2 ON T1.EntrenoId = T2.EntrenoId
+      LEFT JOIN
+        Exercici AS T3 ON T2.ExerciciId = T3.ExerciciId
+      WHERE
+        T1.UserId = ?
+      ORDER BY
+        FechaEntreno DESC,
+        T1.EntrenoId,
+        T2.SerieId ASC
+    `).bind(userId).all();
+
+    return c.json(results);
+  } catch (error) {
+    console.error('Error al obtener historial:', error);
+    throw new HTTPException(500, { message: 'error sql query' });
+  }
+});
 
 //retona dades de l'entreno + series 
 app.post('/api/getEntreno', zValidator('json', getEntreno), async (c) => {
@@ -414,176 +440,264 @@ app.post('/login', zValidator('json', login), async (c) => {
     const message = "error " + error
     throw new HTTPException(500, { message: message })
   }
+
+
 })
 
-// Endpoint simple para probar la conexión con OpenAI
-app.post('/api/test-openai', async (c) => {
+app.post('/api/getUser', zValidator('json', getUser), async (c) => {
+  const userId = await c.get('jwtPayload').UserId;
   try {
-    console.log('🧪 Probando conexión básica con OpenAI...');
+    const user = await c.env.DB.prepare('SELECT Email, UserId, ChatbotPrompt FROM Users WHERE UserId = ?').bind(userId).first();
+    if (!user) {
+      throw new HTTPException(404, { message: 'User not found' });
+    }
+    return c.json(user);
+  } catch (error) {
+    throw new HTTPException(500, { message: 'Error fetching user' });
+  }
+});
 
-    const openai = new OpenAI({
-      apiKey: c.env.OPENAI_API_KEY,
-    });
+app.post('/api/updateUser', zValidator('json', updateUser), async (c) => {
+  const { chatbotPrompt } = await c.req.json();
+  const userId = await c.get('jwtPayload').UserId;
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [
+  try {
+    await c.env.DB.prepare('UPDATE Users SET ChatbotPrompt = ? WHERE UserId = ?').bind(chatbotPrompt, userId).run();
+    return c.json({ message: 'User updated successfully' });
+  } catch (error) {
+    throw new HTTPException(500, { message: 'Error updating user' });
+  }
+});
+
+
+// Endpoint para Gemini
+app.post('/api/gemini', zValidator('json', chatGPT), async (c) => {
+  const { message, currentTraining, chatId } = await c.req.json();
+  const userId = await c.get('jwtPayload').UserId;
+
+  try {
+    const userStats = await getUserStats(userId, c);
+    const seriesCurrentTraining = await getFullSeriesListFromTraining(currentTraining.entreno.EntrenoId, c);
+    const ejerciciosEntrenoActual = currentTraining.ejercicios.map(({ UserID, GrupMuscular1, GrupMuscular2, GrupMuscular3, GrupMuscular4, GrupMuscular5, ...rest }: any) => rest);
+
+    // Obtener prompt personalizado del usuario
+    const user = await c.env.DB.prepare('SELECT ChatbotPrompt FROM Users WHERE UserId = ?').bind(userId).first();
+    const userCustomPrompt = user?.ChatbotPrompt ? `\n\nINSTRUCCIONES PERSONALIZADAS DEL USUARIO:\n${user.ChatbotPrompt}` : '';
+    // --- PROMPT MEJORADO ---
+    // Instrucciones claras para que actúe como planificador experto y directo
+    const basePersona = `
+      ESTILO DE RESPUESTA:
+  1. DIRECTO: No uses frases de relleno("Claro que sí", "Excelente elección").Ve al grano.
+      2. CONCISO: Respuestas cortas y legibles.
+      3. PERSONALIZADO: Usa los datos del usuario(PRs) para sugerir cargas reales.
+
+      CUANDO TE PIDA PLANIFICAR / CREAR UNA RUTINA:
+      Debes responder OBLIGATORIAMENTE con este formato estructurado para cada ejercicio:
+  - Nombre Ejercicio | Series x Repeticiones | Intensidad(RIR) | Notas breves
+
+  Ejemplo: "Press Banca | 3 x 8-10 | RIR 2 | Controla la bajada".
+
+      REGLAS DE DATOS:
+  - Si el usuario tiene un PR registrado(ej: Banca 100kg), sugiérele pesos basados en ese % (ej: "Usa unos 75-80kg").
+      - Si no tienes datos, pide que haga una serie de aproximación.
+      - Idioma: Español.
+
+Base de Conocimiento General para Coach AI
+
+1. Protocolo de Estancamiento(La Regla de la Periodización)
+
+Si el usuario menciona que NO PROGRESA en un ejercicio o está ESTANCADO:
+
+Diagnóstico: Verifica si lleva semanas haciendo las mismas series y repeticiones(Ej: siempre 4x10).
+
+  Solución(Periodización Ondulante): Sugiere alternar la intensidad en las sesiones.
+
+Sesión A(Tensión Mecánica / Fuerza): Bajar repeticiones(3 - 6), subir peso, descansos largos(3min).
+
+Sesión B(Estrés Metabólico / Hipertrofia): Subir repeticiones(10 - 15), peso moderado, descansos cortos(90s).
+
+Frase Clave: "Para romper ese estancamiento, deja de tirar siempre igual. Hoy haz series pesadas de 5 repeticiones, y la próxima vez busca el bombeo a 12 repeticiones."
+
+2. Selección de Carga(RPE y RIR)
+
+Si el usuario pregunta "QUÉ PESO USO" y no hay datos previos:
+
+Regla RIR(Repeticiones en Recámara): Recomienda un peso con el que llegue al final de la serie sintiendo que podría hacer solo 1 o 2 más, pero no más.
+
+Protocolo de Aproximación:
+
+Serie 1: 50 % del esfuerzo percibido(calentamiento).
+
+  Serie 2: 75 % del esfuerzo.
+
+Serie Efectiva: Buscar el RIR 2.
+
+3. Gestión de Fatiga(Deload / Descarga)
+
+Si el usuario menciona DOLOR ARTICULAR, CANSANCIO EXTREMO o REGRESIÓN en pesos:
+
+Diagnóstico: Posible fatiga del Sistema Nervioso Central(SNC).
+
+  Solución: Recomendar una Semana de Descarga.
+
+Mantener los mismos ejercicios.
+
+Reducir el peso al 60 % de lo habitual O reducir las series a la mitad.
+
+  Objetivo: Recuperación activa, no inactividad total.
+
+4. Selección de Ejercicios(Biomecánica)
+
+Si el usuario siente MOLESTIA o no siente el músculo objetivo:
+
+Regla de Estabilidad: Si el usuario falla por equilibrio antes que por fuerza muscular(ej: Sentadilla libre inestable), sugerir variantes más estables(Hack Squat, Multipower, Prensa) para priorizar la hipertrofia.
+
+Regla de Dolor: Si un ejercicio duele(dolor malo, no agujetas), buscar inmediatamente una variante biomecánica(Ej: Press Banca con barra -> Press con Mancuernas neutro o Máquina).
+
+5. Progresión(Sobrecarga Progresiva)
+
+Si el usuario pregunta CÓMO MEJORAR:
+
+Explicar que subir peso no es la única vía.
+
+Vías de mejora:
+
+Más peso(Intensidad).
+
+Más repeticiones con el mismo peso(Volumen).
+
+Mejor técnica / Tempo más lento(Tensión).
+
+Menos descanso entre series(Densidad).
+
+INSTRUCCIÓN DE COMPORTAMIENTO EXTRA:
+Siempre que sugieras una rutina o cambio, justifica brevemente EL PORQUÉ basándote en estos principios. (Ej: "Haz 3x5 hoy porque llevas semanas estancado en 3x10 y necesitamos estimular la fuerza").
+    `;
+
+
+
+    const contextData = `
+      DATOS DEL USUARIO(Contexto Real):
+- Récords Personales(PRs) actuales: ${JSON.stringify(userStats.prs)}
+- Últimos 50 entrenamientos: ${JSON.stringify(userStats.lastWorkouts)}
+      
+      SITUACIÓN ACTUAL(AHORA MISMO):
+- Entrenando: ${currentTraining.entreno.Nom}
+- Ejercicios disponibles en la rutina: ${JSON.stringify(ejerciciosEntrenoActual)}
+- Series ya realizadas hoy: ${seriesCurrentTraining}
+`;
+
+    const finalSystemInstruction = `${basePersona} \n${userCustomPrompt} \n\n${contextData} `;
+
+    if (!c.env.GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY no está configurada');
+    }
+
+    const genAI = new GoogleGenerativeAI(c.env.GEMINI_API_KEY);
+
+    // NOTA: 'gemini-2.5-flash' no existe públicamente aún. 
+    // Se usa 'gemini-2.0-flash-exp' (Experimental, muy rápido y mejor razonamiento) 
+    // O 'gemini-1.5-flash' (Estable).
+    // Cambia a 'gemini-1.5-flash' si el modelo experimental da errores con tu API Key.
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash', // Usamos la versión más potente disponible tipo Flash
+      systemInstruction: finalSystemInstruction,
+      safetySettings: [
         {
-          role: 'user',
-          content: 'Di "Hola, la conexión funciona correctamente"'
+          category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+          threshold: HarmBlockThreshold.BLOCK_NONE,
+        },
+      ]
+    });
+
+    let chatHistory: any[] = [];
+    if (chatId) {
+      try {
+        const parsed = JSON.parse(chatId);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Validar y mapear el historial al formato correcto de Gemini
+          chatHistory = parsed
+            .filter((item: any) =>
+              item &&
+              typeof item === 'object' &&
+              (item.role === 'user' || item.role === 'model') &&
+              item.parts &&
+              Array.isArray(item.parts)
+            )
+            .map((item: any) => ({
+              role: item.role === 'user' ? 'user' : 'model',
+              parts: item.parts.map((part: any) => {
+                // Asegurar que cada part tenga el formato correcto
+                if (typeof part === 'string') {
+                  return { text: part };
+                } else if (part && typeof part === 'object' && part.text) {
+                  return { text: part.text };
+                }
+                return part;
+              })
+            }));
+          console.log(`📚 Historial cargado: ${chatHistory.length} mensajes`);
         }
-      ],
-      max_tokens: 50,
-      temperature: 0.7
-    });
-
-    const response = completion.choices[0].message.content;
-    console.log('✅ Conexión exitosa:', response);
-
-    return c.json({
-      success: true,
-      message: 'Conexión con OpenAI establecida correctamente',
-      response: response
-    });
-  } catch (error: any) {
-    console.error('❌ Error en prueba de conexión:', error);
-    return c.json({
-      success: false,
-      message: `Error de conexión: ${error.message}`,
-      details: {
-        name: error?.name,
-        status: error?.status,
-        type: error?.type
+      } catch (e) {
+        console.warn('⚠️ Error parseando historial, iniciando chat limpio:', e);
+        chatHistory = [];
       }
+    }
+
+    // Iniciar chat con historial (vacío si es primera vez)
+    const chatConfig: any = {};
+    if (chatHistory.length > 0) {
+      chatConfig.history = chatHistory;
+    }
+    const chat = model.startChat(chatConfig);
+
+    const promptUsuario = `[Fecha: ${new Date().toLocaleDateString('es-ES')}] ${message} `;
+
+    const result = await chat.sendMessage(promptUsuario);
+    const response = result.response.text();
+    const newHistory = chat.getHistory();
+
+    return c.json({
+      response,
+      responseId: JSON.stringify(newHistory)
+    });
+
+  } catch (error: any) {
+    console.error('❌ Error Gemini:', error);
+    console.error('❌ Detalles del error:', {
+      message: error.message,
+      name: error.name,
+      stack: error.stack
+    });
+    const errorMessage = error.message || 'Hubo un problema conectando con tu entrenador virtual.';
+    return c.json({
+      error: true,
+      message: errorMessage
     }, 500);
   }
 });
 
-
-//todo: crear un historial de chat per usuari a la bd
-//anadir una columna "chatHistory" a la taula "Users"
-//guardar el historial de chat en formato JSON en la columna "chatHistory" de la taula "Users"
-//cada vegada que es fa una peticio a l'endpoint de ChatGPT, s'afegeix el missatge al historial
-//es demana el historial de chat al front end per mostrar-lo cuan es carrega la pagina
-
-
-//todo: endpoint para borrar el historial de chat
-
-
-
-// Endpoint para ChatGPT
-app.post('/api/chatgpt', zValidator('json', chatGPT), async (c) => {
-  const { message, currentTraining, isFirstMessage, chatId } = await c.req.json();
-  let promptId = 'pmpt_688f9785fee48190b0da02dd3234ca8e0bfd3e2a9012ba01';
-  const userId = await c.get('jwtPayload').UserId;
-  //si el usario es el 13 y el primer caracter del mensaje es + se una un promptId diferente 
-  if (userId == 13 && startsWith(message, '+')) promptId = 'pmpt_6893adeca5148197a5d16728f6f8515d092829a17abd6cec';
-
-  const seriesCurrentTraining = await getFullSeriesListFromTraining(currentTraining.entreno.EntrenoId, c)
-  //remove grupos musculares de los ejercicios
-  currentTraining.ejercicios = currentTraining.ejercicios.map((ejercicio: any) => {
-    const { UserID, GrupMuscular1, GrupMuscular2, GrupMuscular3, GrupMuscular4, GrupMuscular5, ...rest } = ejercicio;
-    return rest;
-  });
-
-  const ejercicios = JSON.stringify(currentTraining.ejercicios);
-
-  try {
-    // Construir el contexto para ChatGPT
-    var contexto = '';
-
-    if (isFirstMessage) {
-
-
-      const history = await getFullHistory(currentTraining.entreno.UserId, c)
-      contexto = contexto + "Historial de entrenos del usuario en json: '''" + history + "'''";
-      contexto = contexto + " Lista de ejercicios del usuario con sus pr y grupos musculares en json: '''" + ejercicios + "''' estos son los tiene guardados pero puedes proponer nuevos ejercicios si lo crees necesario";
-    }
-
-    // Llamada real a la API de OpenAI usando el nuevo formato
-    const openai = new OpenAI({
-      apiKey: c.env.OPENAI_API_KEY,
-    });
-
-    contexto = `${contexto} 
-INFORMACIÓN DEL USUARIO:
-- Entrenamiento actual: ${currentTraining.entreno.Nom} (${currentTraining.entreno.CargaTotal}kg total)
-- Series realizadas: ${currentTraining.series.length}
-- PRs logrados en este entrenamiento: ${currentTraining.series.filter((serie: any) => serie.PR).length}
-
-Entreno actual para que puedas ver los ejercicios y series realizadas en este entreno:
-JSON: '''${seriesCurrentTraining}'''
-
-
-
-CONTEXTO ADICIONAL:
-- Fecha actual: ${new Date().toLocaleDateString('es-ES')}
-- Hora actual: ${new Date().toLocaleTimeString('es-ES')}
-- Día de la semana: ${new Date().toLocaleDateString('es-ES', { weekday: 'long' })}
-- Es el primer mensaje: ${isFirstMessage ? 'SÍ' : 'NO'}
-
-
-
-MENSAJE DEL USUARIO:
-${message}`;
-
-    console.log('🔍 Iniciando llamada a OpenAI...');
-    console.log('📝 Prompt ID:', "pmpt_688f9785fee48190b0da02dd3234ca8e0bfd3e2a9012ba01");
-
-
-
-
-    try {
-      // Intentar entrar les dades per un altre input?
-
-      console.log(contexto);
-
-      console.log('🔄 Intentando API de responses...');
-      const openaiResponse = await openai.responses.create({
-        prompt: {
-          "id": promptId
-        },
-        input: contexto,
-        previous_response_id: chatId || null,
-        text: {
-          "format": {
-            "type": "text"
-          }
-        },
-        reasoning: {},
-        max_output_tokens: 2048,
-        store: true,
-        temperature: 1,
-        top_p: 1,
-        tool_choice: "auto",
-      });
-
-      // fer que el front end guardi la conversa per seguir hitorial?
-      // te que haber una forma mes facil
-      console.log('✅ Respuesta recibida de OpenAI Responses API');
-      console.log('📄 Respuesta:', openaiResponse);
-
-      let responseId = openaiResponse.id
-      let response = typeof openaiResponse.output_text === 'string' ? openaiResponse.output_text : 'Respuesta no válida';
-      return c.json({ response, responseId });
-    } catch (error) {
-      const message = "error " + error
-      throw new HTTPException(500, { message: message })
-
-
-    }
-  } catch (error) {
-    // Si es un error de OpenAI, dar más detalles
-    return c.text('error sql query', 500)
-  }
-});
-
 app.onError((err, c) => {
-  console.error(`${err}`)
+  console.error(`❌ Error capturado: `, err);
+
+  // Manejar errores de validación de Zod
+  if (err.message && err.message.includes('Invalid')) {
+    console.error('❌ Error de validación:', err.message);
+    return c.json({
+      error: true,
+      message: 'Los datos enviados no son válidos. Por favor, verifica que todos los campos estén correctos.',
+      details: err.message
+    }, 400);
+  }
+
   if (err.message == "error sql query") {
     return c.text('error sql query', 500)
   }
-  return c.text('Uknown error', 500)
+
+  return c.json({
+    error: true,
+    message: err.message || 'Error desconocido'
+  }, 500)
 })
 
 
@@ -625,63 +739,54 @@ function updateCargaTotal(c: any, userId: any, entrenoId: any) {
 
 
 }
-async function getFullHistory(userId: any, c: any) {
+
+// Función optimizada para obtener estadísticas clave sin gastar muchos tokens
+async function getUserStats(userId: any, c: any) {
   try {
-    const { results } = await c.env.DB.prepare(`
-    SELECT
-        T1.EntrenoId,
-        T1.Nom AS NombreEntreno,
-        T1.Descripcio AS DescripcionEntreno,
-        T1.Puntuacio AS PuntuacionEntreno,
-        T1.CargaTotal,
-        DATE(T1.Data, 'unixepoch') AS FechaEntreno,
-        T2.SerieId,
-        T2.Kg,
-        T2.Reps,
-        T3.Nom AS NombreEjercicio
-    FROM
-        Entreno AS T1
-    LEFT JOIN
-        Series AS T2 ON T1.EntrenoId = T2.EntrenoId
-    LEFT JOIN
-        Exercici AS T3 ON T2.ExerciciId = T3.ExerciciId
-    WHERE
-        T1.UserId = ?
-    ORDER BY
-        FechaEntreno DESC,
-        T1.EntrenoId,
-        T2.SerieId ASC;
-`).bind(userId).all();
+    // 1. Obtener los PRs (Récords) de cada ejercicio activo
+    const prs = await c.env.DB.prepare(`
+          SELECT Nom, PR FROM Exercici WHERE UserId = ? AND PR > 0
+  `).bind(userId).all();
 
+    // 2. Obtener solo los últimos 5 entrenamientos (resumen ligero)
+    const lastWorkouts = await c.env.DB.prepare(`
+          SELECT Nom, Data, CargaTotal, Puntuacio 
+          FROM Entreno 
+          WHERE UserId = ?
+  ORDER BY Data DESC 
+          LIMIT 50
+  `).bind(userId).all();
 
-
-    return JSON.stringify(results)
-  } catch (error) {
-    console.error("Error retrieving full history:", error);
-    // You might want to throw a specific error or return an empty string/array
-    return JSON.stringify([]); // Return empty array on error
+    return {
+      prs: prs.results,
+      lastWorkouts: lastWorkouts.results
+    };
+  } catch (e) {
+    console.error("Error getting stats", e);
+    return { prs: [], lastWorkouts: [] };
   }
 }
+
 
 async function getFullSeriesListFromTraining(EntrenoId: any, c: any) {
   try {
     const { results } = await c.env.DB.prepare(`
-   SELECT 
-    Series.SerieId,
-    Series.EntrenoId,
-    Series.ExerciciId,
-    Exercici.Nom AS NomExercici,
+SELECT
+Series.SerieId,
+  Series.EntrenoId,
+  Series.ExerciciId,
+  Exercici.Nom AS NomExercici,
     Series.Kg,
     Series.Reps,
     Series.Data,
     Series.Carga,
     Series.PR
-FROM 
-    Series
+FROM
+Series
 JOIN 
     Exercici ON Series.ExerciciId = Exercici.ExerciciId
-WHERE 
-    Series.EntrenoId = ?;
+WHERE
+Series.EntrenoId = ?;
 `).bind(EntrenoId).all();
 
 
@@ -693,4 +798,3 @@ WHERE
     return JSON.stringify([]); // Return empty array on error
   }
 }
-

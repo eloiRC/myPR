@@ -119,14 +119,14 @@ export const chatGPT = z.object({
             Kg: z.number(),
             Reps: z.number(),
             Carga: z.number(),
-            PR: z.number(),
+            PR: z.union([z.number(), z.boolean()]), // PR puede ser number o boolean
             Data: z.number()
         })).nullish(),
         ejercicios: z.array(z.object({
             ExerciciId: z.number(),
             Nom: z.string(),
             UserId: z.number(),
-            PR: z.number(),
+            PR: z.union([z.number(), z.boolean()]), // PR puede ser number o boolean
             GrupMuscular1: z.number().nullable(),
             GrupMuscular2: z.number().nullable(),
             GrupMuscular3: z.number().nullable(),
@@ -151,14 +151,14 @@ export const chatGPT = z.object({
             Kg: z.number(),
             Reps: z.number(),
             Carga: z.number(),
-            PR: z.number(),
+            PR: z.union([z.number(), z.boolean()]), // PR puede ser number o boolean
             Data: z.number()
         })).nullish(),
         ejercicios: z.array(z.object({
             ExerciciId: z.number(),
             Nom: z.string(),
             UserId: z.number(),
-            PR: z.number(),
+            PR: z.union([z.number(), z.boolean()]), // PR puede ser number o boolean
             GrupMuscular1: z.number().nullable(),
             GrupMuscular2: z.number().nullable(),
             GrupMuscular3: z.number().nullable(),
@@ -167,7 +167,15 @@ export const chatGPT = z.object({
 
         })).nullish()
     })).nullish(),
-    isFirstMessage: z.boolean(),
     chatId: z.string().nullish()
+})
+
+export const updateUser = z.object({
+    token: z.string().min(10),
+    chatbotPrompt: z.string().max(1000).optional()
+})
+
+export const getUser = z.object({
+    token: z.string().min(10)
 })
 

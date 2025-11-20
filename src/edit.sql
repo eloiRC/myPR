@@ -30,7 +30,7 @@ WHERE
     -- Filtramos para obtener solo los resultados de un usuario específico.
     -- IMPORTANTE: Asegúrate de reemplazar '?' con un UserId que exista en tu tabla 'Users'.
     -- Por ejemplo: T1.UserId = 1
-    T1.UserId = ?
+    T1.UserId = 13
 ORDER BY
     -- Ordenamos los resultados por fecha y luego por entreno para mantener las series juntas.
     FechaEntreno DESC,

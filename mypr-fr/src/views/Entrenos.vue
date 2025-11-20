@@ -273,6 +273,7 @@ const crearNuevoEntreno = async () => {
   }
 };
 
+
 // Inicializar el rango de fechas al montar el componente
 onMounted(() => {
   actualizarRangoFechas('30d');

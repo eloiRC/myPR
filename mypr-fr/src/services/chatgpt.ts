@@ -17,8 +17,9 @@ interface ChatGPTPayload {
     message: string;
     currentTraining: {
         entreno: EntrenoData;
+        series?: any[];
+        ejercicios?: any[];
     };
-    isFirstMessage: boolean;
     chatId: string | null;
 }
 
@@ -76,14 +77,22 @@ class ChatGPTService {
 
     async sendMessage(payload: ChatGPTPayload): Promise<string> {
         payload.token = getToken();
-        if (!payload.isFirstMessage && localStorage.getItem('responseId') != null) {
-            console.log('pass')
-            payload.chatId = localStorage.getItem('responseId')
-
+        
+        // Obtener el historial de chat si existe
+        const savedChatId = localStorage.getItem('responseId');
+        if (savedChatId) {
+            payload.chatId = savedChatId;
+        } else {
+            payload.chatId = null;
         }
-        console.log(payload);
+        
+        console.log('Enviando mensaje a Gemini:', { 
+            message: payload.message.substring(0, 50) + '...',
+            hasChatId: !!payload.chatId 
+        });
+        
         try {
-            const response = await fetch(`${API_URL}/api/chatgpt`, {
+            const response = await fetch(`${API_URL}/api/gemini`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -92,15 +101,36 @@ class ChatGPTService {
             });
 
             if (!response.ok) {
-                throw new Error(`Error en la comunicación con ChatGPT: ${response.status}`);
+                let errorData: any = {};
+                try {
+                    errorData = await response.json();
+                } catch (e) {
+                    // Si no se puede parsear el JSON, usar el texto de respuesta
+                    const text = await response.text().catch(() => '');
+                    errorData = { message: text || `Error ${response.status}` };
+                }
+                
+                // Mensajes más específicos según el código de error
+                if (response.status === 400) {
+                    throw new Error(errorData.message || 'Los datos enviados no son válidos. Por favor, recarga la página e intenta de nuevo.');
+                } else if (response.status === 401) {
+                    throw new Error('Tu sesión ha expirado. Por favor, inicia sesión de nuevo.');
+                } else {
+                    throw new Error(errorData.message || `Error en la comunicación con el asistente: ${response.status}`);
+                }
             }
 
             const data = await response.json();
-            localStorage.setItem('responseId', data.responseId)
+            
+            // Guardar el historial actualizado para la próxima conversación
+            if (data.responseId) {
+                localStorage.setItem('responseId', data.responseId);
+            }
+            
             return data.response || 'Lo siento, no pude procesar tu mensaje en este momento.';
-        } catch (error) {
-            console.error('Error al comunicarse con ChatGPT:', error);
-            throw new Error('Error de conexión con el asistente. Por favor, intenta de nuevo.');
+        } catch (error: any) {
+            console.error('Error al comunicarse con el asistente:', error);
+            throw new Error(error.message || 'Error de conexión con el asistente. Por favor, intenta de nuevo.');
         }
     }
 
@@ -109,7 +139,7 @@ class ChatGPTService {
         const token = getToken();
         try {
             // Probar conexión básica primero
-            console.log('🧪 Probando conexión básica con OpenAI...');
+            console.log('🧪 Probando conexión básica con Gemini...');
             const basicResponse = await fetch(`${API_URL}/api/test-openai`, {
                 method: 'POST',
                 headers: {
@@ -134,8 +164,8 @@ class ChatGPTService {
             }
 
             // Si la conexión básica funciona, probar el endpoint completo
-            console.log('🧪 Probando endpoint completo de ChatGPT...');
-            const response = await fetch(`${API_URL}/api/chatgpt`, {
+            console.log('🧪 Probando endpoint completo del asistente...');
+            const response = await fetch(`${API_URL}/api/gemini`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -148,8 +178,7 @@ class ChatGPTService {
                         series: [],
                         ejercicios: []
                     },
-                    previousTrainings: [],
-                    isFirstMessage: true
+                    chatId: null
                 })
             });
 
@@ -162,7 +191,7 @@ class ChatGPTService {
 
             return {
                 success: true,
-                message: 'Conexión con ChatGPT establecida correctamente',
+                message: 'Conexión con el asistente establecida correctamente',
                 details: {
                     basicTest: basicResult.response,
                     fullTest: result.response ? 'Funcionando' : 'Error en respuesta'

@@ -68,20 +68,24 @@ const sendMessage = async () => {
   isLoading.value = true;
   
   try {
+    // Validar que tenemos los datos necesarios
+    if (!props.entrenoData) {
+      throw new Error('Los datos del entrenamiento no están disponibles. Por favor, espera un momento.');
+    }
+
     // Preparar los datos del entrenamiento current
     const currentTraining = {
       entreno: props.entrenoData,
-      series: props.series,
-      ejercicios: props.ejercicios
+      series: props.series || [],
+      ejercicios: props.ejercicios || []
     };
     
-    // Enviar mensaje a ChatGPT
+    // Enviar mensaje al asistente (Gemini)
     const response = await chatGPTService.sendMessage({
         message: userMessage,
         currentTraining,
-        isFirstMessage: isFirstMessage.value,
         token: null,
-        chatId: null
+        chatId: null // Se obtiene automáticamente del localStorage en el servicio
     });
     
     // Añadir respuesta del bot
@@ -153,7 +157,7 @@ const resetConversation = () => {
   isFirstMessage.value = true;
   localStorage.removeItem('chatHistory');
   localStorage.removeItem('isFirstMessage');
-  localStorage.removeItem('responseId');
+  localStorage.removeItem('responseId'); // Limpiar el historial de Gemini
   
   // Añadir mensaje de bienvenida
   messages.value.push({

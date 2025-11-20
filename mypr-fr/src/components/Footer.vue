@@ -10,13 +10,17 @@ const cerrarSesion = () => {
   authService.logout();
   router.push('/login');
 };
+
+const irAPerfil = () => {
+  router.push('/user');
+};
 </script>
 
 <template>
   <footer class="footer">
     <div class="footer-content">
       <div class="user-info" v-if="userInfo">
-        <span class="email">{{ userInfo.email }}</span>
+        <span class="email clickable" @click="irAPerfil" title="Ver mi perfil">{{ userInfo.email }}</span>
       </div>
       <button @click="cerrarSesion" class="btn-logout">
         <span class="icon">⟲</span> Cerrar Sesión
@@ -52,6 +56,19 @@ const cerrarSesion = () => {
 .email {
   font-size: 0.9rem;
   color: var(--text-secondary);
+}
+
+.email.clickable {
+  cursor: pointer;
+  transition: color 0.2s ease;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: all 0.2s ease;
+}
+
+.email.clickable:hover {
+  color: var(--color-sandy-brown);
+  text-decoration-color: var(--color-sandy-brown);
 }
 
 .btn-logout {
