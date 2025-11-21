@@ -80,12 +80,29 @@ const sendMessage = async () => {
       ejercicios: props.ejercicios || []
     };
     
+    // Preparar el historial (excluyendo el mensaje actual que acabamos de añadir)
+    const rawHistory = messages.value.slice(0, -1);
+    
+    // Gemini requiere que el historial empiece con un mensaje de usuario ('user')
+    // Buscamos el primer mensaje que sea del usuario
+    const firstUserIndex = rawHistory.findIndex(msg => msg.isUser);
+    
+    // Si encontramos un mensaje de usuario, filtramos todo lo anterior (mensajes de bienvenida del sistema)
+    // Si no hay mensajes de usuario previos, el historial enviado debe estar vacío
+    const validHistory = firstUserIndex !== -1 ? rawHistory.slice(firstUserIndex) : [];
+
+    const history = validHistory.map(msg => ({
+      role: msg.isUser ? 'user' : 'model',
+      parts: [{ text: msg.text }]
+    }));
+
     // Enviar mensaje al asistente (Gemini)
     const response = await chatGPTService.sendMessage({
         message: userMessage,
         currentTraining,
         token: null,
-        chatId: null // Se obtiene automáticamente del localStorage en el servicio
+        chatId: null,
+        history: history
     });
     
     // Añadir respuesta del bot
@@ -157,6 +174,7 @@ const resetConversation = () => {
   isFirstMessage.value = true;
   localStorage.removeItem('chatHistory');
   localStorage.removeItem('isFirstMessage');
+  localStorage.removeItem('chatHistoryTimestamp');
   localStorage.removeItem('responseId'); // Limpiar el historial de Gemini
   
   // Añadir mensaje de bienvenida

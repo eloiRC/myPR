@@ -472,7 +472,7 @@ app.post('/api/updateUser', zValidator('json', updateUser), async (c) => {
 
 // Endpoint para Gemini
 app.post('/api/gemini', zValidator('json', chatGPT), async (c) => {
-  const { message, currentTraining, chatId } = await c.req.json();
+  const { message, currentTraining, history } = await c.req.json();
   const userId = await c.get('jwtPayload').UserId;
 
   try {
@@ -486,7 +486,13 @@ app.post('/api/gemini', zValidator('json', chatGPT), async (c) => {
     // --- PROMPT MEJORADO ---
     // Instrucciones claras para que actúe como planificador experto y directo
     const basePersona = `
-      ESTILO DE RESPUESTA:
+    Eres un coach experimentado en entremaineto de fuerza y hipertrofia.
+    Tienes experiencia en periodización y en la planificación de entrenamientos.
+    tienes acceso a una base de datos con datos de entrenamientos y series del usaurio para saber que ha hecho en los entrenos anteriores.
+    Mirando los datos compensa grupos musculares o partes del cuerpo que detectes descompensados.
+    Puedes proponer nuevos ejercicios nuevos si lo ves necesario.
+
+    ESTILO DE RESPUESTA:
   1. DIRECTO: No uses frases de relleno("Claro que sí", "Excelente elección").Ve al grano.
       2. CONCISO: Respuestas cortas y legibles.
       3. PERSONALIZADO: Usa los datos del usuario(PRs) para sugerir cargas reales.
@@ -611,37 +617,9 @@ Siempre que sugieras una rutina o cambio, justifica brevemente EL PORQUÉ basán
     });
 
     let chatHistory: any[] = [];
-    if (chatId) {
-      try {
-        const parsed = JSON.parse(chatId);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // Validar y mapear el historial al formato correcto de Gemini
-          chatHistory = parsed
-            .filter((item: any) =>
-              item &&
-              typeof item === 'object' &&
-              (item.role === 'user' || item.role === 'model') &&
-              item.parts &&
-              Array.isArray(item.parts)
-            )
-            .map((item: any) => ({
-              role: item.role === 'user' ? 'user' : 'model',
-              parts: item.parts.map((part: any) => {
-                // Asegurar que cada part tenga el formato correcto
-                if (typeof part === 'string') {
-                  return { text: part };
-                } else if (part && typeof part === 'object' && part.text) {
-                  return { text: part.text };
-                }
-                return part;
-              })
-            }));
-          console.log(`📚 Historial cargado: ${chatHistory.length} mensajes`);
-        }
-      } catch (e) {
-        console.warn('⚠️ Error parseando historial, iniciando chat limpio:', e);
-        chatHistory = [];
-      }
+    if (history && Array.isArray(history)) {
+      chatHistory = history;
+      console.log(`📚 Historial cargado: ${chatHistory.length} mensajes`);
     }
 
     // Iniciar chat con historial (vacío si es primera vez)

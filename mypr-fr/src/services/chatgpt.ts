@@ -21,6 +21,7 @@ interface ChatGPTPayload {
         ejercicios?: any[];
     };
     chatId: string | null;
+    history?: any[];
 }
 
 interface ChatMessage {
@@ -41,10 +42,23 @@ class ChatGPTService {
     saveMessages(messages: ChatMessage[], isFirstMessage: boolean): void {
         localStorage.setItem('chatHistory', JSON.stringify(messages));
         localStorage.setItem('isFirstMessage', JSON.stringify(isFirstMessage));
+        localStorage.setItem('chatHistoryTimestamp', Date.now().toString());
     }
 
     loadMessages(): { messages: ChatMessage[], isFirstMessage: boolean } {
         try {
+            const savedTimestamp = localStorage.getItem('chatHistoryTimestamp');
+            const now = Date.now();
+            const twelveHours = 12 * 60 * 60 * 1000;
+
+            if (savedTimestamp && (now - parseInt(savedTimestamp) > twelveHours)) {
+                console.log('Chat history expired, clearing...');
+                localStorage.removeItem('chatHistory');
+                localStorage.removeItem('isFirstMessage');
+                localStorage.removeItem('chatHistoryTimestamp');
+                return { messages: [], isFirstMessage: true };
+            }
+
             const savedMessages = localStorage.getItem('chatHistory');
             const savedIsFirstMessage = localStorage.getItem('isFirstMessage');
 
@@ -71,26 +85,19 @@ class ChatGPTService {
             // Si hay algún error, limpiamos el localStorage y retornamos valores por defecto
             localStorage.removeItem('chatHistory');
             localStorage.removeItem('isFirstMessage');
+            localStorage.removeItem('chatHistoryTimestamp');
             return { messages: [], isFirstMessage: true };
         }
     }
 
-    async sendMessage(payload: ChatGPTPayload): Promise<string> {
+    async sendMessage(payload: ChatGPTPayload & { history: any[] }): Promise<string> {
         payload.token = getToken();
-        
-        // Obtener el historial de chat si existe
-        const savedChatId = localStorage.getItem('responseId');
-        if (savedChatId) {
-            payload.chatId = savedChatId;
-        } else {
-            payload.chatId = null;
-        }
-        
-        console.log('Enviando mensaje a Gemini:', { 
+
+        console.log('Enviando mensaje a Gemini:', {
             message: payload.message.substring(0, 50) + '...',
-            hasChatId: !!payload.chatId 
+            historyLength: payload.history?.length || 0
         });
-        
+
         try {
             const response = await fetch(`${API_URL}/api/gemini`, {
                 method: 'POST',
@@ -109,7 +116,7 @@ class ChatGPTService {
                     const text = await response.text().catch(() => '');
                     errorData = { message: text || `Error ${response.status}` };
                 }
-                
+
                 // Mensajes más específicos según el código de error
                 if (response.status === 400) {
                     throw new Error(errorData.message || 'Los datos enviados no son válidos. Por favor, recarga la página e intenta de nuevo.');
@@ -121,12 +128,7 @@ class ChatGPTService {
             }
 
             const data = await response.json();
-            
-            // Guardar el historial actualizado para la próxima conversación
-            if (data.responseId) {
-                localStorage.setItem('responseId', data.responseId);
-            }
-            
+
             return data.response || 'Lo siento, no pude procesar tu mensaje en este momento.';
         } catch (error: any) {
             console.error('Error al comunicarse con el asistente:', error);
