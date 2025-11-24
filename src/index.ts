@@ -554,7 +554,9 @@ app.post('/api/gemini', zValidator('json', chatGPT), async (c) => {
     - IMPORTANTE: Genera un objeto JSON POR CADA SERIE. Si quieres añadir 4 series de un ejercicio, debe haber 4 objetos en el array con ese ExerciciId.
     - Usa SOLO los IDs de la lista proporcionada.
     - Estima los Kg basándote en los PRs del usuario (${JSON.stringify(userStats.prs)}) o usa un peso conservador.
-    - "Reps" debe ser un número entero.
+    - "Reps" debe ser un número entero mayor a 0.
+    - "Kg" debe ser un número decimal mayor a 0 y maximo un decimal.
+  
     `;
 
     const contextData = `
