@@ -395,7 +395,14 @@ onMounted(loadEntreno);
     </div>
   </div>
   
-  <Chatbot :entreno-id="entrenoId" :entreno-data="entreno" :series="series" :ejercicios="ejercicios"/>
+  <!-- Chatbot conectado con @refresh para actualizar datos si la AI hace cambios -->
+  <Chatbot 
+    :entreno-id="entrenoId" 
+    :entreno-data="entreno" 
+    :series="series" 
+    :ejercicios="ejercicios"
+    @refresh="loadEntreno"
+  />
 </template>
 
 <!-- Importamos el CSS externo -->

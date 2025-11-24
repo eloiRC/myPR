@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'; // Añadir onUnmounted
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'; 
 import chatGPTService from '../services/chatgpt';
 
 // Props
@@ -16,6 +16,9 @@ const props = withDefaults(defineProps<Props>(), {
   series: () => [],
   ejercicios: () => []
 });
+
+// Definir emits
+const emit = defineEmits(['refresh']);
 
 // Estados reactivos
 const isOpen = ref(false);
@@ -77,18 +80,13 @@ const sendMessage = async () => {
     const currentTraining = {
       entreno: props.entrenoData,
       series: props.series || [],
-      ejercicios: props.ejercicios || []
+      ejercicios: props.ejercicios || [] // Pasamos todos los ejercicios disponibles
     };
     
     // Preparar el historial (excluyendo el mensaje actual que acabamos de añadir)
     const rawHistory = messages.value.slice(0, -1);
     
-    // Gemini requiere que el historial empiece con un mensaje de usuario ('user')
-    // Buscamos el primer mensaje que sea del usuario
     const firstUserIndex = rawHistory.findIndex(msg => msg.isUser);
-    
-    // Si encontramos un mensaje de usuario, filtramos todo lo anterior (mensajes de bienvenida del sistema)
-    // Si no hay mensajes de usuario previos, el historial enviado debe estar vacío
     const validHistory = firstUserIndex !== -1 ? rawHistory.slice(firstUserIndex) : [];
 
     const history = validHistory.map(msg => ({
@@ -97,21 +95,49 @@ const sendMessage = async () => {
     }));
 
     // Enviar mensaje al asistente (Gemini)
-    const response = await chatGPTService.sendMessage({
-        message: userMessage,
-        currentTraining,
-        token: null,
-        chatId: null,
-        history: history
+    // Usamos fetch directo aquí porque necesitamos acceder a campos extra como workoutUpdated
+    // que chatGPTService.sendMessage podría no estar retornando actualmente
+    // O mejor, actualizamos chatGPTService, pero para este ejemplo rápido modificamos aquí o usamos el servicio si devuelve el objeto completo.
+    // Como chatGPTService devuelve string, haremos la llamada aquí o adaptaremos el servicio.
+    // Para mantener consistencia, usaremos una llamada directa similar a la del servicio pero capturando la respuesta completa.
+    
+    const token = localStorage.getItem('token');
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787';
+    
+    const response = await fetch(`${API_URL}/api/gemini`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            token,
+            message: userMessage,
+            currentTraining,
+            chatId: null,
+            history: history
+        })
     });
+
+    if (!response.ok) {
+        throw new Error('Error al comunicar con el asistente');
+    }
+
+    const data = await response.json();
     
     // Añadir respuesta del bot
     messages.value.push({
       id: Date.now(),
-      text: response,
+      text: data.response,
       isUser: false,
       timestamp: new Date()
     });
+
+    // Si el backend indica que actualizó el entrenamiento, emitimos evento
+    if (data.workoutUpdated) {
+      emit('refresh');
+      // Opcional: Añadir mensaje de sistema local
+      // messages.value.push({ id: Date.now(), text: '✅ Rutina cargada automáticamente.', isUser: false, timestamp: new Date() });
+    }
     
     // Marcar que ya no es el primer mensaje
     if (isFirstMessage.value) {
