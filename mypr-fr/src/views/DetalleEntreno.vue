@@ -791,7 +791,7 @@ onMounted(loadEntreno);
           <div class="serie-info">
             <h3>
               <div @click="verDetalleEjercicio(serie.ExerciciId)">
-{{ ejercicios.find(e => e.ExerciciId === serie.ExerciciId)?.Nom || `Ejercicio desconocido` }}
+                {{ ejercicios.find(e => e.ExerciciId === serie.ExerciciId)?.Nom || `Ejercicio desconocido` }}
               </div>
               
             </h3>

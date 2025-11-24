@@ -604,9 +604,12 @@ Siempre que sugieras una rutina o cambio, justifica brevemente EL PORQUÉ basán
     // NOTA: 'gemini-2.5-flash' no existe públicamente aún. 
     // Se usa 'gemini-2.0-flash-exp' (Experimental, muy rápido y mejor razonamiento) 
     // O 'gemini-1.5-flash' (Estable).
-    // Cambia a 'gemini-1.5-flash' si el modelo experimental da errores con tu API Key.
+    let modelVersion = 'gemini-2.5-flash'
+    if (userId == 13) {
+      modelVersion = 'gemini-2.5-pro'
+    }
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash', // Usamos la versión más potente disponible tipo Flash
+      model: modelVersion, // Usamos la versión más potente disponible tipo Flash
       systemInstruction: finalSystemInstruction,
       safetySettings: [
         {
