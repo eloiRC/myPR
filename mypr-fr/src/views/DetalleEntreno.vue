@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import authService from '../services/auth';
-import {  guardarNuevoEjercicio } from '../utils/ejercicioUtils';
+import { guardarNuevoEjercicio } from '../utils/ejercicioUtils';
 import Chatbot from '../components/Chatbot.vue';
+import BuscadorSelect from '../components/BuscadorSelect.vue';
+// Importamos el nuevo componente hijo
+import SerieItem from '../components/SerieItem.vue';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787'; // Usa la variable de entorno o el valor por defecto
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787';
 
-// Definir interfaces para los datos
+// Interfaces (Se pueden mover a un archivo types.ts para limpiar más)
 interface Entreno {
   EntrenoId: number;
   UserId: number;
@@ -36,33 +39,29 @@ interface Ejercicio {
   UserId: number;
   PR: number;
   GrupMuscular1: number | null;
-  GrupMuscular2: number | null;
-  GrupMuscular3: number | null;
-  GrupMuscular4: number | null;
-  GrupMuscular5: number | null;
-  Selected: string;
+  // ... otros campos opcionales si no se usan
 }
 
-// Definir la interfaz para los grupos musculares
 interface GrupoMuscular {
   GrupMuscularId: number;
   Nom: string;
 }
 
-// Obtener el ID del entreno de los parámetros de la ruta
 const route = useRoute();
 const router = useRouter();
 const entrenoId = Number(route.params.id);
 
-// Estados reactivos
+// Estados
 const entreno = ref<Entreno | null>(null);
 const series = ref<Serie[]>([]);
 const ejercicios = ref<Ejercicio[]>([]);
 const gruposMusculares = ref<GrupoMuscular[]>([]);
 const isLoading = ref(true);
+const isSaving = ref(false);
 const error = ref('');
 const showForm = ref(false);
-const editandoSerie = ref<Serie | null>(null);
+
+// Alertas
 const showPrAlert = ref(false);
 const prMessage = ref('');
 const showEjercicioModal = ref(false);
@@ -70,540 +69,211 @@ const showEjercicioAlert = ref(false);
 const showAlert = ref(false);
 const alertMessage = ref('');
 const ejercicioAlertMessage = ref('');
-const nuevoEjercicio = ref({
-  Nom: '',
-  gruposMusculares: [] as number[]
-});
+
+// Formularios
+const nuevoEjercicio = ref({ Nom: '', gruposMusculares: [] as number[] });
 const guardandoEjercicio = ref(false);
 const errorGuardado = ref('');
 let lastExercise = ref(0);
 
-// Estado del formulario
-const nuevaSerie = ref({
-  ejercicioId: 0,
-  kg: 0,
-  reps: 0
-});
-
-// Estado para edición de serie
-const serieEditada = ref({
-  ejercicioId: 0,
-  kg: 0,
-  reps: 0
-});
-
-// Estado para edición del entreno
+const nuevaSerie = ref({ ejercicioId: 0, kg: 0, reps: 0 });
 const editandoEntreno = ref(false);
-const entrenoEditado = ref({
-  nom: '',
-  descripcio: '',
-  puntuacio: 3
-});
+const entrenoEditado = ref({ nom: '', descripcio: '', puntuacio: 3 });
 
-// Calcular la carga de la nueva serie
-const cargaCalculada = computed(() => {
-  return nuevaSerie.value.kg * nuevaSerie.value.reps;
-});
+// Computed
+const cargaCalculada = computed(() => nuevaSerie.value.kg * nuevaSerie.value.reps);
+const ejerciciosUnicos = computed(() => new Set(series.value.map(serie => serie.ExerciciId)).size);
 
-// Obtener ejercicios únicos en el entreno
-const ejerciciosUnicos = computed(() => {
-  const ids = new Set(series.value.map(serie => serie.ExerciciId));
-  return Array.from(ids);
-});
-
-// Mapa de ejercicios a grupos musculares
 const ejercicioGrupoMap = computed(() => {
   const map = new Map();
-  
-  if (ejercicios.value.length === 0 || gruposMusculares.value.length === 0) {
-    return map;
-  }
-  
+  if (ejercicios.value.length === 0 || gruposMusculares.value.length === 0) return map;
   ejercicios.value.forEach(ejercicio => {
     if (ejercicio.GrupMuscular1) {
       const grupo = gruposMusculares.value.find(g => g.GrupMuscularId === ejercicio.GrupMuscular1);
-      if (grupo) {
-        //map.set(ejercicio.ExerciciId, grupo.Nom); aplica el nom del primer grup muscular
-      }
+      if (grupo) map.set(ejercicio.ExerciciId, grupo.Nom);
     }
   });
-  
   return map;
 });
 
+// Funciones auxiliares
+const formatDateTitle = (timestamp: number) => new Date(timestamp * 1000).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+const alertWindow = (msg: string) => { alertMessage.value = msg; showAlert.value = true; setTimeout(() => showAlert.value = false, 5000); };
+const capitalize = (s: string) => s.replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
 
-
-// Formatear la fecha para el título (formato más compacto)
-const formatDateTitle = (timestamp: number): string => {
-  const date = new Date(timestamp * 1000);
-  return date.toLocaleDateString('es-ES', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  });
-};
-
-// Cargar los detalles del entreno
+// Cargas de datos
 const loadEntreno = async () => {
-  if (!authService.isAuthenticated()) {
-    router.push('/login');
-    return;
-  }
-
+  if (!authService.isAuthenticated()) return router.push('/login');
   try {
     isLoading.value = true;
-    
-    // Obtener el token de autenticación
     const token = authService.getToken();
-    
-    // Hacer la solicitud a la API
-    const response = await fetch(API_URL+'/api/getEntreno', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        token,
-        entrenoId
-      })
+    const res = await fetch(API_URL+'/api/getEntreno', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, entrenoId })
     });
+    if (!res.ok) throw new Error('Error al cargar entreno');
     
-    if (!response.ok) {
-      throw new Error('Error al cargar los detalles del entreno');
-    }
-    
-    const data = await response.json();
-    console.log('Datos del entreno recibidos:', data);
+    const data = await res.json();
     entreno.value = data.entreno[0];
-    if (entreno.value) {
-      entreno.value.CargaTotal = parseFloat((entreno.value.CargaTotal / 1000).toFixed(2));
-    }
-    
-    
+    if (entreno.value) entreno.value.CargaTotal = parseFloat((entreno.value.CargaTotal / 1000).toFixed(2));
     series.value = data.series.reverse();
     
-    // Cargar los ejercicios
     await loadEjercicios();
-    
-    // Cargar los grupos musculares si no están cargados
-    if (gruposMusculares.value.length === 0) {
-      await loadGruposMusculares();
-    }
+    if (gruposMusculares.value.length === 0) await loadGruposMusculares();
   } catch (err: any) {
-    error.value = err.message || 'Error al cargar los detalles del entreno';
-    console.error('Error al cargar detalles del entreno:', err);
+    error.value = err.message;
   } finally {
     isLoading.value = false;
   }
 };
 
-// Cargar los ejercicios disponibles
 const loadEjercicios = async () => {
   try {
     const token = authService.getToken();
+    const res = await fetch(API_URL+'/api/getExercicis', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+    if (!res.ok) throw new Error('Error ejercicios');
+    ejercicios.value = await res.json();
     
-    const response = await fetch(API_URL+'/api/getExercicis', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token })
-    });
-    
-    if (!response.ok) {
-      throw new Error('Error al cargar los ejercicios');
-    }
-    
-    const data = await response.json();
-    ejercicios.value = data;
-    //Si hay ejercicios, seleccionar el primero por defecto
-    if (ejercicios.value.length > 0) {
+    // Recuperar último ejercicio
+    const lastSaved = localStorage.getItem('lastSelectedExerciseId');
+    if (lastSaved && ejercicios.value.some(e => e.ExerciciId === Number(lastSaved))) {
+      nuevaSerie.value.ejercicioId = Number(lastSaved);
+    } else if (ejercicios.value.length > 0) {
       nuevaSerie.value.ejercicioId = ejercicios.value[0].ExerciciId;
-      if(lastExercise.value != 0){
-      nuevaSerie.value.ejercicioId = lastExercise.value;
     }
-    }
-    
-  } catch (err: any) {
-    console.error('Error al cargar ejercicios:', err);
-  }
+    lastExercise.value = nuevaSerie.value.ejercicioId;
+  } catch (e) { console.error(e); }
 };
 
-// Cargar los grupos musculares
 const loadGruposMusculares = async () => {
   try {
     const token = authService.getToken();
-    
-    const response = await fetch(API_URL+'/api/getGrupsMusculars', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token })
-    });
-    
-    if (!response.ok) {
-      throw new Error('Error al cargar los grupos musculares');
-    }
-    
-    const data = await response.json();
-    console.log('Grupos musculares recibidos:', data);
-    
-    if (Array.isArray(data)) {
-      gruposMusculares.value = data;
-    } else if (data && typeof data === 'object') {
-      gruposMusculares.value = data.results || [];
-    } else {
-      gruposMusculares.value = [];
-      console.error('Formato de datos inesperado:', data);
-    }
-  } catch (err: any) {
-    console.error('Error al cargar grupos musculares:', err);
-  }
+    const res = await fetch(API_URL+'/api/getGrupsMusculars', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+    if (!res.ok) throw new Error('Error grupos');
+    const data = await res.json();
+    gruposMusculares.value = Array.isArray(data) ? data : data.results || [];
+  } catch (e) { console.error(e); }
 };
 
-// Guardar una nueva serie
-const guardarSerie = async () => {
-  if (nuevaSerie.value.ejercicioId === 0 || nuevaSerie.value.kg <= 0 || nuevaSerie.value.reps <= 0) {
-    
-    
-    if(nuevaSerie.value.kg <= 0){
-      alertWindow('Por favor, completa todos los campos correctament, el peso minimo es 1 kg')
-    }
-    else{
-      alertWindow('Por favor, completa todos los campos correctamente');
-    }
-      
-      
-    return;
-  }
-  
-  try {
-    isLoading.value = true;
-    
-    const token = authService.getToken();
-    
-    const response = await fetch(API_URL+'/api/novaSerie', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        token,
-        entrenoId,
-        exerciciId: nuevaSerie.value.ejercicioId,
-        kg: nuevaSerie.value.kg,
-        reps: nuevaSerie.value.reps
-      })
-    });
-    
-    if (!response.ok) {
-      throw new Error('Error al guardar la serie');
-    }
-    lastExercise.value=nuevaSerie.value.ejercicioId
-
-    const data = await response.json();
-    console.log('Serie guardada:', data);
-    
-    if (data.newPr) {
-      const ejercicio = ejercicios.value.find(e => e.ExerciciId === nuevaSerie.value.ejercicioId);
-      prMessage.value = `¡Felicidades! Has conseguido un nuevo PR en ${ejercicio?.Nom || 'el ejercicio'} con ${nuevaSerie.value.kg}kg`;
-      showPrAlert.value = true;
-
-      setTimeout(() => {
-        showPrAlert.value = false;
-      }, 5000);
-    }
-    
-    // Resetear el formulario
-    nuevaSerie.value = {
-      ejercicioId: ejercicios.value.length > 0 ? ejercicios.value[0].ExerciciId : lastExercise.value,
-      kg: 0,
-      reps: 0
-    };
-    
-    // Ocultar el formulario
-    showForm.value = false;
-    
-    // Recargar los datos del entreno
-    await loadEntreno();
-  } catch (err: any) {
-    error.value = err.message || 'Error al guardar la serie';
-    console.error('Error al guardar serie:', err);
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-// Mostrar/ocultar el formulario
-const toggleForm = () => {
-  showForm.value = !showForm.value;
-};
-
-// Función para abrir el modal
-const abrirModalEjercicio = () => {
-  nuevoEjercicio.value = {
-    Nom: '',
-    gruposMusculares: []
-  };
-  errorGuardado.value = '';
-  showEjercicioModal.value = true;
-  
-  // Cargar grupos musculares si no están cargados
-  if (gruposMusculares.value.length === 0) {
-    cargarGruposMusculares();
-  }
-};
-
-// Función para cerrar el modal
-const cerrarModalEjercicio = () => {
-  showEjercicioModal.value = false;
-};
-
-// Función para cargar grupos musculares
-const cargarGruposMusculares = async () => {
-  try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/GruposMuscular`);
-    if (!response.ok) {
-      throw new Error('Error al cargar grupos musculares');
-    }
-    gruposMusculares.value = await response.json();
-  } catch (error) {
-    console.error('Error al cargar grupos musculares:', error);
-  }
-};
-
-function capitalize(s:string){
-  return s.replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
-
-}
-const newExercici = async () => {
-  
-  const newName= capitalize(nuevoEjercicio.value.Nom)
-  var duplicated = false
-  console.log(newName)
-ejercicios.value.forEach(value => {
-  const nom = value.Nom
-  if(nom==newName){
-    console.log(true)
-    alertWindow('Este nombre de ejercicio ya existe')
-    duplicated=true
+watch(() => nuevaSerie.value.ejercicioId, (newId) => {
+  if (newId) {
+    localStorage.setItem('lastSelectedExerciseId', newId.toString());
+    lastExercise.value = newId;
   }
 });
-if(!duplicated){
-  guardarNuevoEjercicioHandler()
-}
-}
 
-// Función para guardar el nuevo ejercicio
-const guardarNuevoEjercicioHandler = async () => {
-  guardandoEjercicio.value = true;
-  errorGuardado.value = '';
-  
-  
-  await guardarNuevoEjercicio(
-    nuevoEjercicio.value,
-    async (ejercicioId) => {
-      // Recargar la lista de ejercicios
-      await loadEjercicios();
-
-        lastExercise.value=ejercicioId
-        serieEditada.value.ejercicioId = lastExercise.value;
-        nuevaSerie.value.ejercicioId = lastExercise.value;
-      
-      
-      // Cerrar el modal
-      cerrarModalEjercicio();
-      
-      // Mostrar mensaje de éxito
-      ejercicioAlertMessage.value = '¡Ejercicio creado correctamente!';
-      showEjercicioAlert.value = true;
-      setTimeout(() => {
-        showEjercicioAlert.value = false;
-      }, 3000);
-    },
-    (error) => {
-      errorGuardado.value = error;
-    }
-  );
-  
-  guardandoEjercicio.value = false;
-};
-
-// Volver a la lista de entrenos
-const volverAEntrenos = () => {
-  router.push('/entrenos');
-};
-
-// Ir al detalle de un entreno
-const verDetalleEjercicio = (ejercicioId: number) => {
-  router.push(`/ejercicio/${ejercicioId}`);
-};
-
-// Iniciar edición de serie
-const iniciarEdicionSerie = (serie: Serie) => {
-  editandoSerie.value = serie;
-  serieEditada.value = {
-    ejercicioId: serie.ExerciciId,
-    kg: serie.Kg,
-    reps: serie.Reps
-  };
-};
-
-// Cancelar edición de serie
-const cancelarEdicionSerie = () => {
-  editandoSerie.value = null;
-  serieEditada.value = {
-    ejercicioId: 0,
-    kg: 0,
-    reps: 0
-  };
-};
-
-// Guardar edición de serie
-const guardarEdicionSerie = async () => {
-  if (!editandoSerie.value) return;
+// Acciones Principales
+const guardarSerie = async () => {
+  if (nuevaSerie.value.ejercicioId === 0 || nuevaSerie.value.kg <= 0 || nuevaSerie.value.reps <= 0) {
+    return alertWindow('Completa todos los campos correctamente (mínimo 0.5kg)');
+  }
   
   try {
-    isLoading.value = true;
+    isSaving.value = true;
     const token = authService.getToken();
-    
-    const response = await fetch(API_URL+'/api/editSerie', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        token,
-        serieId: editandoSerie.value.SerieId,
-        entrenoId: editandoSerie.value.EntrenoId,
-        exerciciId: serieEditada.value.ejercicioId,
-        kg: serieEditada.value.kg,
-        reps: serieEditada.value.reps
-      })
+    const res = await fetch(API_URL+'/api/novaSerie', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, entrenoId, exerciciId: nuevaSerie.value.ejercicioId, kg: nuevaSerie.value.kg, reps: nuevaSerie.value.reps })
     });
     
-    if (!response.ok) {
-      throw new Error('Error al editar la serie');
-    }
-    
-    const data = await response.json();
-    console.log('Serie editada:', data);
+    if (!res.ok) throw new Error('Error al guardar');
+    const data = await res.json();
     
     if (data.newPr) {
-      const ejercicio = ejercicios.value.find(e => e.ExerciciId === editandoSerie.value?.ExerciciId);
-      prMessage.value = `¡Felicidades! Has conseguido un nuevo PR en ${ejercicio?.Nom || 'el ejercicio'} con ${serieEditada.value.kg}kg`;
+      const ej = ejercicios.value.find(e => e.ExerciciId === nuevaSerie.value.ejercicioId);
+      prMessage.value = `¡Felicidades! Nuevo PR en ${ej?.Nom} con ${nuevaSerie.value.kg}kg`;
       showPrAlert.value = true;
-      setTimeout(() => {
-        showPrAlert.value = false;
-      }, 5000);
+      setTimeout(() => showPrAlert.value = false, 5000);
     }
-    
-    // Resetear el estado de edición
-    editandoSerie.value = null;
-    serieEditada.value = {
-      ejercicioId: 0,
-      kg: 0,
-      reps: 0
-    };
-    
-    // Recargar los datos del entreno
-    await loadEntreno();
-  } catch (err: any) {
-    error.value = err.message || 'Error al editar la serie';
-    console.error('Error al editar serie:', err);
+
+    // Actualización local optimista
+    if (entreno.value) {
+      entreno.value.CargaTotal = parseFloat((data.cargaTotal / 1000).toFixed(2));
+      const nuevaSerieLocal: Serie = {
+        SerieId: data.serieId, UserId: entreno.value.UserId, EntrenoId: entreno.value.EntrenoId,
+        ExerciciId: nuevaSerie.value.ejercicioId, Kg: nuevaSerie.value.kg, Reps: nuevaSerie.value.reps,
+        Carga: nuevaSerie.value.kg * nuevaSerie.value.reps, PR: data.newPr, Data: Math.floor(Date.now() / 1000)
+      };
+      series.value.unshift(nuevaSerieLocal);
+    }
+
+    // Resetear formulario (manteniendo ejercicio)
+    const currentId = nuevaSerie.value.ejercicioId;
+    nuevaSerie.value = { ejercicioId: currentId, kg: 0, reps: 0 };
+    showForm.value = false;
+  } catch (e: any) {
+    error.value = e.message;
   } finally {
-    isLoading.value = false;
+    isSaving.value = false;
   }
 };
 
-// Función para iniciar edición del entreno
+// Handlers para eventos del hijo (SerieItem)
+const onSerieUpdated = async (payload: any) => {
+  // Recargamos todo el entreno para asegurar consistencia de totales y PRs
+  // (Se podría hacer optimista también, pero editar es menos frecuente que crear)
+  await loadEntreno();
+  
+  if (payload.data.newPr) {
+    const ej = ejercicios.value.find(e => e.ExerciciId === payload.exerciciId);
+    prMessage.value = `¡Felicidades! Nuevo PR en ${ej?.Nom} con ${payload.kg}kg`;
+    showPrAlert.value = true;
+    setTimeout(() => showPrAlert.value = false, 5000);
+  }
+};
+
+const onSerieDeleted = async () => {
+  alertWindow('¡Serie eliminada!');
+  await loadEntreno();
+};
+
+// Entreno Header lógica
 const iniciarEdicionEntreno = () => {
   if (entreno.value) {
-    entrenoEditado.value = {
-      nom: entreno.value.Nom || '',
-      descripcio: entreno.value.Descripcio || '',
-      puntuacio: entreno.value.Puntuacio || 3
-    };
+    entrenoEditado.value = { nom: entreno.value.Nom || '', descripcio: entreno.value.Descripcio || '', puntuacio: entreno.value.Puntuacio || 3 };
     editandoEntreno.value = true;
   }
 };
 
-// Función para guardar cambios del entreno
 const guardarCambiosEntreno = async () => {
   if (!entreno.value) return;
-
   try {
     const token = authService.getToken();
-    
-    const response = await fetch(API_URL+'/api/editEntreno', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        token,
-        entrenoId: entreno.value.EntrenoId,
-        ...entrenoEditado.value
-      })
+    const res = await fetch(API_URL+'/api/editEntreno', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, entrenoId: entreno.value.EntrenoId, ...entrenoEditado.value })
     });
-
-    if (!response.ok) {
-      throw new Error('Error al actualizar el entreno');
-    }
-
-    // Recargar los datos del entreno
+    if (!res.ok) throw new Error('Error update');
     await loadEntreno();
     editandoEntreno.value = false;
-  } catch (err: any) {
-    error.value = err.message || 'Error al actualizar el entreno';
-    console.error('Error al actualizar entreno:', err);
-  }
+  } catch (e: any) { error.value = e.message; }
 };
 
-
-const eliminarSerie = async (serieId: number) => {
-  if (!entreno.value) return;
-
-  try {
-    const token = authService.getToken();
-    
-    const response = await fetch(API_URL+'/api/deleteSerie', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        token,
-        serieId: serieId
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error('Error al eliminar la serie');
-    }
-    alertWindow('¡Serie eliminada!');
-
-    // Recargar los datos del entreno
-    await loadEntreno();
-    editandoEntreno.value = false;
-  } catch (err: any) {
-    error.value = err.message || 'Error al eliminar la serie';
-    console.error('Error al eliminar la serie:', err);
-  }
+// Lógica Modal Ejercicio
+const newExercici = async () => {
+  const newName = capitalize(nuevoEjercicio.value.Nom);
+  if (ejercicios.value.some(v => v.Nom == newName)) return alertWindow('Nombre duplicado');
+  guardandoEjercicio.value = true;
+  errorGuardado.value = '';
+  
+  await guardarNuevoEjercicio(nuevoEjercicio.value, async (id) => {
+    await loadEjercicios();
+    lastExercise.value = id;
+    nuevaSerie.value.ejercicioId = id;
+    localStorage.setItem('lastSelectedExerciseId', id.toString());
+    showEjercicioModal.value = false;
+    ejercicioAlertMessage.value = '¡Ejercicio creado!';
+    showEjercicioAlert.value = true;
+    setTimeout(() => showEjercicioAlert.value = false, 3000);
+  }, (err) => errorGuardado.value = err);
+  guardandoEjercicio.value = false;
 };
 
-function alertWindow(message:string){
-  alertMessage.value = message
-  showAlert.value = true;
+const abrirModalEjercicio = () => {
+  nuevoEjercicio.value = { Nom: '', gruposMusculares: [] };
+  showEjercicioModal.value = true;
+  if (gruposMusculares.value.length === 0) loadGruposMusculares();
+};
 
-  setTimeout(() => {
-        showAlert.value = false;
-      }, 5000);
-}
-
-// Cargar los detalles al montar el componente
 onMounted(loadEntreno);
 </script>
 
@@ -611,998 +281,122 @@ onMounted(loadEntreno);
   <div class="detalle-entreno-container">
     <header class="header">
       <h1 v-if="entreno" class="entreno-title">{{ formatDateTitle(entreno.Data) }}</h1>
-      <button @click="volverAEntrenos" class="btn btn-secondary">
-        &larr; Volver
-      </button>
-      
+      <button @click="router.push('/entrenos')" class="btn btn-secondary">&larr; Volver</button>
     </header>
     
-    <div v-if="showPrAlert" class="pr-alert">
-      {{ prMessage }}
-    </div>
+    <div v-if="showPrAlert" class="pr-alert">{{ prMessage }}</div>
+    <div v-if="showEjercicioAlert" class="ejercicio-alert">{{ ejercicioAlertMessage }}</div>
+    <div v-if="showAlert" class="alert">{{ alertMessage }}</div>
     
-    <div v-if="showEjercicioAlert" class="ejercicio-alert">
-      {{ ejercicioAlertMessage }}
-    </div>
-
-    <div v-if="showAlert" class="alert">
-      {{ alertMessage }}
-    </div>
-    
-    <div v-if="isLoading" class="loading">
-      <p>Cargando detalles del entreno...</p>
-    </div>
-    
-    <div v-else-if="error" class="error">
-      <p>{{ error }}</p>
-      <button @click="loadEntreno" class="btn">Reintentar</button>
-    </div>
+    <div v-if="isLoading" class="loading"><p>Cargando...</p></div>
+    <div v-else-if="error" class="error"><p>{{ error }}</p><button @click="loadEntreno" class="btn">Reintentar</button></div>
     
     <div v-else-if="entreno" class="entreno-details">
+      <!-- INFO HEADER COMPONENT (Inline por simplicidad, pero extraíble) -->
       <div class="entreno-info-card">
         <div v-if="!editandoEntreno" class="entreno-header">
-          <div class="info-row">
-            <span class="label">Nombre:</span>
-            <span class="value">{{ entreno.Nom || 'Sin nombre' }}</span>
+          <div class="info-row"><span class="label">Nombre:</span><span class="value">{{ entreno.Nom || 'Sin nombre' }}</span></div>
+          <div class="info-row"><span class="label">Descripción:</span><span class="value">{{ entreno.Descripcio || '-' }}</span></div>
+          <div class="info-row"><span class="label">Puntuación:</span>
+            <span class="value"><span v-for="i in 5" :key="i" class="star" :class="{ filled: entreno.Puntuacio && i <= entreno.Puntuacio }">★</span></span>
           </div>
-          <div class="info-row">
-            <span class="label">Descripción:</span>
-            <span class="value">{{ entreno.Descripcio || 'Sin descripción' }}</span>
-          </div>
-          <div class="info-row">
-            <span class="label">Puntuación:</span>
-            <span class="value">
-              <span v-for="i in 5" :key="i" class="star" :class="{ filled: entreno.Puntuacio && i <= entreno.Puntuacio }">★</span>
-            </span>
-          </div>
-          <button @click="iniciarEdicionEntreno" class="btn btn-secondary">Editar información</button>
+          <button @click="iniciarEdicionEntreno" class="btn btn-secondary">Editar info</button>
         </div>
-        
         <div v-else class="entreno-edit-form">
-          <div class="form-group">
-            <label for="nom">Nombre:</label>
-            <input 
-              type="text" 
-              id="nom" 
-              v-model="entrenoEditado.nom" 
-              class="form-control" 
-              required
-            >
-          </div>
-          
-          <div class="form-group">
-            <label for="descripcio">Descripción:</label>
-            <textarea 
-              id="descripcio" 
-              v-model="entrenoEditado.descripcio" 
-              class="form-control" 
-              rows="3"
-            ></textarea>
-          </div>
-          
+          <!-- Formulario edición entreno -->
+          <div class="form-group"><label>Nombre:</label><input type="text" v-model="entrenoEditado.nom" class="form-control"></div>
+          <div class="form-group"><label>Descripción:</label><textarea v-model="entrenoEditado.descripcio" class="form-control"></textarea></div>
           <div class="form-group">
             <label>Puntuación:</label>
-            <div class="rating-input">
-              <button 
-                v-for="i in 5" 
-                :key="i" 
-                class="star-btn btn btn-secondary"
-                :class="{ filled: i <= entrenoEditado.puntuacio }"
-                @click="entrenoEditado.puntuacio = i"
-              >★</button>
-            </div>
+            <div class="rating-input"><button v-for="i in 5" :key="i" class="star-btn btn" :class="{ filled: i <= entrenoEditado.puntuacio }" @click="entrenoEditado.puntuacio = i">★</button></div>
           </div>
-          
           <div class="form-actions">
             <button @click="editandoEntreno = false" class="btn btn-secondary">Cancelar</button>
-            <button @click="guardarCambiosEntreno" class="btn btn-primary">Guardar cambios</button>
+            <button @click="guardarCambiosEntreno" class="btn btn-primary">Guardar</button>
           </div>
         </div>
-        
-        <div class="info-row">
-          <span class="label">Peso total:</span>
-          <span class="value">{{ entreno.CargaTotal }} Tn</span>
-        </div>
-        <div class="info-row">
-          <span class="label">Series:</span>
-          <span class="value">{{ series.length }}</span>
-        </div>
-        <div class="info-row">
-          <span class="label">Ejercicios:</span>
-          <span class="value">{{ ejerciciosUnicos.length }}</span>
-        </div>
+        <div class="info-row"><span class="label">Peso total:</span><span class="value">{{ entreno.CargaTotal }} Tn</span></div>
+        <div class="info-row"><span class="label">Series:</span><span class="value">{{ series.length }}</span></div>
+        <div class="info-row"><span class="label">Ejercicios:</span><span class="value">{{ ejerciciosUnicos }}</span></div>
       </div>
       
       <h2>Series</h2>
       
-      <div v-if="!showForm && series.length >= 0" class="add-serie">
-        <button @click="toggleForm" class="btn btn-primary btn-lg">Agregar nueva serie</button>
+      <div v-if="!showForm" class="add-serie">
+        <button @click="showForm = !showForm" class="btn btn-primary btn-lg">Agregar nueva serie</button>
       </div>
       
-      <!-- Formulario para añadir nueva serie -->
+      <!-- Formulario Nueva Serie -->
       <div v-if="showForm" class="serie-card new-serie-card">
         <div class="serie-info">
           <h3>Añadir nueva serie</h3>
           <form @submit.prevent="guardarSerie" class="serie-form">
             <div class="form-group">
-              <label for="ejercicio">Ejercicio:</label>
+              <label>Ejercicio:</label>
               <div class="input-with-button">
-                <select v-model="nuevaSerie.ejercicioId" id="ejercicio" class="form-control" required>
-                  <option value="" disabled>Selecciona un ejercicio</option>
-                  <option v-for="ejercicio in ejercicios" :key="ejercicio.ExerciciId" :value="ejercicio.ExerciciId" >
-                    {{ ejercicio.Nom }}
-                  </option>
-                </select>
-                <button type="button" class="btn btn-primary btn-sm ejercicio-btn" @click="abrirModalEjercicio" title="Crear nuevo ejercicio">+</button>
+                <BuscadorSelect v-model="nuevaSerie.ejercicioId" :options="ejercicios" label="Nom" :reduce="(e: any) => e.ExerciciId" placeholder="Busca un ejercicio..." />
+                <button type="button" class="btn btn-primary btn-sm ejercicio-btn" @click="abrirModalEjercicio">+</button>
               </div>
             </div>
-            
             <div class="form-row">
-              <div class="form-group">
-                <label for="kg">Peso (kg):</label>
-                <input 
-                  type="number" 
-                  id="kg" 
-                  v-model.number="nuevaSerie.kg" 
-                  class="form-control" 
-                  min="0" 
-                  step="0.5"
-                  required
-                >
-              </div>
-              
-              <div class="form-group">
-                <label for="reps">Repeticiones:</label>
-                <input 
-                  type="number" 
-                  id="reps" 
-                  v-model.number="nuevaSerie.reps" 
-                  class="form-control" 
-                  min="1" 
-                  step="1"
-                  required
-                >
-              </div>
+              <div class="form-group"><label>Peso (kg):</label><input type="number" v-model.number="nuevaSerie.kg" class="form-control" min="0" step="0.5"></div>
+              <div class="form-group"><label>Reps:</label><input type="number" v-model.number="nuevaSerie.reps" class="form-control" min="1" step="1"></div>
             </div>
-            
-            <div class="form-group" v-if="nuevaSerie.kg > 0 && nuevaSerie.reps > 0">
-              <div class="carga-calculada">
-                <span class="label">Carga total:</span>
-                <span class="value">{{ cargaCalculada }} kg</span>
-              </div>
-            </div>
-            
+            <div class="form-group" v-if="nuevaSerie.kg > 0"><div class="carga-calculada"><span class="label">Total:</span><span class="value">{{ cargaCalculada }} kg</span></div></div>
             <div class="form-actions nueva-serie-actions">
-              <button type="button" @click="toggleForm" class="btn btn-secondary">Cancelar</button>
-              <button type="button" @click="guardarSerie" class="btn btn-primary" :disabled="isLoading">
-                {{ isLoading ? 'Guardando...' : 'Guardar Serie' }}
-              </button>
+              <button type="button" @click="showForm = false" class="btn btn-secondary">Cancelar</button>
+              <button type="button" @click="guardarSerie" class="btn btn-primary" :disabled="isSaving">{{ isSaving ? '...' : 'Guardar' }}</button>
             </div>
           </form>
         </div>
       </div>
       
-      <div v-if="series.length === 0 && !showForm" class="no-series">
-        <p>No hay series registradas para este entreno.</p>
-      </div>
+      <div v-if="series.length === 0 && !showForm" class="no-series"><p>No hay series registradas.</p></div>
       
-      <div v-else-if="series.length > 0" class="series-list">
-        <div v-for="serie in series" :key="serie.SerieId" class="serie-card" :class="{ 'editing': editandoSerie?.SerieId === serie.SerieId }">
-          <div class="serie-info">
-            <h3>
-              <div @click="verDetalleEjercicio(serie.ExerciciId)">
-                {{ ejercicios.find(e => e.ExerciciId === serie.ExerciciId)?.Nom || `Ejercicio desconocido` }}
-              </div>
-              
-            </h3>
-            
-            <!-- Modo visualización -->
-            <template v-if="editandoSerie?.SerieId !== serie.SerieId">
-              <p class="serie-stats">
-                <span class="kg">{{ serie.Kg }} kg</span> x 
-                <span class="reps">{{ serie.Reps }} reps</span> = 
-                <span class="carga">{{ serie.Carga }} kg</span>
-              </p>
-              <p v-if="serie.PR" class="pr-badge">PR 🏆</p>
-            </template>
-            
-            <!-- Modo edición -->
-            <template v-else>
-              <div class="edit-form">
-                <div class="form-group">
-                  <label for="edit-ejercicio">Ejercicio:</label>
-                  <div class="input-with-button">
-                    <select 
-                      id="edit-ejercicio" 
-                      v-model="serieEditada.ejercicioId" 
-                      class="form-control" 
-                      required
-                    >
-                      <option v-for="ejercicio in ejercicios" :key="ejercicio.ExerciciId" :value="ejercicio.ExerciciId">
-                        {{ ejercicio.Nom }}
-                      </option>
-                    </select>
-                    <button type="button" class="btn btn-secondary btn-sm ejercicio-btn" @click="abrirModalEjercicio" title="Crear nuevo ejercicio">+</button>
-                  </div>
-                </div>
-                
-                <div class="form-row">
-                  <div class="form-group">
-                    <label for="edit-kg">Peso (kg):</label>
-                    <input 
-                      type="number" 
-                      id="edit-kg" 
-                      v-model.number="serieEditada.kg" 
-                      class="form-control" 
-                      min="0" 
-                      step="0.5"
-                      required
-                    >
-                  </div>
-                  
-                  <div class="form-group">
-                    <label for="edit-reps">Repeticiones:</label>
-                    <input 
-                      type="number" 
-                      id="edit-reps" 
-                      v-model.number="serieEditada.reps" 
-                      class="form-control" 
-                      min="1" 
-                      step="1"
-                      required
-                    >
-                  </div>
-                </div>
-                
-                <div class="form-group" v-if="serieEditada.kg > 0 && serieEditada.reps > 0">
-                  <div class="carga-calculada">
-                    <span class="label">Carga total:</span>
-                    <span class="value">{{ serieEditada.kg * serieEditada.reps }} kg</span>
-                  </div>
-                </div>
-                
-                <div class="edit-actions">
-                  <button class="btn btn-primary" @click="guardarEdicionSerie">Guardar</button>
-                  <button class="btn btn-secondary" @click="cancelarEdicionSerie">Cancelar</button>
-                </div>
-              </div>
-            </template>
-          </div>
-          
-          <div class="serie-right-column" v-if="editandoSerie?.SerieId !== serie.SerieId">
-            <div class="grupo-muscular-container" v-if="ejercicioGrupoMap.has(serie.ExerciciId)">
-              <span class="grupo-muscular">
-                {{ ejercicioGrupoMap.get(serie.ExerciciId) }}
-              </span>
-            </div>
-            <div class="serie-actions">
-              <button class="btn btn-secondary btn-sm" @click="iniciarEdicionSerie(serie)">Editar</button>
-              <button class="btn btn-danger btn-sm" @click="eliminarSerie(serie.SerieId)">Eliminar</button>
-            </div>
-          </div>
-        </div>
+      <!-- LISTA DE SERIES COMPONENTIZADA -->
+      <div v-else class="series-list">
+        <SerieItem 
+          v-for="serie in series" 
+          :key="serie.SerieId"
+          :serie="serie"
+          :ejercicios="ejercicios"
+          :grupo-muscular-nombre="ejercicioGrupoMap.get(serie.ExerciciId)"
+          @serieUpdated="onSerieUpdated"
+          @serieDeleted="onSerieDeleted"
+          @openModalEjercicio="abrirModalEjercicio"
+          @goToEjercicio="(id) => router.push(`/ejercicio/${id}`)"
+        />
       </div>
     </div>
   </div>
   
-  <!-- Modal para crear ejercicio -->
-  <div v-if="showEjercicioModal" class="modal-overlay" @click="cerrarModalEjercicio">
+  <!-- Modal Ejercicio -->
+  <div v-if="showEjercicioModal" class="modal-overlay" @click="showEjercicioModal = false">
     <div class="modal-container" @click.stop>
-      <div class="modal-header">
-        <h3>Crear nuevo ejercicio</h3>
-        <button type="button" class="btn-close" @click="cerrarModalEjercicio">&times;</button>
-      </div>
-      
+      <div class="modal-header"><h3>Nuevo ejercicio</h3><button class="btn-close" @click="showEjercicioModal = false">&times;</button></div>
       <div class="modal-body">
         <form @submit.prevent="newExercici" class="ejercicio-form">
+          <div class="form-group"><label>Nombre:</label><input type="text" v-model="nuevoEjercicio.Nom" class="form-control" required></div>
           <div class="form-group">
-            <label for="nombre">Nombre del ejercicio:</label>
-            <input 
-              type="text" 
-              id="nombre" 
-              v-model="nuevoEjercicio.Nom" 
-              class="form-control" 
-              required
-              placeholder="Ej: Press de banca"
-            >
-          </div>
-          
-          <div class="form-group">
-            <label>Grupos musculares:</label>
+            <label>Grupos:</label>
             <div class="grupos-seleccion">
               <div v-for="grupo in gruposMusculares" :key="grupo.GrupMuscularId" class="grupo-checkbox">
-                <input 
-                  type="checkbox" 
-                  :id="'grupo-' + grupo.GrupMuscularId" 
-                  :value="grupo.GrupMuscularId" 
-                  v-model="nuevoEjercicio.gruposMusculares"
-                  class="checkbox-input"
-                >
-                <label :for="'grupo-' + grupo.GrupMuscularId" class="checkbox-label">{{ grupo.Nom }}</label>
+                <input type="checkbox" :id="'grp'+grupo.GrupMuscularId" :value="grupo.GrupMuscularId" v-model="nuevoEjercicio.gruposMusculares">
+                <label :for="'grp'+grupo.GrupMuscularId">{{ grupo.Nom }}</label>
               </div>
             </div>
-            <span class="select-help">Selecciona entre 1 y 5 grupos musculares</span>
-            <p v-if="errorGuardado" class="error-message">{{ errorGuardado }}</p>
           </div>
-          
           <div class="form-actions">
-            <button type="button" @click="cerrarModalEjercicio" class="btn btn-secondary">Cancelar</button>
-            <button type="submit" class="btn btn-primary" :disabled="guardandoEjercicio">
-              {{ guardandoEjercicio ? 'Guardando...' : 'Guardar Ejercicio' }}
-            </button>
+            <button type="button" @click="showEjercicioModal = false" class="btn btn-secondary">Cancelar</button>
+            <button type="submit" class="btn btn-primary" :disabled="guardandoEjercicio">Guardar</button>
           </div>
         </form>
       </div>
     </div>
   </div>
   
-  <!-- Componente del chatbot -->
-  <Chatbot 
-    :entreno-id="entrenoId" 
-    :entreno-data="entreno" 
-    :series="series"
-    :ejercicios="ejercicios"
-  />
+  <Chatbot :entreno-id="entrenoId" :entreno-data="entreno" :series="series" :ejercicios="ejercicios"/>
 </template>
 
-<style scoped>
-.detalle-entreno-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 1rem;
-  padding-bottom: 80px;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.entreno-title {
-  margin: 0;
-  font-size: 1.25rem;
-  text-align: left;
-  flex: 1;
-
-}
-.entreno-title:first-letter {
-  text-transform: uppercase;
-}
-@media (max-width: 480px) {
-  .header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .entreno-title {
-    text-align: center;
-  }
-}
-
-.entreno-info-card {
-  background-color: var(--bg-secondary);
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-  border: 1px solid var(--border);
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-}
-
-@media (min-width: 768px) {
-  .entreno-info-card {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    padding: 1.5rem;
-  }
-}
-
-.info-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.5rem;
-  background-color: var(--bg-primary);
-  border-radius: 6px;
-}
-
-.label {
-  font-weight: 500;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-}
-
-.value {
-  font-weight: 600;
-  font-size: 1rem;
-}
-
-@media (min-width: 768px) {
-  .value {
-    font-size: 1.1rem;
-  }
-}
-
-h2 {
-  margin: 2rem 0 1.5rem;
-  font-size: 1.5rem;
-}
-
-.serie-card h3 {
-  margin: 0 0 0.5rem;
-  font-size: 1.1rem;
-  color: var(--color-cobalt-blue);
-  
-  padding-bottom: 0.5rem;
-  width: 100%;
-}
-
-.grupo-muscular-container {
-  margin-bottom: 1rem;
-}
-
-.grupo-muscular {
-  display: inline-block;
-  background-color: transparent;
-  color: #777;
-  padding: 0.15rem 0.35rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  border: none;
-}
-
-.serie-card {
-  background-color: var(--bg-secondary);
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border: 1px solid var(--border);
-}
-
-.serie-info {
-  width: 100%;
-}
-
-.serie-info p {
-  margin: 0.5rem 0;
-}
-
-.serie-stats {
-  margin: 0.5rem 0;
-  font-size: 1.1rem;
-}
-
-.kg, .reps, .carga {
-  font-weight: 600;
-}
-
-.carga {
-  color: var(--color-cobalt-blue);
-}
-
-.pr-badge {
-  display: inline-block;
-  background-color: var(--color-cobalt-blue);
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  margin-top: 0.5rem;
-}
-
-.serie-right-column {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-
-.serie-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.btn-sm {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.8rem;
-}
-
-.btn-danger {
-  background-color: var(--color-delft-blue);
-  color: white;
-  border: none;
-}
-
-.btn-danger:hover {
-  background-color: #c02a5d;
-}
-
-.add-serie {
-  margin-bottom: 1.5rem;
-  width: 100%;
-}
-
-.add-serie button {
-  width: 100%;
-  display: block;
-  box-sizing: border-box;
-  text-align: center;
-  padding: 1rem;
-  height: auto;
-  border-radius: 8px;
-  font-size: 1.25rem;
-  font-weight: 600;
-  background-color: var(--color-cobalt-blue);
-  color: white;
-  border: none;
-  transition: background-color 0.2s;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.add-serie button:hover {
-  background-color: var(--accent-primary-dark);
-}
-
-.new-serie-card {
-  margin-bottom: 2rem;
-  border: 2px dashed var(--color-cobalt-blue);
-  background-color: rgba(25, 86, 200, 0.05);
-  display: block;
-  padding: 1.5rem;
-}
-
-.loading, .error, .no-series {
-  text-align: center;
-  padding: 2rem;
-  background-color: var(--bg-secondary);
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  margin: 1.5rem 0;
-}
-
-.error {
-  color: var(--error);
-}
-
-.btn {
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.btn-primary {
-  background-color: var(--color-cobalt-blue);
-  color: white;
-  border: none;
-}
-
-.btn-primary:hover {
-  background-color: #1648a0;
-}
-
-.btn-secondary {
-  background-color: transparent;
-  border: 1px solid var(--color-razzmatazz);
-  color: var(--color-razzmatazz);
-}
-
-.btn-secondary:hover {
-  background-color: rgba(25, 86, 200, 0.1);
-}
-
-.btn-lg {
-  padding: 0.75rem 1.5rem;
-  font-size: 1.1rem;
-}
-
-.form-container {
-  background-color: var(--bg-secondary);
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-  border: 1px solid var(--border);
-}
-
-.serie-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  width: 100%;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.form-row {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.form-row .form-group {
-  flex: 1;
-  min-width: 120px;
-}
-
-.form-control {
-  padding: 0.5rem;
-  border-radius: 4px;
-  border: 1px solid var(--border);
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  font-size: 1rem;
-  height: 38px;
-  box-sizing: border-box;
-}
-
-.form-control:focus {
-  outline: none;
-  border-color: var(--color-cobalt-blue);
-  box-shadow: 0 0 0 2px rgba(25, 86, 200, 0.2);
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.nueva-serie-actions {
-  justify-content: center;
-  margin-top: 2rem;
-}
-
-.nueva-serie-actions button {
-  width: 50%;
-  padding: 0.75rem 0;
-  font-size: 1rem;
-  font-weight: 500;
-  border-radius: 6px;
-}
-
-.carga-calculada {
-  background-color: var(--bg-primary);
-  padding: 0.75rem;
-  border-radius: 4px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.carga-calculada .value {
-  color: var(--color-cobalt-blue);
-  font-size: 1.1rem;
-}
-
-.edit-form {
-  margin-top: 1rem;
-  width: 100%;
-}
-
-.edit-form .form-row {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.edit-form .form-group {
-  flex: 1;
-}
-
-.edit-form .form-control {
-  width: 100%;
-}
-
-.edit-form .carga-calculada {
-  margin-top: 0.5rem;
-}
-
-.edit-actions {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.edit-actions button {
-  width: 50%;
-  padding: 0.75rem 0;
-  font-size: 1rem;
-  font-weight: 500;
-  border-radius: 6px;
-}
-
-.ml-2 {
-  margin-left: 0.5rem;
-}
-
-.ejercicio-select-container {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-.select-wrapper {
-  width: 100%;
-}
-
-.input-with-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-}
-
-.input-with-button .form-control {
-  flex: 1;
-}
-
-.ejercicio-btn {
-  height: 38px;
-  min-width: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0;
-  padding: 0;
-  font-size: 1.2rem;
-  line-height: 1;
-  border-radius: 4px;
-  position: relative;
-  top: -1px;
-  align-self: flex-start;
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  animation: fadeIn 0.2s ease-out;
-}
-
-.modal-container {
-  background-color: var(--bg-primary);
-  border-radius: 8px;
-  width: 95%;
-  max-width: 600px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  animation: slideUp 0.3s ease-out;
-  margin: 1rem;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.modal-header h3 {
-  margin: 0;
-  font-size: 1.25rem;
-}
-
-.btn-close {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: var(--text-secondary);
-}
-
-.btn-close:hover {
-  color: var(--text-primary);
-}
-
-.modal-body {
-  padding: 1.5rem;
-}
-
-.grupos-seleccion {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 0.75rem;
-  margin-top: 0.5rem;
-}
-
-@media (min-width: 768px) {
-  .grupos-seleccion {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  }
-}
-
-.grupo-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.checkbox-input {
-  margin: 0;
-}
-
-.checkbox-label {
-  cursor: pointer;
-}
-
-.select-help {
-  display: block;
-  margin-top: 0.5rem;
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(50px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-
-
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-.serie-card.editing {
-  display: block;
-  padding: 1.5rem;
-}
-
-.entreno-header {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.entreno-edit-form {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border);
-}
-
-textarea.form-control {
-  resize: vertical;
-  min-height: 100px;
-}
-.star-btn{
-  color:grey;
-  border-color: grey;
-  margin-right: 0.3rem;
-}
-
-.filled{
-  color: var(--color-cobalt-blue);
-  border-color: var(--color-cobalt-blue);
-}
-
-
-
-.w-100 {
-  width: 100%;
-}
-
-.edit-button-container {
-  grid-column: 1 / -1;
-  width: 100%;
-}
-
-.edit-button-container .btn {
-  width: 100%;
-}
-
-@media (max-width: 480px) {
-  .form-row {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .form-row .form-group {
-    width: 100%;
-  }
-  
-  .form-control {
-    width: 100%;
-    box-sizing: border-box;
-  }
-}
-
-.pr-alert {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background-color: var(--color-razzmatazz);
-  color: white;
-  font-weight: bold;
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
-  animation: slideIn 0.3s ease-out;
-}
-
-.ejercicio-alert {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background-color: var(--color-cobalt-blue);
-  color: white;
-  font-weight: bold;
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
-  animation: slideIn 0.3s ease-out;
-}
-
-.alert {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background-color: var(--color-sandy-brown);
-  color: white;
-  font-weight: bold;
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  z-index: 9999;
-  animation: slideIn 0.3s ease-out;
-}
-
-.error-message {
-  color: var(--color-razzmatazz);
-}
-</style> 
+<!-- Importamos el CSS externo -->
+<style src="../styles/detalle-entreno.css"></style>
