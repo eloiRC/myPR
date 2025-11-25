@@ -6,11 +6,12 @@ import DetalleEntreno from '../views/DetalleEntreno.vue';
 import Ejercicios from '../views/Ejercicios.vue';
 import DetalleEjercicio from '../views/DetalleEjercicio.vue';
 import User from '../views/User.vue';
-import authService from '../services/auth';
+import { useAuthStore } from '../stores/auth'; // Importar el store
 
-// Función para verificar si el usuario está autenticado
+// Función para verificar si el usuario está autenticado usando Pinia
 const requireAuth = (_to: any, _from: any, next: any) => {
-    if (!authService.isAuthenticated()) {
+    const authStore = useAuthStore(); // Usar el store aquí dentro
+    if (!authStore.isAuthenticated) {
         next('/login');
     } else {
         next();
@@ -68,6 +69,5 @@ const router = createRouter({
         }
     ]
 });
-
 
 export default router;

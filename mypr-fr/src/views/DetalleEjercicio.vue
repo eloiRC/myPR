@@ -3,9 +3,11 @@ import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
-import authService from '../services/auth';
+import {useAuthStore} from '../stores/auth';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787'; // Usa la variable de entorno o el valor por defecto
+
+const authStore = useAuthStore();
 
 
 // Registrar los componentes necesarios de Chart.js
@@ -193,14 +195,14 @@ const chartOptionsCarga = {
 
 // Cargar los datos del ejercicio
 const loadEjercicio = async () => {
-  if (!authService.isAuthenticated()) {
+  if (!authStore.isAuthenticated) {
     router.push('/login');
     return;
   }
 
   try {
     isLoading.value = true;
-    const token = authService.getToken();
+    const token = authStore.token;
     const exerciciId = Number(route.params.id);
 
     // Cargar datos del ejercicio
@@ -268,7 +270,7 @@ const verDetalleEntreno = (entrenoId: number) => {
 // Cargar los grupos musculares
 const loadGruposMusculares = async () => {
   try {
-    const token = authService.getToken();
+    const token = authStore.token;
     
     const response = await fetch(API_URL+'/api/getGrupsMusculars', {
       method: 'POST',

@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import authService from '../services/auth';
+import { useAuthStore } from '../stores/auth';
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787'; // Usa la variable de entorno o el valor por defecto
+
+const authStore = useAuthStore();
 
 // Registrar los componentes necesarios de Chart.js
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
@@ -174,7 +176,7 @@ const navegarTiempo = (direccion: 'anterior' | 'siguiente') => {
 
 // Modificar la función loadEntrenos para usar el rango de fechas
 const loadEntrenos = async () => {
-  if (!authService.isAuthenticated()) {
+  if (!authStore.isAuthenticated) {
     router.push('/login');
     return;
   }
@@ -183,7 +185,7 @@ const loadEntrenos = async () => {
     isLoading.value = true;
     
     // Obtener el token de autenticación
-    const token = authService.getToken();
+    const token = authStore.token;
     
     // Preparar los datos para la solicitud
     const requestData = {
@@ -246,7 +248,7 @@ const crearNuevoEntreno = async () => {
     isLoading.value = true;
     
     // Obtener el token de autenticación
-    const token = authService.getToken();
+    const token = authStore.token;
     
     // Hacer la solicitud a la API
     const response = await fetch(API_URL+'/api/nouEntreno', {

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import authService from '../services/auth';
+import { useAuthStore } from '../stores/auth';
 import { formatearTexto, guardarNuevoEjercicio } from '../utils/ejercicioUtils';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787'; // Usa la variable de entorno o el valor por defecto
+
+const authStore = useAuthStore();
 
 // Definir la interfaz para un ejercicio
 interface Ejercicio {
@@ -73,7 +75,7 @@ const limpiarFiltro = () => {
 
 // Cargar los ejercicios
 const loadEjercicios = async () => {
-  if (!authService.isAuthenticated()) {
+  if (!authStore.isAuthenticated) {
     router.push('/login');
     return;
   }
@@ -82,7 +84,7 @@ const loadEjercicios = async () => {
     isLoading.value = true;
     
     // Obtener el token de autenticación
-    const token = authService.getToken();
+    const token = authStore.token;
     
     // Hacer la solicitud a la API
     const response = await fetch(API_URL+'/api/getExercicis', {
@@ -123,7 +125,7 @@ const loadEjercicios = async () => {
 // Cargar los grupos musculares
 const loadGruposMusculares = async () => {
   try {
-    const token = authService.getToken();
+    const token = authStore.token;
     
     const response = await fetch(API_URL+'/api/getGrupsMusculars', {
       method: 'POST',
@@ -280,7 +282,7 @@ const guardarEdicionEjercicio = async () => {
   try {
     isLoading.value = true;
     
-    const token = authService.getToken();
+    const token = authStore.token;
     
     // Preparar los datos para la solicitud
     const requestData = {

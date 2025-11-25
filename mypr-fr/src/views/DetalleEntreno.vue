@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import authService from '../services/auth';
+import {useAuthStore} from   '../stores/auth';  
 import { guardarNuevoEjercicio } from '../utils/ejercicioUtils';
 import Chatbot from '../components/Chatbot.vue';
 import BuscadorSelect from '../components/BuscadorSelect.vue';
@@ -9,6 +9,8 @@ import BuscadorSelect from '../components/BuscadorSelect.vue';
 import SerieItem from '../components/SerieItem.vue';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787';
+
+const authStore = useAuthStore();
 
 // Interfaces (Se pueden mover a un archivo types.ts para limpiar más)
 interface Entreno {
@@ -103,10 +105,10 @@ const capitalize = (s: string) => s.replace(/(^\w{1})|(\s+\w{1})/g, letter => le
 
 // Cargas de datos
 const loadEntreno = async () => {
-  if (!authService.isAuthenticated()) return router.push('/login');
+  if (!authStore.isAuthenticated) return router.push('/login');
   try {
     isLoading.value = true;
-    const token = authService.getToken();
+    const token = authStore.token;
     const res = await fetch(API_URL+'/api/getEntreno', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, entrenoId })
     });
@@ -128,7 +130,7 @@ const loadEntreno = async () => {
 
 const loadEjercicios = async () => {
   try {
-    const token = authService.getToken();
+    const token = authStore.token;
     const res = await fetch(API_URL+'/api/getExercicis', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
     if (!res.ok) throw new Error('Error ejercicios');
     ejercicios.value = await res.json();
@@ -146,7 +148,7 @@ const loadEjercicios = async () => {
 
 const loadGruposMusculares = async () => {
   try {
-    const token = authService.getToken();
+    const token = authStore.token;
     const res = await fetch(API_URL+'/api/getGrupsMusculars', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
     if (!res.ok) throw new Error('Error grupos');
     const data = await res.json();
@@ -169,7 +171,7 @@ const guardarSerie = async () => {
   
   try {
     isSaving.value = true;
-    const token = authService.getToken();
+    const token = authStore.token;
     const res = await fetch(API_URL+'/api/novaSerie', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token, entrenoId, exerciciId: nuevaSerie.value.ejercicioId, kg: nuevaSerie.value.kg, reps: nuevaSerie.value.reps })
@@ -237,7 +239,7 @@ const iniciarEdicionEntreno = () => {
 const guardarCambiosEntreno = async () => {
   if (!entreno.value) return;
   try {
-    const token = authService.getToken();
+    const token = authStore.token;
     const res = await fetch(API_URL+'/api/editEntreno', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token, entrenoId: entreno.value.EntrenoId, ...entrenoEditado.value })

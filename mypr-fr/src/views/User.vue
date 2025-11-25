@@ -1,21 +1,22 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import authService from '../services/auth';
+import { useAuthStore } from '../stores/auth';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787';
 const router = useRouter();
+const authStore = useAuthStore();
 
 const isLoading = ref(false);
 const error = ref('');
-const userInfo = ref(authService.getUserInfo());
+const userInfo = ref(authStore.userInfo);
 const chatbotPrompt = ref('');
 const isSavingPrompt = ref(false);
 
 // Cargar prompt del usuario
 const loadUserPrompt = async () => {
   try {
-    const token = authService.getToken();
+    const token = authStore.token;
     const response = await fetch(API_URL + '/api/getUser', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -34,7 +35,7 @@ const loadUserPrompt = async () => {
 const saveChatbotPrompt = async () => {
   try {
     isSavingPrompt.value = true;
-    const token = authService.getToken();
+    const token = authStore.token;
     const response = await fetch(API_URL + '/api/updateUser', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -54,7 +55,7 @@ const saveChatbotPrompt = async () => {
 
 // Descargar historial completo de entrenos
 const descargarHistorial = async () => {
-  if (!authService.isAuthenticated()) {
+  if (!authStore.isAuthenticated) {
     router.push('/login');
     return;
   }
@@ -64,7 +65,7 @@ const descargarHistorial = async () => {
     error.value = '';
     
     // Obtener el token de autenticación
-    const token = authService.getToken();
+    const token = authStore.token;
     
     // Hacer la solicitud a la API
     const response = await fetch(API_URL+'/api/downloadHistorial', {
@@ -114,10 +115,10 @@ const descargarHistorial = async () => {
 };
 
 onMounted(() => {
-  if (!authService.isAuthenticated()) {
+  if (!authStore.isAuthenticated) {
     router.push('/login');
   }
-  userInfo.value = authService.getUserInfo();
+  userInfo.value = authStore.userInfo;
   loadUserPrompt();
 });
 </script>

@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import authService from '../services/auth';
+import { useAuthStore } from '../stores/auth';
 
 const router = useRouter();
+const authStore = useAuthStore();
+
 const email = ref('');
 const password = ref('');
 const confirmPassword = ref('');
@@ -39,7 +41,7 @@ const handleRegister = async () => {
 
   try {
     isLoading.value = true;
-    await authService.register({
+    await authStore.register({
       email: email.value,
       password: password.value
     });

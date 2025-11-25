@@ -1,29 +1,25 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787';
 
-interface UserInfo {
-    email: string;
-    UserId: number;
-}
-
 export const useAuthStore = defineStore('auth', () => {
-    // Estado (State)
+    const router = useRouter();
+
+    // Estado (inicializado desde localStorage para persistencia al recargar)
     const token = ref<string | null>(localStorage.getItem('token'));
     const userId = ref<string | null>(localStorage.getItem('userId'));
 
-    // Getters (Computed)
+    // Getters
     const isAuthenticated = computed(() => {
         if (!token.value) return false;
         const exp = localStorage.getItem('exp');
-        if (exp && parseInt(exp) < (Math.floor(Date.now() / 1000))) {
-            return false;
-        }
-        return true;
+        if (!exp) return false;
+        return parseInt(exp) > Math.floor(Date.now() / 1000);
     });
 
-    const userInfo = computed<UserInfo | null>(() => {
+    const userInfo = computed(() => {
         if (!token.value) return null;
         try {
             const tokenParts = token.value.split('.');
@@ -36,77 +32,71 @@ export const useAuthStore = defineStore('auth', () => {
             }
             return null;
         } catch (error) {
-            console.error('Error decodificando token:', error);
             return null;
         }
     });
 
-    // Acciones (Actions)
-    function setToken(newToken: string) {
+    // Acciones internas
+    function setSession(newToken: string) {
         token.value = newToken;
         localStorage.setItem('token', newToken);
 
-        // Decodificar y guardar datos extra si es necesario
         try {
             const tokenParts = newToken.split('.');
             if (tokenParts.length === 3) {
                 const payload = JSON.parse(atob(tokenParts[1]));
+
                 if (payload.UserId) {
                     userId.value = payload.UserId.toString();
                     localStorage.setItem('userId', payload.UserId.toString());
                 }
                 if (payload.exp) {
-                    localStorage.setItem('exp', payload.exp);
+                    localStorage.setItem('exp', payload.exp.toString());
                 }
             }
         } catch (e) {
-            console.error(e);
+            console.error('Error parsing token', e);
         }
     }
 
+    // Acciones públicas
     function logout() {
         token.value = null;
         userId.value = null;
         localStorage.removeItem('token');
         localStorage.removeItem('userId');
         localStorage.removeItem('exp');
+        // Opcional: router.push('/login');
     }
 
-    async function login(credentials: { email: string, password: string }) {
+    async function login(data: { email: string, password: string }) {
         const response = await fetch(`${API_URL}/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(credentials)
+            body: JSON.stringify(data),
+            credentials: 'include',
         });
 
         if (!response.ok) {
-            const errorText = await response.text();
-            // Intentar parsear como JSON, si falla usar texto plano
-            try {
-                const errorJson = JSON.parse(errorText);
-                throw new Error(errorJson.message || 'Error al iniciar sesión');
-            } catch {
-                throw new Error(errorText || 'Error al iniciar sesión');
-            }
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Error al iniciar sesión');
         }
 
-        const data = await response.json();
-        setToken(data.token);
-        return data;
+        const responseData = await response.json();
+        setSession(responseData.token);
     }
 
-    async function register(credentials: { email: string, password: string }) {
+    async function register(data: { email: string, password: string }) {
         const response = await fetch(`${API_URL}/signup`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(credentials)
+            body: JSON.stringify(data),
         });
 
         if (!response.ok) {
             const error = await response.text();
             throw new Error(error);
         }
-
         return await response.json();
     }
 
@@ -116,7 +106,7 @@ export const useAuthStore = defineStore('auth', () => {
         isAuthenticated,
         userInfo,
         login,
-        logout,
-        register
+        register,
+        logout
     };
 });

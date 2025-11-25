@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import authService from '../services/auth';
+import { useAuthStore } from '../stores/auth';
 
 const router = useRouter();
+const authStore = useAuthStore();
+
 const email = ref('');
 const password = ref('');
 const errorMessage = ref('');
 const isLoading = ref(false);
 
-if(authService.isAuthenticated()){
+if(authStore.isAuthenticated){
   router.push('/entrenos');
 }
 const handleLogin = async () => {
@@ -22,7 +24,7 @@ const handleLogin = async () => {
     isLoading.value = true;
     
     // Usar el servicio de autenticación para iniciar sesión
-    await authService.login({
+    await authStore.login({
       email: email.value,
       password: password.value
     });
