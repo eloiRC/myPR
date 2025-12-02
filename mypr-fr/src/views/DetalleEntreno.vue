@@ -86,6 +86,9 @@ const entrenoEditado = ref({ nom: '', descripcio: '', puntuacio: 3 });
 const cargaCalculada = computed(() => nuevaSerie.value.kg * nuevaSerie.value.reps);
 const ejerciciosUnicos = computed(() => new Set(series.value.map(serie => serie.ExerciciId)).size);
 
+// Mostrar las series con la más reciente arriba (invertido respecto al orden base)
+const seriesDisplay = computed(() => series.value.slice().reverse());
+
 const ejercicioGrupoMap = computed(() => {
   const map = new Map();
   if (ejercicios.value.length === 0 || gruposMusculares.value.length === 0) return map;
@@ -212,7 +215,7 @@ const guardarSerie = async () => {
 // Handlers para eventos del hijo (SerieItem)
 const onSerieUpdated = (payload: any) => {
   // Actualización local sin recargar toda la página
-  const { data, serieId, entrenoId, exerciciId, kg, reps } = payload;
+  const { data, serieId, exerciciId, kg, reps } = payload;
 
   // Actualizar totales del entreno (servidor devuelve en kg)
   if (entreno.value && data?.cargaTotal !== undefined) {
@@ -455,7 +458,7 @@ const onDrop = async (targetId: number) => {
       <!-- LISTA DE SERIES COMPONENTIZADA -->
       <div v-else class="series-list">
         <SerieItem 
-          v-for="serie in series" 
+          v-for="serie in seriesDisplay" 
           :key="serie.SerieId"
           :serie="serie"
           :ejercicios="ejercicios"
