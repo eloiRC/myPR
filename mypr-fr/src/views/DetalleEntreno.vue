@@ -117,7 +117,7 @@ const loadEntreno = async () => {
     const data = await res.json();
     entreno.value = data.entreno[0];
     if (entreno.value) entreno.value.CargaTotal = parseFloat((entreno.value.CargaTotal / 1000).toFixed(2));
-    series.value = data.series.reverse();
+    series.value = data.series;
     
     await loadEjercicios();
     if (gruposMusculares.value.length === 0) await loadGruposMusculares();
@@ -195,7 +195,7 @@ const guardarSerie = async () => {
         ExerciciId: nuevaSerie.value.ejercicioId, Kg: nuevaSerie.value.kg, Reps: nuevaSerie.value.reps,
         Carga: nuevaSerie.value.kg * nuevaSerie.value.reps, PR: data.newPr, Data: Math.floor(Date.now() / 1000)
       };
-      series.value.unshift(nuevaSerieLocal);
+      series.value.push(nuevaSerieLocal);
     }
 
     // Resetear formulario (manteniendo ejercicio)
@@ -210,22 +210,71 @@ const guardarSerie = async () => {
 };
 
 // Handlers para eventos del hijo (SerieItem)
-const onSerieUpdated = async (payload: any) => {
-  // Recargamos todo el entreno para asegurar consistencia de totales y PRs
-  // (Se podría hacer optimista también, pero editar es menos frecuente que crear)
-  await loadEntreno();
-  
-  if (payload.data.newPr) {
-    const ej = ejercicios.value.find(e => e.ExerciciId === payload.exerciciId);
-    prMessage.value = `¡Felicidades! Nuevo PR en ${ej?.Nom} con ${payload.kg}kg`;
+const onSerieUpdated = (payload: any) => {
+  // Actualización local sin recargar toda la página
+  const { data, serieId, entrenoId, exerciciId, kg, reps } = payload;
+
+  // Actualizar totales del entreno (servidor devuelve en kg)
+  if (entreno.value && data?.cargaTotal !== undefined) {
+    entreno.value.CargaTotal = parseFloat((data.cargaTotal / 1000).toFixed(2));
+  }
+
+  // Encontrar serie y actualizar campos
+  const idx = series.value.findIndex(s => s.SerieId === serieId);
+  if (idx !== -1) {
+    const oldExerciciId = series.value[idx].ExerciciId;
+    series.value[idx].ExerciciId = exerciciId;
+    series.value[idx].Kg = kg;
+    series.value[idx].Reps = reps;
+    series.value[idx].Carga = kg * reps;
+
+    // Recalcular PR para el ejercicio anterior si cambió
+    const affectedExercises = new Set<number>([oldExerciciId, exerciciId]);
+    affectedExercises.forEach((exId) => {
+      const group = series.value.filter(s => s.ExerciciId === exId);
+      if (group.length > 0) {
+        const maxKg = Math.max(...group.map(s => s.Kg));
+        group.forEach(s => { s.PR = s.Kg === maxKg; });
+      }
+    });
+  }
+
+  // Alerta PR si corresponde
+  if (data?.newPr) {
+    const ej = ejercicios.value.find(e => e.ExerciciId === exerciciId);
+    prMessage.value = `¡Felicidades! Nuevo PR en ${ej?.Nom} con ${kg}kg`;
     showPrAlert.value = true;
     setTimeout(() => showPrAlert.value = false, 5000);
   }
 };
 
-const onSerieDeleted = async () => {
+const onSerieDeleted = (payload: any) => {
+  // Eliminar localmente y actualizar totales/PRs sin recargar
+  const { data, serieId, exerciciId, carga } = payload;
   alertWindow('¡Serie eliminada!');
-  await loadEntreno();
+
+  // Actualizar total del entreno (usar valor del servidor si está, si no, restar localmente)
+  if (entreno.value) {
+    if (data?.cargaTotal !== undefined) {
+      entreno.value.CargaTotal = parseFloat((data.cargaTotal / 1000).toFixed(2));
+    } else if (typeof carga === 'number') {
+      const nuevaCargaKg = Math.max(0, (entreno.value.CargaTotal * 1000) - carga);
+      entreno.value.CargaTotal = parseFloat((nuevaCargaKg / 1000).toFixed(2));
+    }
+  }
+
+  // Quitar serie
+  const idx = series.value.findIndex(s => s.SerieId === serieId);
+  if (idx !== -1) {
+    series.value.splice(idx, 1);
+  }
+
+  // Recalcular PR del ejercicio afectado
+  const group = series.value.filter(s => s.ExerciciId === exerciciId);
+  if (group.length > 0) {
+    const maxKg = Math.max(...group.map(s => s.Kg));
+    group.forEach(s => { s.PR = s.Kg === maxKg; });
+  }
 };
 
 // Entreno Header lógica
@@ -240,14 +289,33 @@ const guardarCambiosEntreno = async () => {
   if (!entreno.value) return;
   try {
     const token = authStore.token;
-    const res = await fetch(API_URL+'/api/editEntreno', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, entrenoId: entreno.value.EntrenoId, ...entrenoEditado.value })
+    const res = await fetch(API_URL + '/api/editEntreno', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        token,
+        entrenoId: entreno.value.EntrenoId,
+        nom: entrenoEditado.value.nom,
+        descripcio: entrenoEditado.value.descripcio,
+        puntuacio: entrenoEditado.value.puntuacio
+      })
     });
     if (!res.ok) throw new Error('Error update');
-    await loadEntreno();
+    const data = await res.json();
+
+    // Actualización local sin recargar
+    const updated = data?.entreno;
+    if (updated && entreno.value) {
+      entreno.value.Nom = updated.Nom ?? entrenoEditado.value.nom;
+      entreno.value.Descripcio = updated.Descripcio ?? entrenoEditado.value.descripcio ?? '';
+      entreno.value.Puntuacio = updated.Puntuacio ?? entrenoEditado.value.puntuacio ?? null;
+      // Nota: mantenemos CargaTotal tal como está (ya formateada en Tn)
+    }
+
     editandoEntreno.value = false;
-  } catch (e: any) { error.value = e.message; }
+  } catch (e: any) {
+    error.value = e.message;
+  }
 };
 
 // Lógica Modal Ejercicio
@@ -277,6 +345,35 @@ const abrirModalEjercicio = () => {
 };
 
 onMounted(loadEntreno);
+
+// Drag-and-drop reordenado
+const dragSerieId = ref<number | null>(null);
+const onDragStart = (id: number) => { dragSerieId.value = id; };
+const onDrop = async (targetId: number) => {
+  if (dragSerieId.value === null) return;
+  const fromIdx = series.value.findIndex(s => s.SerieId === dragSerieId.value);
+  const toIdx = series.value.findIndex(s => s.SerieId === targetId);
+  dragSerieId.value = null;
+  if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
+
+  const prevOrder = [...series.value];
+  const [moved] = series.value.splice(fromIdx, 1);
+  series.value.splice(toIdx, 0, moved);
+
+  try {
+    const token = authStore.token;
+    const res = await fetch(API_URL + '/api/reorderSerie', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, entrenoId, serieId: moved.SerieId, newIndex: toIdx })
+    });
+    if (!res.ok) throw new Error('Error al reordenar');
+    await res.json();
+  } catch (e) {
+    series.value = prevOrder;
+    alertWindow('No se pudo reordenar. Inténtalo de nuevo.');
+  }
+};
 </script>
 
 <template>
@@ -367,6 +464,8 @@ onMounted(loadEntreno);
           @serieDeleted="onSerieDeleted"
           @openModalEjercicio="abrirModalEjercicio"
           @goToEjercicio="(id) => router.push(`/ejercicio/${id}`)"
+          @dragStart="onDragStart"
+          @drop="onDrop"
         />
       </div>
     </div>

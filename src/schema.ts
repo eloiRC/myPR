@@ -83,6 +83,11 @@ export const deleteSerie = z.object({
     serieId: z.number().min(1)
 })
 
+export const deleteEntreno = z.object({
+    token: z.string().min(10),
+    entrenoId: z.number().min(1)
+})
+
 export const getExercici = z.object({
     token: z.string().min(10),
     exerciciId: z.number().min(1)
@@ -96,6 +101,13 @@ export const getPesosHistorial = z.object({
 export const getCargaHistorial = z.object({
     token: z.string().min(10),
     exerciciId: z.number().min(1)
+})
+
+export const reorderSerie = z.object({
+    token: z.string().min(10),
+    entrenoId: z.number().min(1),
+    serieId: z.number().min(1),
+    newIndex: z.number().min(0)
 })
 
 export const chatGPT = z.object({
@@ -178,4 +190,3 @@ export const updateUser = z.object({
 export const getUser = z.object({
     token: z.string().min(10)
 })
-

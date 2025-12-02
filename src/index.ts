@@ -4,7 +4,7 @@ import { zValidator } from '@hono/zod-validator'
 import { HTTPException } from 'hono/http-exception'
 import { cors } from 'hono/cors'
 import { jwt } from 'hono/jwt'
-import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars, getExercici, getPesosHistorial, nouEntreno, editEntreno, getCargaHistorial, chatGPT, updateUser, getUser } from './schema'
+import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars, getExercici, getPesosHistorial, nouEntreno, editEntreno, getCargaHistorial, chatGPT, updateUser, getUser, deleteEntreno, reorderSerie } from './schema'
 import { hashPassword, verifyPassword, generateJWT, verifyJWT } from './jwt'
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai'
 import { startsWith } from 'zod/v4'
@@ -62,8 +62,13 @@ async function addSerieToDb(c: any, userId: number, entrenoId: number, exerciciI
     await c.env.DB.prepare('UPDATE Series SET PR=FALSE WHERE UserID=? AND ExerciciId=? AND PR=TRUE ').bind(userId, exerciciId).run()
   }
 
+  // Calcular el nuevo orden al final del entreno
+  const maxOrder = await c.env.DB.prepare('SELECT COALESCE(MAX(Orden), 0) as maxOrden FROM Series WHERE UserId=? AND EntrenoId=?')
+    .bind(userId, entrenoId).all();
+  const newOrden = Number(maxOrder.results?.[0]?.maxOrden || 0) + 1;
+
   // Insertar la nueva serie
-  const result = await c.env.DB.prepare('INSERT INTO Series (UserId,EntrenoId,ExerciciId,Kg,Reps,Carga,PR,Data) VALUES (?,?,?,?,?,?,?,?) RETURNING *').bind(userId, entrenoId, exerciciId, kg, reps, carga, prUpdated, data).run()
+  const result = await c.env.DB.prepare('INSERT INTO Series (UserId,EntrenoId,ExerciciId,Kg,Reps,Carga,PR,Data,Orden) VALUES (?,?,?,?,?,?,?,?,?) RETURNING *').bind(userId, entrenoId, exerciciId, kg, reps, carga, prUpdated, data, newOrden).run()
 
   // Actualizar carga total del entreno
   const updateCarga = await c.env.DB.prepare('UPDATE Entreno SET CargaTotal=CargaTotal+? WHERE UserID=? AND EntrenoId=?  RETURNING *').bind(carga, userId, entrenoId).run()
@@ -197,6 +202,29 @@ app.post('/api/deleteSerie', zValidator('json', deleteSerie), async (c) => {
 
 })
 
+// eliminar un entreno completo del usuario (primero borra sus series)
+app.post('/api/deleteEntreno', zValidator('json', deleteEntreno), async (c) => {
+  const { entrenoId } = await c.req.json();
+  const userId = await c.get('jwtPayload').UserId
+
+  try {
+    // Borrar todas las series asociadas a este entreno para el usuario
+    await c.env.DB.prepare('DELETE FROM Series WHERE EntrenoId=? AND UserId=?').bind(entrenoId, userId).run()
+
+    // Borrar el entreno
+    const result = await c.env.DB.prepare('DELETE FROM Entreno WHERE EntrenoId=? AND UserId=?').bind(entrenoId, userId).run()
+
+    if (result.meta.rows_written && result.meta.rows_written > 0) {
+      return c.json({ message: 'Entreno Borrado', entrenoId })
+    } else {
+      return c.json({ message: 'Entreno NO Borrado' }, 404)
+    }
+  } catch (error) {
+    console.log(error)
+    throw new HTTPException(500, { message: 'error sql query' })
+  }
+})
+
 
 //retorna tots els entrtenos entre dos dates d'un usuari
 app.post('/api/getEntrenos', zValidator('json', getEntrenos), async (c) => {
@@ -252,9 +280,48 @@ app.post('/api/getEntreno', zValidator('json', getEntreno), async (c) => {
 
   try {
     const resultsE = await c.env.DB.prepare('SELECT * FROM Entreno WHERE EntrenoId=? AND UserId=?').bind(entrenoId, userId).all();
-    const resultsS = await c.env.DB.prepare('SELECT * FROM Series WHERE EntrenoId = ? AND UserId=?').bind(entrenoId, userId).all();
+    const resultsS = await c.env.DB.prepare('SELECT * FROM Series WHERE EntrenoId = ? AND UserId=? ORDER BY Orden ASC, SerieId ASC').bind(entrenoId, userId).all();
 
     return c.json({ entreno: resultsE.results, series: resultsS.results })
+  } catch (error) {
+    console.log(error)
+    throw new HTTPException(500, { message: 'error sql query' })
+  }
+})
+
+// Reordenar una serie dentro de un entreno
+app.post('/api/reorderSerie', zValidator('json', reorderSerie), async (c) => {
+  const { entrenoId, serieId, newIndex } = await c.req.json();
+  const userId = await c.get('jwtPayload').UserId;
+
+  try {
+    const current = await c.env.DB
+      .prepare('SELECT SerieId, Orden FROM Series WHERE EntrenoId=? AND UserId=? ORDER BY Orden ASC, SerieId ASC')
+      .bind(entrenoId, userId)
+      .all();
+
+    const list = current.results || [];
+    if (list.length === 0) return c.json({ message: 'no series' });
+
+    const ids = list.map((s: any) => s.SerieId);
+    const fromIdx = ids.indexOf(serieId);
+    if (fromIdx === -1) throw new HTTPException(404, { message: 'serie not found' });
+
+    const toIdx = Math.min(Math.max(newIndex, 0), ids.length - 1);
+    if (toIdx === fromIdx) return c.json({ message: 'no change' });
+
+    const reordered = [...ids];
+    const [moved] = reordered.splice(fromIdx, 1);
+    reordered.splice(toIdx, 0, moved);
+
+    for (let i = 0; i < reordered.length; i++) {
+      await c.env.DB
+        .prepare('UPDATE Series SET Orden=? WHERE SerieId=? AND UserId=? AND EntrenoId=?')
+        .bind(i + 1, reordered[i], userId, entrenoId)
+        .run();
+    }
+
+    return c.json({ message: 'reordered', orden: reordered.map((id, i) => ({ serieId: id, orden: i + 1 })) });
   } catch (error) {
     console.log(error)
     throw new HTTPException(500, { message: 'error sql query' })

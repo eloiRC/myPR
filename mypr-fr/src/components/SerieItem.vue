@@ -15,7 +15,7 @@ interface Props {
 const props = defineProps<Props>();
 
 // Emits
-const emit = defineEmits(['serieUpdated', 'serieDeleted', 'openModalEjercicio', 'goToEjercicio']);
+const emit = defineEmits(['serieUpdated', 'serieDeleted', 'openModalEjercicio', 'goToEjercicio', 'dragStart', 'drop']);
 
 // Estado local
 const isEditing = ref(false);
@@ -29,14 +29,10 @@ const serieEditada = ref({
 // Estado completado
 const isCompleted = ref(false);
 
-// Variables para Long Press
-const longPressTimer = ref<ReturnType<typeof setTimeout> | null>(null);
-const isPressing = ref(false); // Para efecto visual al presionar
-const isTouchInteraction = ref(false); // Para evitar conflictos touch/mouse
-
-// Variables para detectar scroll
-const startX = ref(0);
-const startY = ref(0);
+// Variables para triple pulsación
+const tapCount = ref(0);
+const lastTapTime = ref<number>(0);
+const TAP_WINDOW_MS = 800;
 
 // Cargar estado
 onMounted(() => {
@@ -63,66 +59,32 @@ watch(isCompleted, (newValue) => {
   }
 });
 
-// --- Lógica de Long Press ---
-const startLongPress = () => {
-  isPressing.value = true;
-  longPressTimer.value = setTimeout(() => {
-    // Acción al completar el tiempo (800ms)
+// --- Triple click / tap para marcar completado ---
+const onCardClick = () => {
+  if (isEditing.value || isLoading.value) return;
+  const now = Date.now();
+  if (now - lastTapTime.value > TAP_WINDOW_MS) {
+    tapCount.value = 0;
+  }
+  tapCount.value += 1;
+  lastTapTime.value = now;
+  if (tapCount.value >= 3) {
     isCompleted.value = !isCompleted.value;
-    if (navigator.vibrate) navigator.vibrate(50); // Vibración háptica
-    isPressing.value = false; // Terminar efecto visual
-  }, 800); 
-};
-
-const cancelLongPress = () => {
-  if (longPressTimer.value) {
-    clearTimeout(longPressTimer.value);
-    longPressTimer.value = null;
-  }
-  isPressing.value = false;
-};
-
-// --- Eventos Touch (Móvil) ---
-const onTouchStart = (e: TouchEvent) => {
-  if (isEditing.value) return; 
-  isTouchInteraction.value = true; 
-  
-  // Guardamos posición inicial para detectar si hace scroll luego
-  startX.value = e.touches[0].clientX;
-  startY.value = e.touches[0].clientY;
-  
-  startLongPress();
-};
-
-const onTouchMove = (e: TouchEvent) => {
-  if (!isPressing.value) return;
-  
-  const currentX = e.touches[0].clientX;
-  const currentY = e.touches[0].clientY;
-  
-  // Si se mueve más de 10px en cualquier dirección, es que está haciendo scroll o moviendo el dedo
-  // Cancelamos el long press
-  if (Math.abs(currentX - startX.value) > 10 || Math.abs(currentY - startY.value) > 10) {
-    cancelLongPress();
+    tapCount.value = 0;
+    if (navigator.vibrate) navigator.vibrate(50);
   }
 };
 
-const onTouchEnd = () => {
-  cancelLongPress(); // Si levanta el dedo antes de los 800ms, cancela
+// --- Drag & Drop ---
+const onDragStart = (e: DragEvent) => {
+  if (isEditing.value || isLoading.value) return;
+  e.dataTransfer?.setData('text/plain', String(props.serie.SerieId));
+  emit('dragStart', props.serie.SerieId);
 };
 
-// --- Eventos Mouse (PC) ---
-const onMouseDown = () => {
-  if (isEditing.value || isTouchInteraction.value) return;
-  startLongPress();
-};
-
-const onMouseUp = () => {
-  cancelLongPress();
-};
-
-const onMouseLeave = () => {
-  cancelLongPress();
+const onDrop = (e: DragEvent) => {
+  e.preventDefault();
+  emit('drop', props.serie.SerieId);
 };
 
 // Edición y lógica estándar...
@@ -161,7 +123,14 @@ const saveEdit = async () => {
     });
     if (!response.ok) throw new Error('Error al editar la serie');
     const data = await response.json();
-    emit('serieUpdated', { data, exerciciId: serieEditada.value.ejercicioId, kg: serieEditada.value.kg });
+    emit('serieUpdated', {
+      data,
+      serieId: props.serie.SerieId,
+      entrenoId: props.serie.EntrenoId,
+      exerciciId: serieEditada.value.ejercicioId,
+      kg: serieEditada.value.kg,
+      reps: serieEditada.value.reps
+    });
     isEditing.value = false;
   } catch (error) {
     console.error(error);
@@ -182,8 +151,15 @@ const deleteSerie = async () => {
       body: JSON.stringify({ token, serieId: props.serie.SerieId })
     });
     if (!response.ok) throw new Error('Error al eliminar');
+    const data = await response.json();
     localStorage.removeItem(`serie_completed_${props.serie.SerieId}`);
-    emit('serieDeleted');
+    emit('serieDeleted', {
+      data,
+      serieId: props.serie.SerieId,
+      entrenoId: props.serie.EntrenoId,
+      exerciciId: props.serie.ExerciciId,
+      carga: props.serie.Carga
+    });
   } catch (error) {
     console.error(error);
     alert('Error al eliminar la serie');
@@ -199,14 +175,13 @@ const deleteSerie = async () => {
     :class="{ 
       'editing': isEditing, 
       'serie-done': isCompleted, 
-      'pressing': isPressing 
+      'serie-pending': !isCompleted,
     }"
-    @touchstart="onTouchStart"
-    @touchmove="onTouchMove"
-    @touchend="onTouchEnd"
-    @mousedown="onMouseDown"
-    @mouseup="onMouseUp"
-    @mouseleave="onMouseLeave"
+    draggable="true"
+    @dragstart="onDragStart"
+    @dragover.prevent
+    @drop.prevent="onDrop"
+    @click="onCardClick"
   >
     <!-- MODO VISUALIZACIÓN -->
     <template v-if="!isEditing">
@@ -269,22 +244,24 @@ const deleteSerie = async () => {
   position: relative;
   background-color: var(--bg-secondary);
   user-select: none; /* Importante para evitar selección de texto al mantener pulsado */
-  transition: transform 0.1s, background-color 0.3s ease, border-color 0.3s ease;
-}
-
-/* Efecto visual al mantener pulsado: se encoge un poco */
-.pressing {
-  transform: scale(0.97) !important;
-  background-color: rgba(255, 255, 255, 0.05); /* Ligeramente más claro/oscuro según tema */
+  transition: transform 0.1s, background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid transparent;
 }
 
 .serie-done {
-  background-color: rgba(15, 139, 141, 0.08);
-  border-color: rgba(15, 139, 141, 0.3);
+  background: linear-gradient(0deg, rgba(15,139,141,0.10) 0%, rgba(15,139,141,0.06) 100%);
+  border-color: rgba(15, 139, 141, 0.5);
+  border-left: 6px solid #0f8b8d;
+  box-shadow: inset 0 0 0 999px rgba(15, 139, 141, 0.05);
+}
+
+.serie-pending {
+  background-color: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .text-dimmed {
-  opacity: 0.5;
+  opacity: 0.38;
   transition: opacity 0.3s ease;
 }
 
@@ -295,6 +272,7 @@ const deleteSerie = async () => {
   font-style: italic;
   opacity: 0.6;
 }
+
 
 @media (max-width: 480px) {
   .serie-actions {

@@ -275,6 +275,29 @@ const crearNuevoEntreno = async () => {
   }
 };
 
+// Eliminar un entreno completo (con confirmación)
+const eliminarEntreno = async (entrenoId: number) => {
+  if (!confirm('¿Estás seguro de eliminar este entreno? Se borrarán todas sus series.')) return;
+  try {
+    isLoading.value = true;
+    const token = authStore.token;
+    const response = await fetch(API_URL + '/api/deleteEntreno', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, entrenoId })
+    });
+    if (!response.ok) {
+      throw new Error('Error al eliminar entreno');
+    }
+    // Eliminar de la lista local sin recargar
+    entrenos.value = entrenos.value.filter(e => e.EntrenoId !== entrenoId);
+  } catch (err: any) {
+    error.value = err.message || 'Error al eliminar entreno';
+    console.error('Error al eliminar entreno:', err);
+  } finally {
+    isLoading.value = false;
+  }
+}
 
 // Inicializar el rango de fechas al montar el componente
 onMounted(() => {
@@ -383,6 +406,9 @@ onMounted(() => {
             <p class="date">{{ formatDate(entreno.Data) }}</p>
             <p class="carga">Peso total: <strong class="num-carga">{{ entreno.CargaTotal }} Tn</strong></p>
           </div>
+          <div class="entreno-actions">
+            <button class="btn btn-danger" @click.stop="eliminarEntreno(entreno.EntrenoId)" :disabled="isLoading">Eliminar</button>
+          </div>
           
         </div>
       </div>
@@ -458,6 +484,11 @@ onMounted(() => {
   flex: 1;
 }
 
+.entreno-actions {
+  display: flex;
+  align-items: center;
+}
+
 .entreno-info h3 {
   margin: 0 0 0.5rem;
   font-size: 1.1rem;
@@ -517,6 +548,16 @@ onMounted(() => {
 
 .btn-secondary:hover {
   background-color: rgba(25, 86, 200, 0.1);
+}
+
+.btn-danger {
+  background-color: #c02a5d;
+  color: white;
+  border: none;
+}
+
+.btn-danger:hover {
+  background-color: #a1244e;
 }
 
 .btn:disabled {
