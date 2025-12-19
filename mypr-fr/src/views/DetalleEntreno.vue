@@ -225,21 +225,16 @@ const onSerieUpdated = (payload: any) => {
   // Encontrar serie y actualizar campos
   const idx = series.value.findIndex(s => s.SerieId === serieId);
   if (idx !== -1) {
-    const oldExerciciId = series.value[idx].ExerciciId;
+
     series.value[idx].ExerciciId = exerciciId;
     series.value[idx].Kg = kg;
     series.value[idx].Reps = reps;
     series.value[idx].Carga = kg * reps;
 
-    // Recalcular PR para el ejercicio anterior si cambió
-    const affectedExercises = new Set<number>([oldExerciciId, exerciciId]);
-    affectedExercises.forEach((exId) => {
-      const group = series.value.filter(s => s.ExerciciId === exId);
-      if (group.length > 0) {
-        const maxKg = Math.max(...group.map(s => s.Kg));
-        group.forEach(s => { s.PR = s.Kg === maxKg; });
-      }
-    });
+    // Actualizar PR de la serie específica si el servidor devuelve nueva información
+    if (data && typeof data.newPr !== 'undefined') {
+      series.value[idx].PR = !!data.newPr;
+    }
   }
 
   // Alerta PR si corresponde
@@ -253,7 +248,7 @@ const onSerieUpdated = (payload: any) => {
 
 const onSerieDeleted = (payload: any) => {
   // Eliminar localmente y actualizar totales/PRs sin recargar
-  const { data, serieId, exerciciId, carga } = payload;
+  const { data, serieId, carga } = payload;
   alertWindow('¡Serie eliminada!');
 
   // Actualizar total del entreno (usar valor del servidor si está, si no, restar localmente)
@@ -272,12 +267,7 @@ const onSerieDeleted = (payload: any) => {
     series.value.splice(idx, 1);
   }
 
-  // Recalcular PR del ejercicio afectado
-  const group = series.value.filter(s => s.ExerciciId === exerciciId);
-  if (group.length > 0) {
-    const maxKg = Math.max(...group.map(s => s.Kg));
-    group.forEach(s => { s.PR = s.Kg === maxKg; });
-  }
+
 };
 
 // Entreno Header lógica
