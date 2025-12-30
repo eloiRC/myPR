@@ -640,9 +640,9 @@ app.post('/api/gemini', zValidator('json', chatGPT), async (c) => {
 
     const genAI = new GoogleGenerativeAI(c.env.GEMINI_API_KEY);
 
-    let modelVersion = 'gemini-2.5-flash'
+    let modelVersion = 'gemini-flash-latest'
     if (userId == 13) {
-      modelVersion = 'gemini-2.5-flash' // Usamos flash por rapidez
+      modelVersion = 'gemini-3-flash-preview' // Usamos flash por rapidez\
     }
 
     const model = genAI.getGenerativeModel({
