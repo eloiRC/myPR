@@ -70,21 +70,29 @@ const sendMessage = async () => {
   newMessage.value = '';
   isLoading.value = true;
   
+  // Crear mensaje del bot vacío para ir llenándolo con el stream
+  const botMessageId = Date.now() + 1;
+  messages.value.push({
+    id: botMessageId,
+    text: '',
+    isUser: false,
+    timestamp: new Date()
+  });
+  
   try {
     // Validar que tenemos los datos necesarios
     if (!props.entrenoData) {
       throw new Error('Los datos del entrenamiento no están disponibles. Por favor, espera un momento.');
     }
 
-    // Preparar los datos del entrenamiento current
     const currentTraining = {
       entreno: props.entrenoData,
       series: props.series || [],
-      ejercicios: props.ejercicios || [] // Pasamos todos los ejercicios disponibles
+      ejercicios: props.ejercicios || []
     };
     
-    // Preparar el historial (excluyendo el mensaje actual que acabamos de añadir)
-    const rawHistory = messages.value.slice(0, -1);
+    // Preparar el historial (excluyendo el mensaje actual y el bot vacío)
+    const rawHistory = messages.value.slice(0, -2);
     
     const firstUserIndex = rawHistory.findIndex(msg => msg.isUser);
     const validHistory = firstUserIndex !== -1 ? rawHistory.slice(firstUserIndex) : [];
@@ -94,13 +102,6 @@ const sendMessage = async () => {
       parts: [{ text: msg.text }]
     }));
 
-    // Enviar mensaje al asistente (Gemini)
-    // Usamos fetch directo aquí porque necesitamos acceder a campos extra como workoutUpdated
-    // que chatGPTService.sendMessage podría no estar retornando actualmente
-    // O mejor, actualizamos chatGPTService, pero para este ejemplo rápido modificamos aquí o usamos el servicio si devuelve el objeto completo.
-    // Como chatGPTService devuelve string, haremos la llamada aquí o adaptaremos el servicio.
-    // Para mantener consistencia, usaremos una llamada directa similar a la del servicio pero capturando la respuesta completa.
-    
     const token = localStorage.getItem('token');
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787';
     
@@ -122,21 +123,56 @@ const sendMessage = async () => {
         throw new Error('Error al comunicar con el asistente');
     }
 
-    const data = await response.json();
-    
-    // Añadir respuesta del bot
-    messages.value.push({
-      id: Date.now(),
-      text: data.response,
-      isUser: false,
-      timestamp: new Date()
-    });
+    // Consumir el stream SSE
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error('No se pudo leer la respuesta');
 
-    // Si el backend indica que actualizó el entrenamiento, emitimos evento
-    if (data.workoutUpdated) {
-      emit('refresh');
-      // Opcional: Añadir mensaje de sistema local
-      // messages.value.push({ id: Date.now(), text: '✅ Rutina cargada automáticamente.', isUser: false, timestamp: new Date() });
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let streamedText = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      
+      // Procesar líneas SSE completas
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || ''; // Guardar línea incompleta
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try {
+            const eventData = JSON.parse(line.slice(6));
+            
+            if (eventData.type === 'chunk') {
+              streamedText += eventData.text;
+              // Actualizar el mensaje del bot en tiempo real (limpiar json_plan si aparece parcialmente)
+              const botMsg = messages.value.find(m => m.id === botMessageId);
+              if (botMsg) {
+                botMsg.text = streamedText.replace(/```json_plan[\s\S]*$/,'').trim();
+              }
+            } else if (eventData.type === 'done') {
+              // Usar el texto limpio final del backend
+              const botMsg = messages.value.find(m => m.id === botMessageId);
+              if (botMsg) {
+                botMsg.text = eventData.fullText;
+              }
+              if (eventData.workoutUpdated) {
+                emit('refresh');
+              }
+            } else if (eventData.type === 'error') {
+              const botMsg = messages.value.find(m => m.id === botMessageId);
+              if (botMsg) {
+                botMsg.text = eventData.message || 'Error al generar la respuesta.';
+              }
+            }
+          } catch (parseError) {
+            // Ignorar líneas que no se pueden parsear
+          }
+        }
+      }
     }
     
     // Marcar que ya no es el primer mensaje
@@ -144,13 +180,11 @@ const sendMessage = async () => {
       isFirstMessage.value = false;
     }
   } catch (error: any) {
-    // En caso de error, mostrar mensaje de error
-    messages.value.push({
-      id: Date.now(),
-      text: error.message || 'Lo siento, hubo un error al procesar tu mensaje. Por favor, intenta de nuevo.',
-      isUser: false,
-      timestamp: new Date()
-    });
+    // En caso de error, actualizar el mensaje del bot vacío con el error
+    const botMsg = messages.value.find(m => m.id === botMessageId);
+    if (botMsg) {
+      botMsg.text = error.message || 'Lo siento, hubo un error al procesar tu mensaje. Por favor, intenta de nuevo.';
+    }
   } finally {
     isLoading.value = false;
   }
@@ -259,6 +293,7 @@ const handleClickOutside = (event: MouseEvent) => {
           <div 
             v-for="message in messages" 
             :key="message.id"
+            v-show="message.text || message.isUser"
             class="message"
             :class="{ 'user-message': message.isUser, 'bot-message': !message.isUser }">
             <div class="message-content">
@@ -269,8 +304,8 @@ const handleClickOutside = (event: MouseEvent) => {
             </div>
           </div>
           
-          <!-- Indicador de carga -->
-          <div v-if="isLoading" class="message bot-message">
+          <!-- Indicador de carga (visible hasta que llega el primer token) -->
+          <div v-if="isLoading && (!messages.length || messages[messages.length - 1]?.text === '')" class="message bot-message">
             <div class="message-content">
               <div class="typing-indicator">
                 <span></span>

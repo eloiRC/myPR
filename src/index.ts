@@ -556,83 +556,106 @@ app.post('/api/updateUser', zValidator('json', updateUser), async (c) => {
 });
 
 
-// Endpoint para Gemini
+// Endpoint para Gemini (Streaming SSE)
 app.post('/api/gemini', zValidator('json', chatGPT), async (c) => {
   const { message, currentTraining, history } = await c.req.json();
   const userId = await c.get('jwtPayload').UserId;
 
   try {
-    const userStats = await getUserStats(userId, c);
-    const seriesCurrentTraining = await getFullSeriesListFromTraining(currentTraining.entreno.EntrenoId, c);
+    // Ejecutar todas las queries DB en paralelo para reducir latencia
+    const [userStats, seriesCurrentTraining, user] = await Promise.all([
+      getUserStats(userId, c),
+      getFullSeriesListFromTraining(currentTraining.entreno.EntrenoId, c),
+      c.env.DB.prepare('SELECT ChatbotPrompt FROM Users WHERE UserId = ?').bind(userId).first()
+    ]);
 
-    // Obtenemos todos los ejercicios disponibles para mapear IDs
-    // currentTraining.ejercicios contiene la lista completa de ejercicios disponibles según el frontend
     const availableExercises = currentTraining.ejercicios || [];
-
-    // Crear una cadena legible para el sistema con ID y Nombre
     const exercisesListString = availableExercises.map((e: any) => `ID: ${e.ExerciciId} - Nombre: ${e.Nom}`).join('\n');
-
-    // Obtener prompt personalizado del usuario
-    const user = await c.env.DB.prepare('SELECT ChatbotPrompt FROM Users WHERE UserId = ?').bind(userId).first();
     const userCustomPrompt = user?.ChatbotPrompt ? `\n\nINSTRUCCIONES PERSONALIZADAS DEL USUARIO:\n${user.ChatbotPrompt}` : '';
+    const trainingHistory = JSON.stringify(userStats.lastWorkouts);
 
     const basePersona = `
-    Eres un coach experimentado en entrenamiento de fuerza e hipertrofia.
-    IMPORTANTE: Tienes disponible los ultimos 50 entrenos del usaurio para poder guiarlo mejor y ver donde puede mejorar.
-    El objetivo principal el guiar al usaurio y que entrene mejor de los que ya esta haciendo. 
+SYSTEM INSTRUCTIONS: EXPERT STRENGTH COACH
 
-    No seas muy verboso explica solo lo mas importante. el listado de ejercicios debe ser directo y claro.
-    Ejemplo: 
-    - Press banca 4x8 70kg (80%PR) 3 RIR
-    - Press militar 3x12 40kg (75%PR) 2 RIR
+Eres un Coach de Élite especializado en Fuerza y Hipertrofia. Tu objetivo es actuar como un motor de análisis de rendimiento para el usuario. Eres directo, técnico y te enfocas exclusivamente en resultados y datos.
 
-    EN EL CHAT NO INCLUYAS ID DEL EJERCICIO SOLO EL NOMBRE.
-    USA guion para cada ejercicio.
-    Separa los ejercicios con salto de linea.
+CONTEXTO DE ENTRADA
 
-    TIENES CAPACIDAD PARA ANADIR SERIES AL ENTRENAMIENTO ACTUAL:
-    Tienes acceso a la lista de ejercicios disponibles con sus IDs:
-    ${exercisesListString}
-    SI CREES QUE ES NECESARIO ANADIR ALGUN EJERCICO QUE NO ESTE EN LA LISTA, PIDE AL USUARIO QUE LO AÑADA.
+Recibirás:
 
-    PROTOCOLO DE AÑADIR EJERCICIOS (IMPORTANTE):
-    1. Cuando el usuario pida ejercicios o una rutina, PRIMERO propón el plan detallado (Ejercicio, Series, Repeticiones, Peso estimado).
-       - Por defecto, sugiere 2 o 5 series por ejercicio a menos que se pida otra cosa.
-       - NO añadas los ejercicios todavía en el sistema.
-       - Pregunta al usuario si está de acuerdo con el plan y si quiere que lo añadas.
-    
-    2. SOLO cuando el usuario CONFIRME explícitamente (ej: "sí", "vale", "dale", "ok"), entonces procede a añadir los ejercicios generando el bloque JSON oculto.
+Historial: Últimos 50 entrenamientos ${trainingHistory}.
 
-    ESTILO DE RESPUESTA:
-    1. Sé directo y conciso.
+PRs Actuales: ${JSON.stringify(userStats.prs)}.
 
-    FORMATO OBLIGATORIO PARA LA CONFIRMACIÓN (JSON):
-    Cuando el usuario confirme, al final de tu respuesta añade este bloque JSON:
-    
-    \`\`\`json_plan
-    [
-      { "ExerciciId": 123, "Kg": 50, "Reps": 10 },
-      { "ExerciciId": 123, "Kg": 50, "Reps": 10 },
-      { "ExerciciId": 123, "Kg": 50, "Reps": 10 }
-    ]
-    \`\`\`
-    
-    REGLAS CRÍTICAS PARA EL JSON:
-    - IMPORTANTE: Genera un objeto JSON POR CADA SERIE. Si quieres añadir 4 series de un ejercicio, debe haber 4 objetos en el array con ese ExerciciId.
-    - Usa SOLO los IDs de la lista proporcionada.
-    - Estima los Kg basándote en los PRs del usuario (${JSON.stringify(userStats.prs)}) o usa un peso conservador.
-    - "Reps" debe ser un número entero mayor a 0.
-    - "Kg" debe ser un número decimal mayor a 0 y maximo un decimal.
-  
-    `;
+Catálogo de Ejercicios: ${exercisesListString}.
+
+PROTOCOLO DE ANÁLISIS (Interno)
+
+Antes de generar la propuesta, evalúa bajo criterios de realismo técnico y los hallazgos del historial:
+
+Filtro de Calidad de Datos (Anti-Ruido): Identifica y descarta series de aproximación (<40% del PR o <50% del peso máximo de la sesión anterior). Solo analiza "series de trabajo" para evitar falsos cálculos de volumen.
+
+Criterio de Sobrecarga Progresiva:
+- Si el usuario completó todas las reps en la última sesión: Propón un incremento de +1.25kg a +2.5kg (microcarga).
+- Si detectas estancamiento (+3 sesiones con mismo peso/reps): Varía el rango de reps (ej. de 3x10 a 4x8) o propón un Drop Set o Rest-Pause para romper la adaptación.
+
+Jerarquía y Volumen Basura:
+- Prioriza ejercicios multiarticulares (Sentadilla, Banca, Peso Muerto).
+- Si detectas más de 10 series efectivas por grupo muscular en una sesión, elimina accesorios redundantes para priorizar la intensidad en los básicos.
+
+Análisis de Variedad Estratégica:
+- ¿Lleva +3 semanas con el mismo ejercicio? Si hay estancamiento, cambia el ángulo (ej. Press Plano por Inclinado).
+- ¿Músculos descuidados? Si un grupo no aparece en 2 semanas, incorpóralo.
+
+REGLAS DE RESPUESTA (ESTRICTO)
+
+FASE 1: PROPUESTA (Esperando confirmación)
+
+Genera una respuesta visualmente limpia:
+
+[Nombre del Grupo Muscular o Enfoque]
+
+[Nombre Ejercicio]: [Series]x[Reps] | [Peso Sugerido]kg | RIR [X]
+
+Contexto: [Comparativa directa: ej. "Subimos +2.5kg respecto al lunes" o "Nueva variante para romper estancamiento en banca"].
+
+Pregunta Final: "¿Confirmas este plan para añadirlo a tu registro?"
+
+FASE 2: EJECUCIÓN (Solo tras confirmación explícita)
+
+Genera el bloque JSON al final de tu mensaje.
+
+FORMATO JSON_PLAN
+
+\`\`\`json_plan
+[
+  { "ExerciciId": integer, "Kg": float, "Reps": integer }
+]
+\`\`\`
+
+Regla de Oro: Un objeto por cada serie individual (4 series = 4 objetos).
+Precisión: Máximo 1 decimal en Kg. Mayor a 0.
+Consistencia: Usa exclusivamente IDs presentes en el catálogo de ejercicios.
+
+TONO Y ESTILO
+
+Sin saludos innecesarios. Directo al grano.
+Emojis funcionales: 📈 (Progreso), ⚠️ (Fatiga/Volumen basura), 🎯 (Objetivo).
+Nunca muestres IDs de ejercicio al usuario.
+
+RESTRICCIONES
+
+Continuidad: No cambies un básico si el usuario ha progresado en él las últimas 4 semanas.
+Resolución de dudas: Si el usuario pregunta algo técnico o sobre una molestia, suspende la propuesta y responde a la consulta con prioridad máxima.
+`;
 
     const contextData = `
-      SITUACIÓN ACTUAL:
-      - Entrenando: ${currentTraining.entreno.Nom} (ID: ${currentTraining.entreno.EntrenoId})
-      - Series ya realizadas hoy: ${seriesCurrentTraining}
+SITUACIÓN ACTUAL:
+- Entrenando: ${currentTraining.entreno.Nom} (ID: ${currentTraining.entreno.EntrenoId})
+- Series ya realizadas hoy: ${seriesCurrentTraining}
     `;
 
-    const finalSystemInstruction = `${basePersona} \n${userCustomPrompt} \n\n${contextData} `;
+    const finalSystemInstruction = `${basePersona}\n${userCustomPrompt}\n\n${contextData}`;
 
     if (!c.env.GEMINI_API_KEY) {
       throw new Error('GEMINI_API_KEY no está configurada');
@@ -640,13 +663,8 @@ app.post('/api/gemini', zValidator('json', chatGPT), async (c) => {
 
     const genAI = new GoogleGenerativeAI(c.env.GEMINI_API_KEY);
 
-    let modelVersion = 'gemini-flash-latest'
-    if (userId == 13) {
-      modelVersion = 'gemini-3-flash-preview' // Usamos flash por rapidez\
-    }
-
     const model = genAI.getGenerativeModel({
-      model: modelVersion,
+      model: 'gemini-3-flash-preview',
       systemInstruction: finalSystemInstruction,
       safetySettings: [
         {
@@ -667,51 +685,83 @@ app.post('/api/gemini', zValidator('json', chatGPT), async (c) => {
     }
     const chat = model.startChat(chatConfig);
 
-    const promptUsuario = `[Fecha: ${new Date().toLocaleDateString('es-ES')}] ${message} `;
+    const promptUsuario = `[Fecha: ${new Date().toLocaleDateString('es-ES')}] ${message}`;
 
-    const result = await chat.sendMessage(promptUsuario);
-    let responseText = result.response.text();
+    // Usar streaming para enviar tokens progresivamente
+    const streamResult = await chat.sendMessageStream(promptUsuario);
 
-    // Procesar posible JSON de plan de entrenamiento
-    let workoutUpdated = false;
-    const jsonBlockRegex = /```json_plan\s*([\s\S]*?)\s*```/;
-    const match = responseText.match(jsonBlockRegex);
+    // Configurar SSE response
+    const stream = new ReadableStream({
+      async start(controller) {
+        const encoder = new TextEncoder();
+        let fullText = '';
 
-    if (match && match[1]) {
-      try {
-        const plan = JSON.parse(match[1]);
-        if (Array.isArray(plan)) {
-          console.log("Detectado plan de entrenamiento automático:", plan);
-
-          for (const serie of plan) {
-            if (serie.ExerciciId && serie.Reps) {
-              await addSerieToDb(
-                c,
-                userId,
-                currentTraining.entreno.EntrenoId,
-                serie.ExerciciId,
-                serie.Kg || 0,
-                serie.Reps
-              );
+        try {
+          for await (const chunk of streamResult.stream) {
+            const chunkText = chunk.text();
+            if (chunkText) {
+              fullText += chunkText;
+              // Enviar chunk de texto como evento SSE
+              const sseData = JSON.stringify({ type: 'chunk', text: chunkText });
+              controller.enqueue(encoder.encode(`data: ${sseData}\n\n`));
             }
           }
-          workoutUpdated = true;
 
-          // Limpiar el bloque JSON de la respuesta visible para el usuario
-          responseText = responseText.replace(match[0], "").trim();
+          // Stream completo — procesar JSON plan si existe
+          let workoutUpdated = false;
+          let cleanedText = fullText;
+          const jsonBlockRegex = /```json_plan\s*([\s\S]*?)\s*```/;
+          const match = fullText.match(jsonBlockRegex);
+
+          if (match && match[1]) {
+            try {
+              const plan = JSON.parse(match[1]);
+              if (Array.isArray(plan)) {
+                console.log("Detectado plan de entrenamiento automático:", plan);
+                for (const serie of plan) {
+                  if (serie.ExerciciId && serie.Reps) {
+                    await addSerieToDb(
+                      c,
+                      userId,
+                      currentTraining.entreno.EntrenoId,
+                      serie.ExerciciId,
+                      serie.Kg || 0,
+                      serie.Reps
+                    );
+                  }
+                }
+                workoutUpdated = true;
+                cleanedText = fullText.replace(match[0], "").trim();
+              }
+            } catch (e) {
+              console.error("Error al procesar el plan JSON de Gemini:", e);
+            }
+          }
+
+          // Enviar evento final con metadata
+          const doneData = JSON.stringify({
+            type: 'done',
+            fullText: cleanedText,
+            workoutUpdated: workoutUpdated
+          });
+          controller.enqueue(encoder.encode(`data: ${doneData}\n\n`));
+          controller.close();
+        } catch (streamError) {
+          console.error('❌ Error en stream:', streamError);
+          const errorData = JSON.stringify({ type: 'error', message: 'Error durante la generación de respuesta' });
+          controller.enqueue(encoder.encode(`data: ${errorData}\n\n`));
+          controller.close();
         }
-      } catch (e) {
-        console.error("Error al procesar el plan JSON de Gemini:", e);
-        // No fallamos la request, solo ignoramos el plan automático y dejamos el texto
       }
-    }
+    });
 
-    const newHistory = chat.getHistory();
-
-    return c.json({
-      response: responseText,
-      responseId: JSON.stringify(newHistory),
-      workoutUpdated: workoutUpdated // Flag para que el frontend se actualice
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*',
+      }
     });
 
   } catch (error: any) {
@@ -795,18 +845,38 @@ async function getUserStats(userId: any, c: any) {
           SELECT Nom, PR FROM Exercici WHERE UserId = ? AND PR > 0
   `).bind(userId).all();
 
-    // 2. Obtener solo los últimos 5 entrenamientos (resumen ligero)
+    // 2. Obtener los últimos 50 entrenamientos con sus series detalladas
     const lastWorkouts = await c.env.DB.prepare(`
-          SELECT Nom, Data, CargaTotal, Puntuacio 
-          FROM Entreno 
-          WHERE UserId = ?
-  ORDER BY Data DESC 
-          LIMIT 50
-  `).bind(userId).all();
+      SELECT 
+        E.EntrenoId, E.Nom, E.Data, E.CargaTotal,
+        S.ExerciciId, Ex.Nom AS NomExercici, S.Kg, S.Reps
+      FROM Entreno E
+      LEFT JOIN Series S ON E.EntrenoId = S.EntrenoId AND S.UserId = ?
+      LEFT JOIN Exercici Ex ON S.ExerciciId = Ex.ExerciciId
+      WHERE E.UserId = ?
+      ORDER BY E.Data DESC, S.Orden ASC, S.SerieId ASC
+      LIMIT 500
+    `).bind(userId, userId).all();
+
+    // Agrupar series por entreno para reducir tokens
+    const workoutsMap = new Map<number, any>();
+    for (const row of lastWorkouts.results as any[]) {
+      if (!workoutsMap.has(row.EntrenoId)) {
+        workoutsMap.set(row.EntrenoId, {
+          nom: row.Nom, data: row.Data, carga: row.CargaTotal, series: []
+        });
+      }
+      if (row.ExerciciId) {
+        workoutsMap.get(row.EntrenoId).series.push({
+          ex: row.NomExercici, kg: row.Kg, reps: row.Reps
+        });
+      }
+    }
+    const workoutsSummary = Array.from(workoutsMap.values()).slice(0, 50);
 
     return {
       prs: prs.results,
-      lastWorkouts: lastWorkouts.results
+      lastWorkouts: workoutsSummary
     };
   } catch (e) {
     console.error("Error getting stats", e);
