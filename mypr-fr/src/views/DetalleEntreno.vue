@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {useAuthStore} from   '../stores/auth';  
 import { guardarNuevoEjercicio } from '../utils/ejercicioUtils';
@@ -41,7 +41,10 @@ interface Ejercicio {
   UserId: number;
   PR: number;
   GrupMuscular1: number | null;
-  // ... otros campos opcionales si no se usan
+  GrupMuscular2: number | null;
+  GrupMuscular3: number | null;
+  GrupMuscular4: number | null;
+  GrupMuscular5: number | null;
 }
 
 interface GrupoMuscular {
@@ -81,6 +84,38 @@ let lastExercise = ref(0);
 const nuevaSerie = ref({ ejercicioId: 0, kg: 0, reps: 0 });
 const editandoEntreno = ref(false);
 const entrenoEditado = ref({ nom: '', descripcio: '', puntuacio: 3 });
+const showResumen = ref(false);
+const showDatos = ref(false);
+const modoGrafico = ref<'series' | 'reps'>('series');
+const editandoNombre = ref(false);
+const nombreEditado = ref('');
+const nombreInput = ref<HTMLInputElement | null>(null);
+const modoVisualizacion = ref<'lista' | 'tarjetas'>('lista');
+const serieActualIdx = ref(0);
+const touchStartX = ref(0);
+const touchStartY = ref(0);
+const editandoCard = ref(false);
+const cardEditData = ref({ ejercicioId: 0, kg: 0, reps: 0 });
+const completadasMap = ref<Record<number, boolean>>({});
+
+// Triple tap en tarjetas
+const tapCount = ref(0);
+const lastTapTime = ref<number>(0);
+const TAP_WINDOW_MS = 800;
+const onCardTap = (serieId: number) => {
+  if (editandoCard.value) return;
+  const now = Date.now();
+  if (now - lastTapTime.value > TAP_WINDOW_MS) {
+    tapCount.value = 0;
+  }
+  tapCount.value += 1;
+  lastTapTime.value = now;
+  if (tapCount.value >= 3) {
+    toggleCompletadoCard(serieId);
+    tapCount.value = 0;
+    if (navigator.vibrate) navigator.vibrate(50);
+  }
+};
 
 // Computed
 const cargaCalculada = computed(() => nuevaSerie.value.kg * nuevaSerie.value.reps);
@@ -88,6 +123,7 @@ const ejerciciosUnicos = computed(() => new Set(series.value.map(serie => serie.
 
 // Mostrar las series con la más reciente arriba (invertido respecto al orden base)
 const seriesDisplay = computed(() => series.value.slice().reverse());
+const seriesCardOrder = computed(() => seriesDisplay.value);
 
 const ejercicioGrupoMap = computed(() => {
   const map = new Map();
@@ -100,6 +136,183 @@ const ejercicioGrupoMap = computed(() => {
   });
   return map;
 });
+
+const musculoStats = computed(() => {
+  const stats = new Map<string, { series: number; reps: number }>();
+  if (!ejercicios.value.length || !series.value.length) return [];
+
+  series.value.forEach(s => {
+    const ej = ejercicios.value.find(e => e.ExerciciId === s.ExerciciId);
+    if (!ej) return;
+    const gmIds = [ej.GrupMuscular1, ej.GrupMuscular2, ej.GrupMuscular3, ej.GrupMuscular4, ej.GrupMuscular5].filter(Boolean) as number[];
+    if (!gmIds.length) return;
+    gmIds.forEach(gmId => {
+      const grupo = gruposMusculares.value.find(g => g.GrupMuscularId === gmId);
+      if (!grupo) return;
+      if (!stats.has(grupo.Nom)) stats.set(grupo.Nom, { series: 0, reps: 0 });
+      const st = stats.get(grupo.Nom)!;
+      st.series++;
+      st.reps += s.Reps;
+    });
+  });
+
+  const totalSeries = Array.from(stats.values()).reduce((a, b) => a + b.series, 0);
+  const totalReps = Array.from(stats.values()).reduce((a, b) => a + b.reps, 0);
+
+  return Array.from(stats.entries()).map(([nom, v]) => ({
+    nom,
+    series: v.series,
+    reps: v.reps,
+    pctSeries: totalSeries ? Math.round((v.series / totalSeries) * 100) : 0,
+    pctReps: totalReps ? Math.round((v.reps / totalReps) * 100) : 0,
+  })).sort((a, b) => b[modoGrafico.value === 'series' ? 'pctSeries' : 'pctReps'] - a[modoGrafico.value === 'series' ? 'pctSeries' : 'pctReps']);
+});
+
+// Card view helpers
+const serieActual = computed(() => seriesCardOrder.value[serieActualIdx.value] || null);
+
+const nombreEjercicio = (serie: any) => {
+  return ejercicios.value.find(e => e.ExerciciId === serie.ExerciciId)?.Nom || 'Ejercicio desconocido';
+};
+
+const grupoMuscularNombre = (serie: any) => {
+  const ej = ejercicios.value.find(e => e.ExerciciId === serie.ExerciciId);
+  if (!ej || !ej.GrupMuscular1) return '';
+  const grupo = gruposMusculares.value.find(g => g.GrupMuscularId === ej.GrupMuscular1);
+  return grupo?.Nom || '';
+};
+
+const isCompletada = (serieId: number) => completadasMap.value[serieId] ?? false;
+
+const cargarCompletadas = () => {
+  const map: Record<number, boolean> = {};
+  seriesCardOrder.value.forEach(s => {
+    map[s.SerieId] = localStorage.getItem(`serie_completed_${s.SerieId}`) === 'true';
+  });
+  completadasMap.value = map;
+};
+
+const toggleCompletadoCard = (serieId: number) => {
+  const key = `serie_completed_${serieId}`;
+  const nowCompleted = !completadasMap.value[serieId];
+  completadasMap.value = { ...completadasMap.value, [serieId]: nowCompleted };
+  if (nowCompleted) {
+    localStorage.setItem(key, 'true');
+  } else {
+    localStorage.removeItem(key);
+  }
+};
+
+const avanzaSerie = () => {
+  if (serieActualIdx.value < seriesCardOrder.value.length - 1) {
+    serieActualIdx.value++;
+    editandoCard.value = false;
+  }
+};
+
+const retrocedeSerie = () => {
+  if (serieActualIdx.value > 0) {
+    serieActualIdx.value--;
+    editandoCard.value = false;
+  }
+};
+
+const primerIdxNoCompletado = () => {
+  for (let i = 0; i < seriesCardOrder.value.length; i++) {
+    if (!isCompletada(seriesCardOrder.value[i].SerieId)) return i;
+  }
+  return 0;
+};
+
+const cambiarModoTarjetas = () => {
+  modoVisualizacion.value = 'tarjetas';
+  cargarCompletadas();
+  serieActualIdx.value = primerIdxNoCompletado();
+  editandoCard.value = false;
+};
+
+const iniciarEdicionCard = () => {
+  if (!serieActual.value) return;
+  cardEditData.value = {
+    ejercicioId: serieActual.value.ExerciciId,
+    kg: serieActual.value.Kg,
+    reps: serieActual.value.Reps
+  };
+  editandoCard.value = true;
+};
+
+const cancelarEdicionCard = () => {
+  editandoCard.value = false;
+};
+
+const guardarEdicionCard = async () => {
+  if (!serieActual.value || !entreno.value) return;
+  try {
+    const token = authStore.token;
+    const res = await fetch(API_URL + '/api/editSerie', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        token,
+        serieId: serieActual.value.SerieId,
+        entrenoId: entreno.value.EntrenoId,
+        exerciciId: cardEditData.value.ejercicioId,
+        kg: cardEditData.value.kg,
+        reps: cardEditData.value.reps
+      })
+    });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    onSerieUpdated({ data, serieId: serieActual.value.SerieId, entrenoId: entreno.value.EntrenoId, exerciciId: cardEditData.value.ejercicioId, kg: cardEditData.value.kg, reps: cardEditData.value.reps });
+    editandoCard.value = false;
+  } catch {
+    alertWindow('Error al guardar');
+  }
+};
+
+const eliminarCard = async () => {
+  if (!serieActual.value) return;
+  if (!confirm('¿Eliminar esta serie?')) return;
+  try {
+    const token = authStore.token;
+    const res = await fetch(API_URL + '/api/deleteSerie', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, serieId: serieActual.value.SerieId })
+    });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    localStorage.removeItem(`serie_completed_${serieActual.value.SerieId}`);
+    const deletedId = serieActual.value.SerieId;
+    onSerieDeleted({ data, serieId: deletedId, entrenoId: serieActual.value.EntrenoId, exerciciId: serieActual.value.ExerciciId, carga: serieActual.value.Carga });
+    completadasMap.value = { ...completadasMap.value };
+    delete completadasMap.value[deletedId];
+    if (serieActualIdx.value >= seriesCardOrder.value.length - 1 && serieActualIdx.value > 0) {
+      serieActualIdx.value--;
+    }
+  } catch {
+    alertWindow('Error al eliminar');
+  }
+};
+
+const onTouchStart = (e: TouchEvent) => {
+  touchStartX.value = e.touches[0].clientX;
+  touchStartY.value = e.touches[0].clientY;
+};
+
+const onTouchEnd = (e: TouchEvent) => {
+  const dx = e.changedTouches[0].clientX - touchStartX.value;
+  const dy = e.changedTouches[0].clientY - touchStartY.value;
+  if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
+  if (dx > 0) retrocedeSerie();
+  else avanzaSerie();
+};
+
+const onKeyDown = (e: KeyboardEvent) => {
+  if (modoVisualizacion.value !== 'tarjetas') return;
+  if (e.key === 'ArrowLeft') { retrocedeSerie(); e.preventDefault(); }
+  if (e.key === 'ArrowRight') { avanzaSerie(); e.preventDefault(); }
+};
 
 // Funciones auxiliares
 const formatDateTitle = (timestamp: number) => new Date(timestamp * 1000).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
@@ -311,6 +524,40 @@ const guardarCambiosEntreno = async () => {
   }
 };
 
+// Nombre inline editable
+const iniciarEdicionNombre = () => {
+  if (entreno.value) {
+    nombreEditado.value = entreno.value.Nom || '';
+    editandoNombre.value = true;
+    nextTick(() => nombreInput.value?.focus());
+  }
+};
+
+const guardarNombre = async () => {
+  if (!entreno.value || !editandoNombre.value) return;
+  editandoNombre.value = false;
+  const nuevoNom = nombreEditado.value.trim() || 'Sin nombre';
+  if (nuevoNom === entreno.value.Nom) return;
+  try {
+    const token = authStore.token;
+    const res = await fetch(API_URL + '/api/editEntreno', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        token,
+        entrenoId: entreno.value.EntrenoId,
+        nom: nuevoNom,
+        descripcio: entreno.value.Descripcio || '',
+        puntuacio: entreno.value.Puntuacio || 3
+      })
+    });
+    if (!res.ok) throw new Error();
+    entreno.value.Nom = nuevoNom;
+  } catch {
+    alertWindow('Error al guardar el nombre');
+  }
+};
+
 // Lógica Modal Ejercicio
 const newExercici = async () => {
   const newName = capitalize(nuevoEjercicio.value.Nom);
@@ -337,7 +584,11 @@ const abrirModalEjercicio = () => {
   if (gruposMusculares.value.length === 0) loadGruposMusculares();
 };
 
-onMounted(loadEntreno);
+onMounted(() => {
+  loadEntreno();
+  window.addEventListener('keydown', onKeyDown);
+});
+onUnmounted(() => window.removeEventListener('keydown', onKeyDown));
 
 // Drag-and-drop reordenado
 const dragSerieId = ref<number | null>(null);
@@ -370,52 +621,92 @@ const onDrop = async (targetId: number) => {
 </script>
 
 <template>
-  <div class="detalle-entreno-container">
-    <header class="header">
-      <h1 v-if="entreno" class="entreno-title">{{ formatDateTitle(entreno.Data) }}</h1>
+  <div class="page detalle-entreno">
+    <header class="page-header">
+      <h1 v-if="entreno" class="entreno-title">
+        <span v-if="!editandoNombre" class="editable-name" @click="iniciarEdicionNombre" title="Haz clic para editar">{{ entreno.Nom || 'Sin nombre' }}</span>
+        <input v-else ref="nombreInput" v-model="nombreEditado" @blur="guardarNombre" @keyup.enter="guardarNombre" @keyup.escape="editandoNombre = false" class="nombre-input-inline" />
+      </h1>
       <button @click="router.push('/entrenos')" class="btn btn-secondary">&larr; Volver</button>
     </header>
     
-    <div v-if="showPrAlert" class="pr-alert">{{ prMessage }}</div>
-    <div v-if="showEjercicioAlert" class="ejercicio-alert">{{ ejercicioAlertMessage }}</div>
-    <div v-if="showAlert" class="alert">{{ alertMessage }}</div>
+    <div v-if="showPrAlert" class="toast toast-success">{{ prMessage }}</div>
+    <div v-if="showEjercicioAlert" class="toast toast-success">{{ ejercicioAlertMessage }}</div>
+    <div v-if="showAlert" class="toast toast-warning">{{ alertMessage }}</div>
     
-    <div v-if="isLoading" class="loading"><p>Cargando...</p></div>
-    <div v-else-if="error" class="error"><p>{{ error }}</p><button @click="loadEntreno" class="btn">Reintentar</button></div>
+    <div v-if="isLoading" class="state-box"><p>Cargando...</p></div>
+    <div v-else-if="error" class="state-box error"><p>{{ error }}</p><button @click="loadEntreno" class="btn">Reintentar</button></div>
     
     <div v-else-if="entreno" class="entreno-details">
-      <!-- INFO HEADER COMPONENT (Inline por simplicidad, pero extraíble) -->
-      <div class="entreno-info-card">
-        <div v-if="!editandoEntreno" class="entreno-header">
-          <div class="info-row"><span class="label">Nombre:</span><span class="value">{{ entreno.Nom || 'Sin nombre' }}</span></div>
-          <div class="info-row"><span class="label">Descripción:</span><span class="value">{{ entreno.Descripcio || '-' }}</span></div>
-          <div class="info-row"><span class="label">Puntuación:</span>
-            <span class="value"><span v-for="i in 5" :key="i" class="star" :class="{ filled: entreno.Puntuacio && i <= entreno.Puntuacio }">★</span></span>
-          </div>
-          <button @click="iniciarEdicionEntreno" class="btn btn-secondary">Editar info</button>
+      <!-- PANEL RESUMEN (colapsable, cerrado por defecto) -->
+      <div class="collapsible-panel">
+        <div class="collapsible-header" @click="showResumen = !showResumen">
+          <span>Resumen del entreno</span>
+          <span class="chevron" :class="{ open: showResumen }">▶</span>
         </div>
-        <div v-else class="entreno-edit-form">
-          <!-- Formulario edición entreno -->
-          <div class="form-group"><label>Nombre:</label><input type="text" v-model="entrenoEditado.nom" class="form-control"></div>
-          <div class="form-group"><label>Descripción:</label><textarea v-model="entrenoEditado.descripcio" class="form-control"></textarea></div>
-          <div class="form-group">
-            <label>Puntuación:</label>
-            <div class="rating-input"><button v-for="i in 5" :key="i" class="star-btn btn" :class="{ filled: i <= entrenoEditado.puntuacio }" @click="entrenoEditado.puntuacio = i">★</button></div>
-          </div>
-          <div class="form-actions">
-            <button @click="editandoEntreno = false" class="btn btn-secondary">Cancelar</button>
-            <button @click="guardarCambiosEntreno" class="btn btn-primary">Guardar</button>
+        <div class="collapsible-body" :class="{ open: showResumen }">
+          <div class="info-row"><span class="label">Peso total:</span><span class="value">{{ entreno.CargaTotal }} Tn</span></div>
+          <div class="info-row"><span class="label">Series:</span><span class="value">{{ series.length }}</span></div>
+          <div class="info-row"><span class="label">Ejercicios:</span><span class="value">{{ ejerciciosUnicos }}</span></div>
+          <div v-if="musculoStats.length" class="musculo-graph">
+            <div class="graph-toggle">
+              <button class="toggle-btn" :class="{ active: modoGrafico === 'series' }" @click="modoGrafico = 'series'">Series</button>
+              <button class="toggle-btn" :class="{ active: modoGrafico === 'reps' }" @click="modoGrafico = 'reps'">Reps</button>
+            </div>
+            <div class="graph-bars">
+              <div v-for="m in musculoStats" :key="m.nom" class="graph-row">
+                <span class="graph-label">{{ m.nom }}</span>
+                <div class="bar-track">
+                  <div class="bar-fill" :style="{ width: (modoGrafico === 'series' ? m.pctSeries : m.pctReps) + '%' }"></div>
+                </div>
+                <span class="graph-value">{{ modoGrafico === 'series' ? m.series : m.reps }}</span>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="info-row"><span class="label">Peso total:</span><span class="value">{{ entreno.CargaTotal }} Tn</span></div>
-        <div class="info-row"><span class="label">Series:</span><span class="value">{{ series.length }}</span></div>
-        <div class="info-row"><span class="label">Ejercicios:</span><span class="value">{{ ejerciciosUnicos }}</span></div>
+      </div>
+
+      <!-- PANEL DATOS DEL ENTRENO (colapsable, cerrado por defecto) -->
+      <div class="collapsible-panel">
+        <div class="collapsible-header" @click="showDatos = !showDatos">
+          <span>Datos del entreno</span>
+          <span class="chevron" :class="{ open: showDatos }">▶</span>
+        </div>
+        <div class="collapsible-body" :class="{ open: showDatos }">
+          <div v-if="!editandoEntreno">
+            <div class="info-row"><span class="label">Fecha:</span><span class="value">{{ formatDateTitle(entreno.Data) }}</span></div>
+            <div class="info-row"><span class="label">Nombre:</span><span class="value">{{ entreno.Nom || 'Sin nombre' }}</span></div>
+            <div class="info-row"><span class="label">Descripción:</span><span class="value">{{ entreno.Descripcio || '-' }}</span></div>
+            <div class="info-row"><span class="label">Puntuación:</span>
+              <span class="value"><span v-for="i in 5" :key="i" class="star" :class="{ filled: entreno.Puntuacio && i <= entreno.Puntuacio }">★</span></span>
+            </div>
+            <button @click="iniciarEdicionEntreno" class="btn btn-secondary" style="width:100%;margin-top:0.5rem;">Editar info</button>
+          </div>
+          <div v-else class="entreno-edit-form">
+            <div class="form-group"><label>Nombre:</label><input type="text" v-model="entrenoEditado.nom" class="form-control"></div>
+            <div class="form-group"><label>Descripción:</label><textarea v-model="entrenoEditado.descripcio" class="form-control"></textarea></div>
+            <div class="form-group">
+              <label>Puntuación:</label>
+              <div class="rating-input"><button v-for="i in 5" :key="i" class="star-btn btn" :class="{ filled: i <= entrenoEditado.puntuacio }" @click="entrenoEditado.puntuacio = i">★</button></div>
+            </div>
+            <div class="form-actions">
+              <button @click="editandoEntreno = false" class="btn btn-secondary">Cancelar</button>
+              <button @click="guardarCambiosEntreno" class="btn btn-primary">Guardar</button>
+            </div>
+          </div>
+        </div>
       </div>
       
-      <h2>Series</h2>
+      <h2 class="section-title">Series</h2>
       
       <div v-if="!showForm" class="add-serie">
         <button @click="showForm = !showForm" class="btn btn-primary btn-lg">Agregar nueva serie</button>
+      </div>
+
+      <!-- Toggle vista Lista / Tarjetas -->
+      <div v-if="series.length > 0" class="view-toggle">
+        <button class="toggle-btn" :class="{ active: modoVisualizacion === 'lista' }" @click="modoVisualizacion = 'lista'">Lista</button>
+        <button class="toggle-btn" :class="{ active: modoVisualizacion === 'tarjetas' }" @click="cambiarModoTarjetas">Tarjetas</button>
       </div>
       
       <!-- Formulario Nueva Serie -->
@@ -443,10 +734,10 @@ const onDrop = async (targetId: number) => {
         </div>
       </div>
       
-      <div v-if="series.length === 0 && !showForm" class="no-series"><p>No hay series registradas.</p></div>
+      <div v-if="series.length === 0 && !showForm" class="state-box"><p>No hay series registradas.</p></div>
       
-      <!-- LISTA DE SERIES COMPONENTIZADA -->
-      <div v-else class="series-list">
+      <!-- MODO LISTA -->
+      <div v-else-if="modoVisualizacion === 'lista'" class="series-list">
         <SerieItem 
           v-for="serie in seriesDisplay" 
           :key="serie.SerieId"
@@ -460,6 +751,55 @@ const onDrop = async (targetId: number) => {
           @dragStart="onDragStart"
           @drop="onDrop"
         />
+      </div>
+      
+      <!-- MODO TARJETAS (Tinder swipe) -->
+      <div v-else-if="serieActual" class="swipe-area" @touchstart="onTouchStart" @touchend="onTouchEnd">
+        <div v-if="!editandoCard" class="serie-card-big" :class="{ 'serie-done': isCompletada(serieActual.SerieId) }" @click="onCardTap(serieActual.SerieId)">
+          <div class="big-ejercicio">{{ nombreEjercicio(serieActual) }}</div>
+          <div class="big-stats">
+            <span class="big-kg">{{ serieActual.Kg }} kg</span>
+            <span class="big-x">×</span>
+            <span class="big-reps">{{ serieActual.Reps }}</span>
+          </div>
+          <div class="big-carga">{{ serieActual.Carga }} kg total</div>
+          <div v-if="serieActual.PR" class="pr-badge">PR 🏆</div>
+          <div v-if="grupoMuscularNombre(serieActual)" class="big-grupo">{{ grupoMuscularNombre(serieActual) }}</div>
+          <div class="big-actions">
+            <button class="btn btn-secondary btn-sm" @click.stop="iniciarEdicionCard">Editar</button>
+            <button class="btn btn-danger btn-sm" @click.stop="eliminarCard">Eliminar</button>
+          </div>
+        </div>
+        <div v-else class="serie-card-big editing-card">
+          <div class="card-edit-form">
+            <h3>Editar serie</h3>
+            <div class="form-group">
+              <label>Ejercicio:</label>
+              <div class="input-with-button">
+                <BuscadorSelect v-model="cardEditData.ejercicioId" :options="ejercicios" label="Nom" :reduce="(e: any) => e.ExerciciId" />
+                <button type="button" class="btn btn-secondary btn-sm" @click.stop="abrirModalEjercicio">+</button>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Peso:</label><input type="number" v-model.number="cardEditData.kg" class="form-control" step="0.5"></div>
+              <div class="form-group"><label>Reps:</label><input type="number" v-model.number="cardEditData.reps" class="form-control"></div>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-secondary" @click="cancelarEdicionCard">Cancelar</button>
+              <button class="btn btn-primary" @click="guardarEdicionCard">Guardar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-else-if="modoVisualizacion === 'tarjetas'" class="state-box"><p>No hay series registradas.</p></div>
+      
+      <!-- Dots de progreso (solo en modo tarjetas) -->
+      <div v-if="modoVisualizacion === 'tarjetas' && seriesCardOrder.length > 0" class="card-dots">
+        <span v-for="(s, i) in seriesCardOrder" :key="s.SerieId" 
+          class="dot" 
+          :class="{ active: i === serieActualIdx, done: isCompletada(s.SerieId) }"
+          @click="serieActualIdx = i"></span>
+        <span class="dot-count">{{ serieActualIdx + 1 }} / {{ seriesCardOrder.length }}</span>
       </div>
     </div>
   </div>

@@ -86,5 +86,80 @@ INSERT INTO Exercici (Nom, UserId, PR, GrupMuscular1) VALUES
 INSERT INTO Entreno (UserId, Data, CargaTotal, Nom, Descripcio, Puntuacio) VALUES 
     (1, 0, 0, 'Entreno 1', 'Descripción del entreno 1', 3);
 
+-- Tabla de credenciales Garmin (una por usuario)
+DROP TABLE IF EXISTS GarminCredentials;
+CREATE TABLE GarminCredentials (
+    UserId INTEGER PRIMARY KEY,
+    GarminEmail TEXT NOT NULL,
+    GarminPasswordEncrypted TEXT NOT NULL,
+    LastSync INTEGER DEFAULT NULL,
+    Activo INTEGER DEFAULT 1,
+    FOREIGN KEY (UserId) REFERENCES Users(UserId)
+);
+
+-- Tabla de métricas diarias de recuperación
+DROP TABLE IF EXISTS DailyRecovery;
+CREATE TABLE DailyRecovery (
+    RecoveryId INTEGER PRIMARY KEY AUTOINCREMENT,
+    UserId INTEGER NOT NULL,
+    Data INTEGER NOT NULL,
+    SleepHores REAL DEFAULT NULL,
+    SleepScore INTEGER DEFAULT NULL,
+    SleepDeep REAL DEFAULT NULL,
+    SleepLight REAL DEFAULT NULL,
+    SleepREM REAL DEFAULT NULL,
+    HRV REAL DEFAULT NULL,
+    HRVLastNight REAL DEFAULT NULL,
+    RecoveryHours REAL DEFAULT NULL,
+    RestingHR INTEGER DEFAULT NULL,
+    Passos INTEGER DEFAULT NULL,
+    Stress INTEGER DEFAULT NULL,
+    BodyBattery INTEGER DEFAULT NULL,
+    BodyBatteryDrained INTEGER DEFAULT NULL,
+    TrainingReadiness INTEGER DEFAULT NULL,
+    Calories INTEGER DEFAULT NULL,
+    ActiveCalories INTEGER DEFAULT NULL,
+    IntensityMinutes INTEGER DEFAULT NULL,
+    MaxHR INTEGER DEFAULT NULL,
+    MinHR INTEGER DEFAULT NULL,
+    VO2Max REAL DEFAULT NULL,
+    RespirationRate REAL DEFAULT NULL,
+    SpO2 REAL DEFAULT NULL,
+    FOREIGN KEY (UserId) REFERENCES Users(UserId),
+    UNIQUE(UserId, Data)
+);
+
+-- Tabla de actividades cardio (ciclismo, running, trail, etc.)
+DROP TABLE IF EXISTS CardioActivity;
+CREATE TABLE CardioActivity (
+    ActivityId INTEGER PRIMARY KEY AUTOINCREMENT,
+    UserId INTEGER NOT NULL,
+    GarminActivityId TEXT NOT NULL UNIQUE,
+    Data INTEGER NOT NULL,
+    Tipus TEXT NOT NULL,
+    Nom TEXT DEFAULT NULL,
+    Distancia REAL DEFAULT NULL,
+    Durada INTEGER DEFAULT NULL,
+    AvgHR INTEGER DEFAULT NULL,
+    MaxHR INTEGER DEFAULT NULL,
+    AvgSpeed REAL DEFAULT NULL,
+    MaxSpeed REAL DEFAULT NULL,
+    DesnivelPos REAL DEFAULT NULL,
+    DesnivelNeg REAL DEFAULT NULL,
+    MinElevation REAL DEFAULT NULL,
+    MaxElevation REAL DEFAULT NULL,
+    TSS INTEGER DEFAULT NULL,
+    Esforc REAL DEFAULT NULL,
+    AnaerobicEsforc REAL DEFAULT NULL,
+    Calories INTEGER DEFAULT NULL,
+    AvgPower REAL DEFAULT NULL,
+    MaxPower REAL DEFAULT NULL,
+    VO2MaxValue REAL DEFAULT NULL,
+    AvgCadence REAL DEFAULT NULL,
+    AvgStrideLength REAL DEFAULT NULL,
+    Importat INTEGER DEFAULT 1,
+    FOREIGN KEY (UserId) REFERENCES Users(UserId)
+);
+
 INSERT INTO Series (UserId,EntrenoId,ExerciciId,Kg,Reps,Data,Carga) VALUES
     (1,1,1,10,10,1765849,100);

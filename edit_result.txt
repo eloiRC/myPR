@@ -1,10 +1,4 @@
-﻿
- Ôøà´©Å wrangler 4.24.0 (update available 4.49.0)
-ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
-­ƒîÇ Executing on local database mypr (63087dd2-d370-47cc-9702-5bde7da4a4c1) from .wrangler\state\v3\d1:
-­ƒîÇ To execute on your remote database, add a --remote flag to your wrangler command.
-­ƒÜú 1 command executed successfully.
-[
+﻿[
   {
     "results": [
       {

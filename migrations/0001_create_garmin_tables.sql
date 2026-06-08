@@ -1,0 +1,71 @@
+-- Migration: Create Garmin Connect tables (idempotent)
+-- Run this on both local and remote D1 databases
+
+CREATE TABLE IF NOT EXISTS GarminCredentials (
+    UserId INTEGER PRIMARY KEY,
+    GarminEmail TEXT NOT NULL,
+    GarminPasswordEncrypted TEXT NOT NULL,
+    LastSync INTEGER DEFAULT NULL,
+    Activo INTEGER DEFAULT 1,
+    FOREIGN KEY (UserId) REFERENCES Users(UserId)
+);
+
+CREATE TABLE IF NOT EXISTS DailyRecovery (
+    RecoveryId INTEGER PRIMARY KEY AUTOINCREMENT,
+    UserId INTEGER NOT NULL,
+    Data INTEGER NOT NULL,
+    SleepHores REAL DEFAULT NULL,
+    SleepScore INTEGER DEFAULT NULL,
+    SleepDeep REAL DEFAULT NULL,
+    SleepLight REAL DEFAULT NULL,
+    SleepREM REAL DEFAULT NULL,
+    HRV REAL DEFAULT NULL,
+    HRVLastNight REAL DEFAULT NULL,
+    RecoveryHours REAL DEFAULT NULL,
+    RestingHR INTEGER DEFAULT NULL,
+    Passos INTEGER DEFAULT NULL,
+    Stress INTEGER DEFAULT NULL,
+    BodyBattery INTEGER DEFAULT NULL,
+    BodyBatteryDrained INTEGER DEFAULT NULL,
+    TrainingReadiness INTEGER DEFAULT NULL,
+    Calories INTEGER DEFAULT NULL,
+    ActiveCalories INTEGER DEFAULT NULL,
+    IntensityMinutes INTEGER DEFAULT NULL,
+    MaxHR INTEGER DEFAULT NULL,
+    MinHR INTEGER DEFAULT NULL,
+    VO2Max REAL DEFAULT NULL,
+    RespirationRate REAL DEFAULT NULL,
+    SpO2 REAL DEFAULT NULL,
+    FOREIGN KEY (UserId) REFERENCES Users(UserId),
+    UNIQUE(UserId, Data)
+);
+
+CREATE TABLE IF NOT EXISTS CardioActivity (
+    ActivityId INTEGER PRIMARY KEY AUTOINCREMENT,
+    UserId INTEGER NOT NULL,
+    GarminActivityId TEXT NOT NULL UNIQUE,
+    Data INTEGER NOT NULL,
+    Tipus TEXT NOT NULL,
+    Nom TEXT DEFAULT NULL,
+    Distancia REAL DEFAULT NULL,
+    Durada INTEGER DEFAULT NULL,
+    AvgHR INTEGER DEFAULT NULL,
+    MaxHR INTEGER DEFAULT NULL,
+    AvgSpeed REAL DEFAULT NULL,
+    MaxSpeed REAL DEFAULT NULL,
+    DesnivelPos REAL DEFAULT NULL,
+    DesnivelNeg REAL DEFAULT NULL,
+    MinElevation REAL DEFAULT NULL,
+    MaxElevation REAL DEFAULT NULL,
+    TSS INTEGER DEFAULT NULL,
+    Esforc REAL DEFAULT NULL,
+    AnaerobicEsforc REAL DEFAULT NULL,
+    Calories INTEGER DEFAULT NULL,
+    AvgPower REAL DEFAULT NULL,
+    MaxPower REAL DEFAULT NULL,
+    VO2MaxValue REAL DEFAULT NULL,
+    AvgCadence REAL DEFAULT NULL,
+    AvgStrideLength REAL DEFAULT NULL,
+    Importat INTEGER DEFAULT 1,
+    FOREIGN KEY (UserId) REFERENCES Users(UserId)
+);

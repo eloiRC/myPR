@@ -190,3 +190,67 @@ export const updateUser = z.object({
 export const getUser = z.object({
     token: z.string().min(10)
 })
+
+export const garminCredentialsSave = z.object({
+    token: z.string().min(10),
+    garminEmail: z.string().email(),
+    garminPassword: z.string().min(1)
+})
+
+export const garminCredentialsDelete = z.object({
+    token: z.string().min(10)
+})
+
+export const garminRecovery = z.object({
+    userId: z.number(),
+    data: z.number(),
+    sleepHores: z.number().optional(),
+    sleepScore: z.number().optional(),
+    sleepDeep: z.number().optional(),
+    sleepLight: z.number().optional(),
+    sleepREM: z.number().optional(),
+    hrv: z.number().optional(),
+    hrvLastNight: z.number().optional(),
+    recoveryHours: z.number().optional(),
+    restingHR: z.number().optional(),
+    passos: z.number().optional(),
+    stress: z.number().optional(),
+    bodyBattery: z.number().optional(),
+    bodyBatteryDrained: z.number().optional(),
+    trainingReadiness: z.number().optional(),
+    calories: z.number().optional(),
+    activeCalories: z.number().optional(),
+    intensityMinutes: z.number().optional(),
+    maxHR: z.number().optional(),
+    minHR: z.number().optional(),
+    vo2Max: z.number().optional(),
+    respirationRate: z.number().optional(),
+    spo2: z.number().optional()
+})
+
+export const garminActivity = z.object({
+    userId: z.number(),
+    garminActivityId: z.string(),
+    data: z.number(),
+    tipus: z.string(),
+    nom: z.string().optional(),
+    distancia: z.number().optional(),
+    durada: z.number().optional(),
+    avgHR: z.number().optional(),
+    maxHR: z.number().optional(),
+    avgSpeed: z.number().optional(),
+    maxSpeed: z.number().optional(),
+    desnivelPos: z.number().optional(),
+    desnivelNeg: z.number().optional(),
+    minElevation: z.number().optional(),
+    maxElevation: z.number().optional(),
+    tss: z.number().optional(),
+    esforc: z.number().optional(),
+    anaerobicEsforc: z.number().optional(),
+    calories: z.number().optional(),
+    avgPower: z.number().optional(),
+    maxPower: z.number().optional(),
+    vo2MaxValue: z.number().optional(),
+    avgCadence: z.number().optional(),
+    avgStrideLength: z.number().optional()
+})

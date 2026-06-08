@@ -4,8 +4,9 @@ import { zValidator } from '@hono/zod-validator'
 import { HTTPException } from 'hono/http-exception'
 import { cors } from 'hono/cors'
 import { jwt } from 'hono/jwt'
-import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars, getExercici, getPesosHistorial, nouEntreno, editEntreno, getCargaHistorial, chatGPT, updateUser, getUser, deleteEntreno, reorderSerie } from './schema'
+import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars, getExercici, getPesosHistorial, nouEntreno, editEntreno, getCargaHistorial, chatGPT, updateUser, getUser, deleteEntreno, reorderSerie, garminCredentialsSave, garminCredentialsDelete, garminRecovery, garminActivity } from './schema'
 import { hashPassword, verifyPassword, generateJWT, verifyJWT } from './jwt'
+import { encrypt, decrypt } from './crypto'
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai'
 import { startsWith } from 'zod/v4'
 
@@ -15,6 +16,8 @@ type Bindings = {
   test_password: string;
   jwt_secret: string;
   GEMINI_API_KEY: string;
+  GARMIN_API_KEY: string;
+  GARMIN_ENCRYPTION_KEY: string;
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
@@ -607,23 +610,15 @@ Análisis de Variedad Estratégica:
 - ¿Lleva +3 semanas con el mismo ejercicio? Si hay estancamiento, cambia el ángulo (ej. Press Plano por Inclinado).
 - ¿Músculos descuidados? Si un grupo no aparece en 2 semanas, incorpóralo.
 
-REGLAS DE RESPUESTA (ESTRICTO)
+TÍTULO AUTOMÁTICO DEL ENTRENO:
+- Si el nombre actual del entreno es automático (formato "Entreno #X") y el usuario te pide crear o modificar la rutina, genera un nombre descriptivo breve (ej. "Pecho y Tríceps", "Full Body Fuerza", "Push Pull Legs").
+- Incluye [TITULO_AUTO: nombre] al final de tu respuesta para que el sistema lo aplique automáticamente.
 
-FASE 1: PROPUESTA (Esperando confirmación)
-
-Genera una respuesta visualmente limpia:
-
-[Nombre del Grupo Muscular o Enfoque]
-
-[Nombre Ejercicio]: [Series]x[Reps] | [Peso Sugerido]kg | RIR [X]
-
-Contexto: [Comparativa directa: ej. "Subimos +2.5kg respecto al lunes" o "Nueva variante para romper estancamiento en banca"].
-
-Pregunta Final: "¿Confirmas este plan para añadirlo a tu registro?"
-
-FASE 2: EJECUCIÓN (Solo tras confirmación explícita)
-
-Genera el bloque JSON al final de tu mensaje.
+REGLAS PARA AÑADIR SERIES (JSON_PLAN):
+- Si el usuario pide añadir 1 o más ejercicios específicos (ej: "añade 80kg x 8 reps de Press Banca"), genera el JSON_plan INMEDIATAMENTE sin pedir confirmación.
+- Si el usuario pide un plan de entrenamiento COMPLETO, usa el flujo de propuesta → preguntar confirmación → JSON.
+- Cada objeto en el JSON es UNA serie individual. Puede haber 1 objeto o muchos.
+- El JSON se ejecuta en cuanto aparece — no necesita palabra de confirmación.
 
 FORMATO JSON_PLAN
 
@@ -633,7 +628,7 @@ FORMATO JSON_PLAN
 ]
 \`\`\`
 
-Regla de Oro: Un objeto por cada serie individual (4 series = 4 objetos).
+Regla de Oro: Un objeto por cada serie individual (4 series del mismo ejercicio = 4 objetos).
 Precisión: Máximo 1 decimal en Kg. Mayor a 0.
 Consistencia: Usa exclusivamente IDs presentes en el catálogo de ejercicios.
 
@@ -652,6 +647,7 @@ Resolución de dudas: Si el usuario pregunta algo técnico o sobre una molestia,
     const contextData = `
 SITUACIÓN ACTUAL:
 - Entrenando: ${currentTraining.entreno.Nom} (ID: ${currentTraining.entreno.EntrenoId})
+- Nombre automático: ${/^Entreno #\d+$/.test(currentTraining.entreno.Nom) ? 'Sí (el usuario no lo ha personalizado)' : 'No (el usuario ya lo personalizó)'}
 - Series ya realizadas hoy: ${seriesCurrentTraining}
     `;
 
@@ -664,8 +660,11 @@ SITUACIÓN ACTUAL:
     const genAI = new GoogleGenerativeAI(c.env.GEMINI_API_KEY);
 
     const model = genAI.getGenerativeModel({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3.5-flash',
       systemInstruction: finalSystemInstruction,
+      generationConfig: {
+        temperature: 0.2,
+      },
       safetySettings: [
         {
           category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
@@ -709,7 +708,23 @@ SITUACIÓN ACTUAL:
 
           // Stream completo — procesar JSON plan si existe
           let workoutUpdated = false;
+          let titleAuto = '';
           let cleanedText = fullText;
+
+          // Detectar título automático sugerido por la IA
+          const tituloMatch = fullText.match(/\[TITULO_AUTO:\s*(.*?)\]/);
+          if (tituloMatch && tituloMatch[1]) {
+            titleAuto = tituloMatch[1].trim();
+            // Aplicar el título al entreno si el nombre actual es automático
+            const currentNom = currentTraining.entreno.Nom || '';
+            if (/^Entreno #\d+$/.test(currentNom) || !currentNom) {
+              await c.env.DB.prepare('UPDATE Entreno SET Nom=? WHERE UserId=? AND EntrenoId=?')
+                .bind(titleAuto, userId, currentTraining.entreno.EntrenoId).run();
+              workoutUpdated = true;
+            }
+            cleanedText = cleanedText.replace(tituloMatch[0], '').trim();
+          }
+
           const jsonBlockRegex = /```json_plan\s*([\s\S]*?)\s*```/;
           const match = fullText.match(jsonBlockRegex);
 
@@ -731,7 +746,7 @@ SITUACIÓN ACTUAL:
                   }
                 }
                 workoutUpdated = true;
-                cleanedText = fullText.replace(match[0], "").trim();
+                cleanedText = cleanedText.replace(match[0], "").trim();
               }
             } catch (e) {
               console.error("Error al procesar el plan JSON de Gemini:", e);
@@ -771,6 +786,155 @@ SITUACIÓN ACTUAL:
       error: true,
       message: errorMessage
     }, 500);
+  }
+});
+
+// ---- Garmin Connect Integration ----
+
+// Garmin API key middleware (for GitHub Actions -> Worker)
+async function garminApiKeyAuth(c: any, next: any) {
+  const apiKey = c.req.header('X-Garmin-API-Key');
+  if (!apiKey || apiKey !== c.env.GARMIN_API_KEY) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+  await next();
+}
+
+// Save/update Garmin credentials (user-facing, JWT-protected)
+app.post('/api/garmin/credentials', zValidator('json', garminCredentialsSave), async (c) => {
+  const { garminEmail, garminPassword } = await c.req.json();
+  const userId = await c.get('jwtPayload').UserId;
+
+  if (!c.env.GARMIN_ENCRYPTION_KEY) {
+    throw new HTTPException(500, { message: 'GARMIN_ENCRYPTION_KEY not configured' });
+  }
+
+  try {
+    const encrypted = await encrypt(garminPassword, c.env.GARMIN_ENCRYPTION_KEY);
+    await c.env.DB.prepare(`
+      INSERT INTO GarminCredentials (UserId, GarminEmail, GarminPasswordEncrypted, Activo)
+      VALUES (?, ?, ?, 1)
+      ON CONFLICT(UserId) DO UPDATE SET GarminEmail=excluded.GarminEmail, GarminPasswordEncrypted=excluded.GarminPasswordEncrypted, Activo=1
+    `).bind(userId, garminEmail, encrypted).run();
+    return c.json({ message: 'Garmin credentials saved' });
+  } catch (error) {
+    console.error('Error saving Garmin credentials:', error);
+    throw new HTTPException(500, { message: 'Error saving credentials' });
+  }
+});
+
+// Delete Garmin credentials (user-facing)
+app.post('/api/garmin/credentials/delete', zValidator('json', garminCredentialsDelete), async (c) => {
+  const userId = await c.get('jwtPayload').UserId;
+  try {
+    await c.env.DB.prepare('DELETE FROM GarminCredentials WHERE UserId=?').bind(userId).run();
+    return c.json({ message: 'Garmin credentials removed' });
+  } catch (error) {
+    throw new HTTPException(500, { message: 'Error removing credentials' });
+  }
+});
+
+// Check if user has Garmin configured
+app.post('/api/garmin/status', zValidator('json', petition), async (c) => {
+  const userId = await c.get('jwtPayload').UserId;
+  const cred = await c.env.DB.prepare('SELECT GarminEmail, LastSync FROM GarminCredentials WHERE UserId=? AND Activo=1').bind(userId).first();
+  return c.json({
+    configured: !!cred,
+    garminEmail: cred?.GarminEmail || null,
+    lastSync: cred?.LastSync || null
+  });
+});
+
+// Import recovery data (from GitHub Actions, API key auth)
+app.post('/api/garmin/recovery', garminApiKeyAuth, zValidator('json', garminRecovery), async (c) => {
+  const {
+    userId, data, sleepHores, sleepScore, sleepDeep, sleepLight, sleepREM,
+    hrv, hrvLastNight, recoveryHours, restingHR, passos, stress,
+    bodyBattery, bodyBatteryDrained, trainingReadiness,
+    calories, activeCalories, intensityMinutes, maxHR, minHR,
+    vo2Max, respirationRate, spo2
+  } = await c.req.json();
+  try {
+    await c.env.DB.prepare(`
+      INSERT INTO DailyRecovery (UserId, Data, SleepHores, SleepScore, SleepDeep, SleepLight, SleepREM, HRV, HRVLastNight, RecoveryHours, RestingHR, Passos, Stress, BodyBattery, BodyBatteryDrained, TrainingReadiness, Calories, ActiveCalories, IntensityMinutes, MaxHR, MinHR, VO2Max, RespirationRate, SpO2)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(UserId, Data) DO UPDATE SET
+        SleepHores=COALESCE(excluded.SleepHores, DailyRecovery.SleepHores),
+        SleepScore=COALESCE(excluded.SleepScore, DailyRecovery.SleepScore),
+        SleepDeep=COALESCE(excluded.SleepDeep, DailyRecovery.SleepDeep),
+        SleepLight=COALESCE(excluded.SleepLight, DailyRecovery.SleepLight),
+        SleepREM=COALESCE(excluded.SleepREM, DailyRecovery.SleepREM),
+        HRV=COALESCE(excluded.HRV, DailyRecovery.HRV),
+        HRVLastNight=COALESCE(excluded.HRVLastNight, DailyRecovery.HRVLastNight),
+        RecoveryHours=COALESCE(excluded.RecoveryHours, DailyRecovery.RecoveryHours),
+        RestingHR=COALESCE(excluded.RestingHR, DailyRecovery.RestingHR),
+        Passos=COALESCE(excluded.Passos, DailyRecovery.Passos),
+        Stress=COALESCE(excluded.Stress, DailyRecovery.Stress),
+        BodyBattery=COALESCE(excluded.BodyBattery, DailyRecovery.BodyBattery),
+        BodyBatteryDrained=COALESCE(excluded.BodyBatteryDrained, DailyRecovery.BodyBatteryDrained),
+        TrainingReadiness=COALESCE(excluded.TrainingReadiness, DailyRecovery.TrainingReadiness),
+        Calories=COALESCE(excluded.Calories, DailyRecovery.Calories),
+        ActiveCalories=COALESCE(excluded.ActiveCalories, DailyRecovery.ActiveCalories),
+        IntensityMinutes=COALESCE(excluded.IntensityMinutes, DailyRecovery.IntensityMinutes),
+        MaxHR=COALESCE(excluded.MaxHR, DailyRecovery.MaxHR),
+        MinHR=COALESCE(excluded.MinHR, DailyRecovery.MinHR),
+        VO2Max=COALESCE(excluded.VO2Max, DailyRecovery.VO2Max),
+        RespirationRate=COALESCE(excluded.RespirationRate, DailyRecovery.RespirationRate),
+        SpO2=COALESCE(excluded.SpO2, DailyRecovery.SpO2)
+    `).bind(userId, data, sleepHores ?? null, sleepScore ?? null, sleepDeep ?? null, sleepLight ?? null, sleepREM ?? null, hrv ?? null, hrvLastNight ?? null, recoveryHours ?? null, restingHR ?? null, passos ?? null, stress ?? null, bodyBattery ?? null, bodyBatteryDrained ?? null, trainingReadiness ?? null, calories ?? null, activeCalories ?? null, intensityMinutes ?? null, maxHR ?? null, minHR ?? null, vo2Max ?? null, respirationRate ?? null, spo2 ?? null).run();
+    return c.json({ message: 'Recovery data saved' });
+  } catch (error) {
+    console.error('Error saving recovery data:', error);
+    throw new HTTPException(500, { message: 'Error saving recovery data' });
+  }
+});
+
+// Import activity data (from GitHub Actions)
+app.post('/api/garmin/activity', garminApiKeyAuth, zValidator('json', garminActivity), async (c) => {
+  const {
+    userId, garminActivityId, data, tipus, nom, distancia, durada,
+    avgHR, maxHR, avgSpeed, maxSpeed, desnivelPos, desnivelNeg,
+    minElevation, maxElevation, tss, esforc, anaerobicEsforc, calories,
+    avgPower, maxPower, vo2MaxValue, avgCadence, avgStrideLength
+  } = await c.req.json();
+  try {
+    await c.env.DB.prepare(`
+      INSERT INTO CardioActivity (UserId, GarminActivityId, Data, Tipus, Nom, Distancia, Durada, AvgHR, MaxHR, AvgSpeed, MaxSpeed, DesnivelPos, DesnivelNeg, MinElevation, MaxElevation, TSS, Esforc, AnaerobicEsforc, Calories, AvgPower, MaxPower, VO2MaxValue, AvgCadence, AvgStrideLength)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(GarminActivityId) DO NOTHING
+    `).bind(userId, garminActivityId, data, tipus, nom ?? null, distancia ?? null, durada ?? null, avgHR ?? null, maxHR ?? null, avgSpeed ?? null, maxSpeed ?? null, desnivelPos ?? null, desnivelNeg ?? null, minElevation ?? null, maxElevation ?? null, tss ?? null, esforc ?? null, anaerobicEsforc ?? null, calories ?? null, avgPower ?? null, maxPower ?? null, vo2MaxValue ?? null, avgCadence ?? null, avgStrideLength ?? null).run();
+    return c.json({ message: 'Activity saved' });
+  } catch (error) {
+    console.error('Error saving activity:', error);
+    throw new HTTPException(500, { message: 'Error saving activity' });
+  }
+});
+
+// Get users to sync (for GitHub Actions)
+app.get('/api/garmin/users-sync', garminApiKeyAuth, async (c) => {
+  try {
+    const users = await c.env.DB.prepare('SELECT UserId, GarminEmail, GarminPasswordEncrypted FROM GarminCredentials WHERE Activo=1').all();
+    const decrypted = await Promise.all((users.results || []).map(async (u: any) => ({
+      userId: u.UserId,
+      garminEmail: u.GarminEmail,
+      garminPassword: c.env.GARMIN_ENCRYPTION_KEY ? await decrypt(u.GarminPasswordEncrypted, c.env.GARMIN_ENCRYPTION_KEY) : null
+    })));
+    return c.json(decrypted);
+  } catch (error) {
+    console.error('Error fetching users for sync:', error);
+    throw new HTTPException(500, { message: 'Error fetching users' });
+  }
+});
+
+// Update last sync timestamp
+app.post('/api/garmin/sync-complete', garminApiKeyAuth, async (c) => {
+  const { userId } = await c.req.json();
+  const now = Math.floor(Date.now() / 1000);
+  try {
+    await c.env.DB.prepare('UPDATE GarminCredentials SET LastSync=? WHERE UserId=?').bind(now, userId).run();
+    return c.json({ message: 'Sync timestamp updated', lastSync: now });
+  } catch (error) {
+    throw new HTTPException(500, { message: 'Error updating sync timestamp' });
   }
 });
 

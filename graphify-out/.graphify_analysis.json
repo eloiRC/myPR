@@ -1,0 +1,462 @@
+{
+  "communities": {
+    "0": [
+      "src_index_addserietodb",
+      "src_index_app",
+      "src_index_bindings",
+      "src_index_chat",
+      "src_index_chatconfig",
+      "src_index_chathistory",
+      "src_index_checkpr",
+      "src_index_data",
+      "src_index_exercisesliststring",
+      "src_index_fromidx",
+      "src_index_genai",
+      "src_index_getfullserieslistfromtraining",
+      "src_index_getuserstats",
+      "src_index_ids",
+      "src_index_model",
+      "src_index_moved",
+      "src_index_reordered",
+      "src_index_stream",
+      "src_index_toidx",
+      "src_index_traininghistory",
+      "src_index_ts",
+      "src_index_updatecargatotal",
+      "src_jwt_generatejwt",
+      "src_jwt_hashpassword",
+      "src_jwt_ts",
+      "src_jwt_verifyjwt",
+      "src_jwt_verifypassword",
+      "src_schema_chatgpt",
+      "src_schema_deleteentreno",
+      "src_schema_deleteserie",
+      "src_schema_editentreno",
+      "src_schema_editexercici",
+      "src_schema_editserie",
+      "src_schema_getcargahistorial",
+      "src_schema_getentreno",
+      "src_schema_getentrenos",
+      "src_schema_getexercici",
+      "src_schema_getgrupsmusculars",
+      "src_schema_getpesoshistorial",
+      "src_schema_getuser",
+      "src_schema_login",
+      "src_schema_nouentreno",
+      "src_schema_nouexercici",
+      "src_schema_novaserie",
+      "src_schema_petition",
+      "src_schema_reorderserie",
+      "src_schema_signup",
+      "src_schema_ts",
+      "src_schema_updateuser"
+    ],
+    "1": [
+      "mypr_fr_src_app_vue",
+      "mypr_fr_src_main_ts",
+      "mypr_fr_src_router_index_ts",
+      "mypr_fr_src_stores_auth_ts",
+      "mypr_fr_src_utils_ejercicioutils_ts",
+      "mypr_fr_src_views_detalleejercicio_vue",
+      "mypr_fr_src_views_detalleentreno_vue",
+      "mypr_fr_src_views_ejercicios_vue",
+      "mypr_fr_src_views_entrenos_vue",
+      "mypr_fr_src_views_login_vue",
+      "mypr_fr_src_views_register_vue",
+      "mypr_fr_src_views_user_vue",
+      "router_index_requireauth",
+      "router_index_router",
+      "src_main_app",
+      "src_main_pinia",
+      "stores_auth_useauthstore",
+      "utils_ejercicioutils_formateartexto",
+      "utils_ejercicioutils_guardarnuevoejercicio",
+      "utils_ejercicioutils_nuevoejercicio",
+      "views_detalleejercicio_fecha",
+      "views_detalleentreno_grupo",
+      "views_detalleentreno_if",
+      "views_detalleentreno_map",
+      "views_entrenos_fecha",
+      "views_entrenos_fechastr",
+      "views_user_if"
+    ],
+    "2": [
+      "mypr_package_dependencies",
+      "mypr_package_dependencies_google_generative_ai",
+      "mypr_package_dependencies_hono",
+      "mypr_package_dependencies_hono_zod_validator",
+      "mypr_package_dependencies_jose",
+      "mypr_package_dependencies_openai",
+      "mypr_package_dependencies_tsndr_cloudflare_worker_jwt",
+      "mypr_package_dependencies_zod",
+      "mypr_package_devdependencies",
+      "mypr_package_devdependencies_cloudflare_workers_types",
+      "mypr_package_devdependencies_terser",
+      "mypr_package_devdependencies_types_vue_select",
+      "mypr_package_devdependencies_vue_tsconfig",
+      "mypr_package_devdependencies_wrangler",
+      "mypr_package_name",
+      "mypr_package_scripts",
+      "mypr_package_scripts_cf_typegen",
+      "mypr_package_scripts_deploy",
+      "mypr_package_scripts_deploy_front",
+      "mypr_package_scripts_dev",
+      "mypr_package_scripts_sql_edit",
+      "mypr_package_scripts_update_db",
+      "package_json"
+    ],
+    "3": [
+      "mypr_fr_tsconfig_node_compileroptions",
+      "mypr_fr_tsconfig_node_compileroptions_allowimportingtsextensions",
+      "mypr_fr_tsconfig_node_compileroptions_isolatedmodules",
+      "mypr_fr_tsconfig_node_compileroptions_lib",
+      "mypr_fr_tsconfig_node_compileroptions_module",
+      "mypr_fr_tsconfig_node_compileroptions_moduledetection",
+      "mypr_fr_tsconfig_node_compileroptions_moduleresolution",
+      "mypr_fr_tsconfig_node_compileroptions_noemit",
+      "mypr_fr_tsconfig_node_compileroptions_nofallthroughcasesinswitch",
+      "mypr_fr_tsconfig_node_compileroptions_nouncheckedsideeffectimports",
+      "mypr_fr_tsconfig_node_compileroptions_nounusedlocals",
+      "mypr_fr_tsconfig_node_compileroptions_nounusedparameters",
+      "mypr_fr_tsconfig_node_compileroptions_skiplibcheck",
+      "mypr_fr_tsconfig_node_compileroptions_strict",
+      "mypr_fr_tsconfig_node_compileroptions_target",
+      "mypr_fr_tsconfig_node_compileroptions_tsbuildinfofile",
+      "mypr_fr_tsconfig_node_include",
+      "mypr_fr_tsconfig_node_json"
+    ],
+    "4": [
+      "bot_accent_png",
+      "bot_light_grey_png",
+      "bot_svg",
+      "cloudflare_d1",
+      "cloudflare_pages",
+      "cloudflare_workers",
+      "cors_config",
+      "custom_domain",
+      "jwt_auth",
+      "mypr_app",
+      "mypr_backend",
+      "mypr_frontend",
+      "training_log_data",
+      "vue3_ts_vite",
+      "vue_logo_svg",
+      "vue_script_setup",
+      "wrangler_cli"
+    ],
+    "5": [
+      "components_chatbot_botmsg",
+      "components_chatbot_currenttraining",
+      "components_chatbot_decoder",
+      "components_chatbot_eventdata",
+      "components_chatbot_firstuserindex",
+      "components_chatbot_history",
+      "components_chatbot_lines",
+      "components_chatbot_messages_savedmessages_isfirstmessage_savedisfirstmessage",
+      "components_chatbot_rawhistory",
+      "components_chatbot_reader",
+      "components_chatbot_token",
+      "components_chatbot_usermessage",
+      "mypr_fr_src_components_chatbot_vue"
+    ],
+    "6": [
+      "mypr_fr_package_dependencies",
+      "mypr_fr_package_dependencies_vue",
+      "mypr_fr_package_dependencies_vue_router",
+      "mypr_fr_package_json",
+      "mypr_fr_package_name",
+      "mypr_fr_package_private",
+      "mypr_fr_package_scripts",
+      "mypr_fr_package_scripts_build",
+      "mypr_fr_package_scripts_dev",
+      "mypr_fr_package_scripts_preview",
+      "mypr_fr_package_type",
+      "mypr_fr_package_version"
+    ],
+    "7": [
+      "mypr_fr_package_devdependencies",
+      "mypr_fr_package_devdependencies_chart_js",
+      "mypr_fr_package_devdependencies_pinia",
+      "mypr_fr_package_devdependencies_postcss",
+      "mypr_fr_package_devdependencies_terser",
+      "mypr_fr_package_devdependencies_typescript",
+      "mypr_fr_package_devdependencies_vite",
+      "mypr_fr_package_devdependencies_vite_plugin_pwa",
+      "mypr_fr_package_devdependencies_vitejs_plugin_vue",
+      "mypr_fr_package_devdependencies_vue_chartjs",
+      "mypr_fr_package_devdependencies_vue_tsc",
+      "mypr_fr_package_devdependencies_vue_tsconfig"
+    ],
+    "8": [
+      "mypr_tsconfig_compileroptions",
+      "mypr_tsconfig_compileroptions_jsx",
+      "mypr_tsconfig_compileroptions_jsximportsource",
+      "mypr_tsconfig_compileroptions_lib",
+      "mypr_tsconfig_compileroptions_module",
+      "mypr_tsconfig_compileroptions_moduleresolution",
+      "mypr_tsconfig_compileroptions_skiplibcheck",
+      "mypr_tsconfig_compileroptions_strict",
+      "mypr_tsconfig_compileroptions_target",
+      "mypr_tsconfig_compileroptions_types",
+      "tsconfig_json"
+    ],
+    "9": [
+      "components_chatbot_if",
+      "mypr_fr_src_services_chatgpt_ts",
+      "services_chatgpt_chatgptpayload",
+      "services_chatgpt_chatgptservice",
+      "services_chatgpt_chatgptservice_loadmessages",
+      "services_chatgpt_chatgptservice_savemessages",
+      "services_chatgpt_chatgptservice_sendmessage",
+      "services_chatgpt_chatgptservice_testconnection",
+      "services_chatgpt_chatmessage",
+      "services_chatgpt_entrenodata",
+      "services_chatgpt_gettoken"
+    ],
+    "10": [
+      "mypr_fr_tsconfig_app_compileroptions",
+      "mypr_fr_tsconfig_app_compileroptions_nofallthroughcasesinswitch",
+      "mypr_fr_tsconfig_app_compileroptions_nouncheckedsideeffectimports",
+      "mypr_fr_tsconfig_app_compileroptions_nounusedlocals",
+      "mypr_fr_tsconfig_app_compileroptions_nounusedparameters",
+      "mypr_fr_tsconfig_app_compileroptions_strict",
+      "mypr_fr_tsconfig_app_compileroptions_tsbuildinfofile",
+      "mypr_fr_tsconfig_app_extends",
+      "mypr_fr_tsconfig_app_include",
+      "mypr_fr_tsconfig_app_json"
+    ],
+    "11": [
+      "mypr_fr_src_services_auth_ts",
+      "services_auth_authservice",
+      "services_auth_logindata",
+      "services_auth_loginresponse",
+      "services_auth_registerdata",
+      "services_auth_registerresponse",
+      "services_auth_userinfo"
+    ],
+    "12": [
+      "mypr_fr_routes_exclude",
+      "mypr_fr_routes_include",
+      "mypr_fr_routes_json",
+      "mypr_fr_routes_routes",
+      "mypr_fr_routes_version"
+    ],
+    "13": [
+      "mypr_fr_app",
+      "pwq_192x192_png",
+      "pwq_512x512_png",
+      "trophy_svg",
+      "vite_svg"
+    ],
+    "14": [
+      "components_buscadorselect_selectedoption",
+      "components_buscadorselect_text",
+      "mypr_fr_src_components_buscadorselect_vue"
+    ],
+    "15": [
+      "components_serieitem_savedstate",
+      "components_serieitem_token",
+      "mypr_fr_src_components_serieitem_vue"
+    ],
+    "16": [
+      "mypr_fr_tsconfig_files",
+      "mypr_fr_tsconfig_json",
+      "mypr_fr_tsconfig_references"
+    ],
+    "17": [
+      "mypr_fr_vscode_extensions_json",
+      "vscode_extensions_recommendations"
+    ],
+    "18": [
+      "mypr_worker_configuration_d_cloudflarebindings",
+      "worker_configuration_d_ts"
+    ],
+    "19": [
+      "run_edit_sql_ps1"
+    ],
+    "20": [
+      "mypr_fr_postcss_config_mjs"
+    ],
+    "21": [
+      "mypr_fr_vite_config_ts"
+    ],
+    "22": [
+      "mypr_fr_src_vite_env_d_ts"
+    ],
+    "23": [
+      "mypr_fr_src_components_footer_vue"
+    ]
+  },
+  "cohesion": {
+    "0": 0.06207482993197279,
+    "1": 0.08831908831908832,
+    "2": 0.08695652173913043,
+    "3": 0.1111111111111111,
+    "4": 0.15441176470588236,
+    "5": 0.15384615384615385,
+    "6": 0.16666666666666666,
+    "7": 0.16666666666666666,
+    "8": 0.18181818181818182,
+    "9": 0.21818181818181817,
+    "10": 0.2,
+    "11": 0.2857142857142857,
+    "12": 0.4,
+    "13": 0.5,
+    "14": 0.6666666666666666,
+    "15": 0.6666666666666666,
+    "16": 0.6666666666666666,
+    "17": 1.0,
+    "18": 1.0,
+    "19": 1.0,
+    "20": 1.0,
+    "21": 1.0,
+    "22": 1.0,
+    "23": 1.0
+  },
+  "gods": [
+    {
+      "id": "mypr_fr_tsconfig_node_compileroptions",
+      "label": "compilerOptions",
+      "degree": 16
+    },
+    {
+      "id": "mypr_tsconfig_compileroptions",
+      "label": "compilerOptions",
+      "degree": 10
+    },
+    {
+      "id": "mypr_frontend",
+      "label": "MyPR Frontend (Vue 3 SPA)",
+      "degree": 9
+    },
+    {
+      "id": "mypr_package_scripts",
+      "label": "scripts",
+      "degree": 7
+    },
+    {
+      "id": "mypr_fr_tsconfig_app_compileroptions",
+      "label": "compilerOptions",
+      "degree": 7
+    },
+    {
+      "id": "mypr_backend",
+      "label": "MyPR Backend (Cloudflare Worker)",
+      "degree": 7
+    },
+    {
+      "id": "services_chatgpt_chatgptservice",
+      "label": "ChatGPTService",
+      "degree": 5
+    },
+    {
+      "id": "stores_auth_useauthstore",
+      "label": "useAuthStore",
+      "degree": 5
+    },
+    {
+      "id": "mypr_fr_package_scripts",
+      "label": "scripts",
+      "degree": 4
+    },
+    {
+      "id": "services_chatgpt_gettoken",
+      "label": "getToken()",
+      "degree": 3
+    }
+  ],
+  "surprises": [
+    {
+      "source": "Vue.js Logo SVG",
+      "target": "MyPR Frontend (Vue 3 SPA)",
+      "source_files": [
+        "mypr-fr/src/assets/vue.svg",
+        "mypr-fr/index.html"
+      ],
+      "confidence": "INFERRED",
+      "relation": "conceptually_related_to",
+      "why": "inferred connection - not explicitly stated in source; crosses file types (doc \u2194 image); peripheral node `Vue.js Logo SVG` unexpectedly reaches hub `MyPR Frontend (Vue 3 SPA)`"
+    },
+    {
+      "source": "MyPR Application",
+      "target": "MyPR Backend (Cloudflare Worker)",
+      "source_files": [
+        "README.md",
+        "DEPLOY.md"
+      ],
+      "confidence": "INFERRED",
+      "relation": "references",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+    },
+    {
+      "source": "MyPR Application",
+      "target": "MyPR Frontend (Vue 3 SPA)",
+      "source_files": [
+        "README.md",
+        "mypr-fr/index.html"
+      ],
+      "confidence": "INFERRED",
+      "relation": "references",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+    },
+    {
+      "source": "MyPR Application",
+      "target": "Training Log Data (Exercise Series Records)",
+      "source_files": [
+        "README.md",
+        "edit_result.txt"
+      ],
+      "confidence": "INFERRED",
+      "relation": "references",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+    },
+    {
+      "source": "MyPR Backend (Cloudflare Worker)",
+      "target": "MyPR Frontend (Vue 3 SPA)",
+      "source_files": [
+        "DEPLOY.md",
+        "mypr-fr/index.html"
+      ],
+      "confidence": "INFERRED",
+      "relation": "shares_data_with",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+    }
+  ],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `devDependencies` connect `Community 7` to `Community 6`?",
+      "why": "High betweenness centrality (0.007) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `if()` connect `Community 9` to `Community 5`?",
+      "why": "High betweenness centrality (0.005) - this node is a cross-community bridge."
+    },
+    {
+      "type": "verify_inferred",
+      "question": "Are the 3 inferred relationships involving `MyPR Frontend (Vue 3 SPA)` (e.g. with `MyPR Application` and `MyPR Backend (Cloudflare Worker)`) actually correct?",
+      "why": "`MyPR Frontend (Vue 3 SPA)` has 3 INFERRED edges - model-reasoned connections that need verification."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `name`, `dev`, `deploy` to the rest of the system?",
+      "why": "140 weakly-connected nodes found - possible documentation gaps or missing edges."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 0` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.06207482993197279 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 1` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.08831908831908832 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 2` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.08695652173913043 - nodes in this community are weakly interconnected."
+    }
+  ]
+}

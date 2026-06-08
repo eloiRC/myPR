@@ -350,11 +350,11 @@ function alertWindow(message:string){
 </script>
 
 <template>
-  <div class="ejercicios-container">
-    <header class="header">
-      <h1>Mis Ejercicios</h1>
+  <div class="page">
+    <header class="page-header">
+      <h1>Mis ejercicios</h1>
 
-      <div class="header-buttons">
+      <div class="page-header-actions">
       <button @click="volverAEntrenos" class="btn btn-secondary">
         &larr; Volver
       </button>
@@ -364,23 +364,23 @@ function alertWindow(message:string){
       </div>
     </header>
 
-    <div v-if="showEjercicioAlert" class="ejercicio-alert">
+    <div v-if="showEjercicioAlert" class="toast toast-success">
       {{ ejercicioAlertMessage }}
     </div>
 
-    <div v-if="showAlert" class="alert">
+    <div v-if="showAlert" class="toast toast-warning">
       {{ alertMessage }}
     </div>
  
  
     
     <!-- Filtro por grupo muscular -->
-    <div class="filtro-container">
+    <div class="panel">
       <h3>Filtrar por grupo muscular</h3>
       <div class="filtro-grupos">
         <button 
-          class="btn-filtro" 
-          :class="{ 'btn-filtro-activo': filtroGrupoMuscular === null }"
+          class="chip-filter" 
+          :class="{ 'active': filtroGrupoMuscular === null }"
           @click="limpiarFiltro"
         >
           Todos
@@ -388,8 +388,8 @@ function alertWindow(message:string){
         <button 
           v-for="grupo in gruposMusculares" 
           :key="grupo.GrupMuscularId"
-          class="btn-filtro"
-          :class="{ 'btn-filtro-activo': filtroGrupoMuscular === grupo.GrupMuscularId }"
+          class="chip-filter"
+          :class="{ 'active': filtroGrupoMuscular === grupo.GrupMuscularId }"
           @click="filtroGrupoMuscular = grupo.GrupMuscularId"
         >
           {{ grupo.Nom }}
@@ -398,7 +398,7 @@ function alertWindow(message:string){
     </div>
     
     <!-- Formulario para añadir nuevo ejercicio -->
-    <div v-if="showForm" class="form-container">
+    <div v-if="showForm" class="card card-elevated">
       <h2>Nuevo Ejercicio</h2>
       <form @submit.prevent="newExercici" class="ejercicio-form">
         <div class="form-group">
@@ -452,22 +452,22 @@ function alertWindow(message:string){
       </form>
     </div>
     
-    <div v-if="isLoading" class="loading">
+    <div v-if="isLoading" class="state-box">
       <p>Cargando ejercicios...</p>
     </div>
     
-    <div v-else-if="error" class="error">
+    <div v-else-if="error" class="state-box error">
       <p>{{ error }}</p>
       <button @click="loadEjercicios" class="btn">Reintentar</button>
     </div>
     
-    <div v-else-if="ejercicios.length === 0" class="no-ejercicios">
+    <div v-else-if="ejercicios.length === 0" class="state-box">
       <p class="no-ejercicios-text">No tienes ejercicios registrados.</p>
       <button @click="toggleForm" class="btn btn-primary btn-lg">Crear tu primer ejercicio</button>
     </div>
     
     <div v-else>
-      <h2>Lista de Ejercicios</h2>
+      <h2 class="section-title">Lista de ejercicios</h2>
       
       <div class="resultados-filtro">
         <p>
@@ -481,30 +481,30 @@ function alertWindow(message:string){
         <div 
           v-for="ejercicio in ejerciciosFiltrados" 
           :key="ejercicio.ExerciciId" 
-          class="ejercicio-card"
+          class="list-card"
           
           
         >
           <!-- Modo visualización -->
-          <div v-if="editandoEjercicio?.ExerciciId !== ejercicio.ExerciciId" class="ejercicio-info" @click="verDetalleEjercicio(ejercicio.ExerciciId)">
+          <div v-if="editandoEjercicio?.ExerciciId !== ejercicio.ExerciciId" class="list-card-body" @click="verDetalleEjercicio(ejercicio.ExerciciId)">
             <h3  >{{ ejercicio.Nom }}</h3>
-            <p v-if="ejercicio.PR > 0" class="pr-info">
+            <p v-if="ejercicio.PR > 0" class="list-card-meta">
               PR: <strong>{{ ejercicio.PR }} kg</strong>
             </p>
             <div class="grupos-musculares">
-              <span v-if="ejercicio.GrupMuscular1" class="grupo-tag">
+              <span v-if="ejercicio.GrupMuscular1" class="chip">
                 {{ getNombreGrupoMuscular(ejercicio.GrupMuscular1) }}
               </span>
-              <span v-if="ejercicio.GrupMuscular2" class="grupo-tag">
+              <span v-if="ejercicio.GrupMuscular2" class="chip">
                 {{ getNombreGrupoMuscular(ejercicio.GrupMuscular2) }}
               </span>
-              <span v-if="ejercicio.GrupMuscular3" class="grupo-tag">
+              <span v-if="ejercicio.GrupMuscular3" class="chip">
                 {{ getNombreGrupoMuscular(ejercicio.GrupMuscular3) }}
               </span>
-              <span v-if="ejercicio.GrupMuscular4" class="grupo-tag">
+              <span v-if="ejercicio.GrupMuscular4" class="chip">
                 {{ getNombreGrupoMuscular(ejercicio.GrupMuscular4) }}
               </span>
-              <span v-if="ejercicio.GrupMuscular5" class="grupo-tag">
+              <span v-if="ejercicio.GrupMuscular5" class="chip">
                 {{ getNombreGrupoMuscular(ejercicio.GrupMuscular5) }}
               </span>
             </div>
@@ -571,75 +571,10 @@ function alertWindow(message:string){
 </template>
 
 <style scoped>
-
-.ejercicios-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 1rem;
-  padding-bottom: 80px; /* Espacio para el footer */
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-}
-
-.header-buttons {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
-
-.header h1 {
-  margin-bottom: 0;
-}
-.ejercicios-title {
-  
-  margin-bottom: 0;
-}
-
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 1.5rem;
-}
-
-h2 {
-  margin: 2rem 0 1.5rem;
-  font-size: 1.5rem;
-}
-
-.ejercicio-card {
-  background-color: var(--bg-secondary);
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border: 1px solid var(--border);
-}
-
-.ejercicio-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.ejercicio-info {
-  flex: 1;
-}
-
-.ejercicio-info h3 {
-  margin: 0 0 0.5rem;
-  font-size: 1.1rem;
-}
-
-.pr-info {
-  margin: 0.5rem 0;
-  color: var(--color-cobalt-blue);
+.list-card-body h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  font-weight: 700;
 }
 
 .grupos-musculares {
@@ -649,269 +584,46 @@ h2 {
   margin-top: 0.5rem;
 }
 
-.grupo-tag {
-  background-color: var(--bg-primary);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  border: 1px solid var(--border);
-}
-
 .ejercicio-actions {
   display: flex;
   gap: 0.5rem;
-}
-
-.btn-sm {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.8rem;
-}
-
-.loading, .error, .no-ejercicios {
-  text-align: center;
-  padding: 2rem;
-  background-color: var(--bg-secondary);
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  margin: 1.5rem 0;
-}
-
-.error {
-  color: var(--error);
-}
-
-.btn {
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.btn-primary {
-  background-color: var(--color-cobalt-blue);
-  color: white;
-  border: none;
-}
-
-.btn-primary:hover {
-  background-color: var(--color-cobalt-blue-dark);
-}
-
-.btn-secondary {
-  background-color: transparent;
-  border: 1px solid var(--accent-secondary);
-  color: var(--accent-secondary);
-}
-
-.btn-secondary:hover {
-  background-color: rgba(25, 86, 200, 0.1);
-}
-
-/* Estilos para el formulario */
-.form-container {
-  background-color: var(--bg-secondary);
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-  border: 1px solid var(--border);
-}
-
-.ejercicio-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.form-control {
-  padding: 0.5rem;
-  border-radius: 4px;
-  border: 1px solid var(--border);
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  font-size: 1rem;
-}
-
-.form-control:focus {
-  outline: none;
-  border-color: var(--color-cobalt-blue);
-  box-shadow: 0 0 0 2px rgba(25, 86, 200, 0.2);
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.grupos-seleccion {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
-}
-
-.grupo-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.checkbox-input {
-  margin: 0;
-}
-
-.checkbox-label {
-  cursor: pointer;
-}
-
-.select-multiple {
-  height: auto;
-  min-height: 120px;
-}
-
-.select-help {
-  display: block;
-  margin-top: 0.5rem;
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-}
-
-/* Estilos para el filtro */
-.filtro-container {
-  background-color: var(--bg-secondary);
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 2rem;
-  border: 1px solid var(--border);
-}
-
-.filtro-container h3 {
-  margin-bottom: 1rem;
-}
-
-.filtro-grupos {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.btn-filtro {
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  border: 1px solid var(--color-cobalt-blue);
-  background-color: transparent;
-  color: var(--color-cobalt-blue);
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.btn-filtro:hover {
-  background-color: rgba(25, 86, 200, 0.1);
-}
-
-.btn-filtro-activo {
-  background-color: var(--color-cobalt-blue);
-  color: white;
+  flex-shrink: 0;
 }
 
 .resultados-filtro {
   margin-bottom: 1rem;
-  color: var(--text-secondary);
-  font-style: italic;
+  color: var(--text-muted);
+  font-size: 0.875rem;
 }
 
-/* Estilos para el modo de edición */
 .edit-mode {
   width: 100%;
-  padding: 0.5rem;
 }
 
-.edit-mode .form-group {
-  margin-bottom: 1rem;
+.list-card:has(.edit-mode) {
+  flex-direction: column;
+  align-items: stretch;
+  cursor: default;
 }
 
-.edit-mode .form-control {
-  width: 100%;
+.list-card:has(.edit-mode) .ejercicio-actions {
+  align-self: flex-end;
+  margin-top: 0.75rem;
+}
+
+.list-card-body:not(.edit-mode) {
+  cursor: pointer;
 }
 
 .edit-mode .grupos-seleccion {
-  margin-top: 0.5rem;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 0.5rem;
 }
 
-.ejercicio-card {
-  transition: all 0.3s ease;
+.filtro-grupos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
-
-.ejercicio-card:has(.edit-mode) {
-  flex-direction: column;
-  align-items: stretch;
-}
-
-.ejercicio-card:has(.edit-mode) .ejercicio-actions {
-  align-self: flex-end;
-  margin-top: 1rem;
-}
-
-.no-ejercicios {
-  text-align: center;
-  padding: 3rem 2rem;
-  background-color: var(--bg-secondary);
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  margin: 1.5rem 0;
-}
-
-.no-ejercicios-text {
-  margin-bottom: 1.5rem;
-  font-size: 1.1rem;
-  color: var(--text-secondary);
-}
-
-.btn-lg {
-  padding: 0.75rem 2rem;
-  font-size: 1.1rem;
-}
-
-.error-message {
-  color: var(--color-razzmatazz);
-}
-
-.alert {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background-color: var(--color-sandy-brown);
-  color: black;
-  font-weight: bold;
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  z-index: 9999;
-  animation: slideIn 0.3s ease-out;
-}
-
-.ejercicio-alert {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background-color: var(--color-cobalt-blue);
-  color: white;
-  font-weight: bold;
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
-  animation: slideIn 0.3s ease-out;
-}
-</style> 
+</style>

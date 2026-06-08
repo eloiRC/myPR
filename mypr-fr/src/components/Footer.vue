@@ -17,92 +17,101 @@ const irAPerfil = () => {
 </script>
 
 <template>
-  <footer class="footer">
-    <div class="footer-content">
-      <div class="user-info" v-if="userInfo">
-        <span class="email clickable" @click="irAPerfil" title="Ver mi perfil">{{ userInfo.email }}</span>
-      </div>
-      <button @click="cerrarSesion" class="btn-logout">
-        <span class="icon">⟲</span> Cerrar Sesión
+  <footer class="app-footer">
+    <div class="app-footer-inner">
+      <button
+        v-if="userInfo"
+        type="button"
+        class="footer-profile"
+        @click="irAPerfil"
+        title="Ver mi perfil"
+      >
+        <span class="footer-avatar">{{ userInfo.email?.charAt(0).toUpperCase() }}</span>
+        <span class="footer-email">{{ userInfo.email }}</span>
+      </button>
+      <button type="button" @click="cerrarSesion" class="btn btn-secondary btn-sm footer-logout">
+        Cerrar sesión
       </button>
     </div>
   </footer>
 </template>
 
 <style scoped>
-.footer {
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background-color: var(--bg-secondary);
+.app-footer {
+  flex-shrink: 0;
+  margin-top: 2rem;
+  padding: 1.25rem var(--space-page-x);
+  padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+  background: var(--bg-secondary);
   border-top: 1px solid var(--border);
-  padding: 0.75rem 1rem;
-  z-index: 10;
 }
 
-.footer-content {
+.app-footer-inner {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  max-width: 800px;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: var(--max-content);
   margin: 0 auto;
 }
 
-.user-info {
+.footer-profile {
   display: flex;
   align-items: center;
-}
-
-.email {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-}
-
-.email.clickable {
+  gap: 0.625rem;
+  background: none;
+  border: none;
+  padding: 0.25rem;
   cursor: pointer;
-  transition: color 0.2s ease;
-  text-decoration: underline;
-  text-decoration-color: transparent;
-  transition: all 0.2s ease;
+  color: inherit;
+  font-family: inherit;
+  min-width: 0;
+  border-radius: var(--radius-sm);
+  transition: background 0.2s;
 }
 
-.email.clickable:hover {
-  color: var(--color-sandy-brown);
-  text-decoration-color: var(--color-sandy-brown);
+.footer-profile:hover {
+  background: var(--bg-tertiary);
 }
 
-.btn-logout {
+.footer-avatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: #042f2e;
+  font-size: 0.875rem;
+  font-weight: 800;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background-color: transparent;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.footer-email {
+  font-size: 0.8125rem;
   color: var(--text-secondary);
-  border: 1px solid var(--border);
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.btn-logout:hover {
-  background-color: var(--color-sandy-brown);
-  color: white;
-  border-color: var(--color-sandy-brown);
+.footer-profile:hover .footer-email {
+  color: var(--text-primary);
 }
 
-.icon {
-  font-size: 1.1rem;
+.footer-logout {
+  flex-shrink: 0;
 }
 
-@media (max-width: 600px) {
-  .footer-content {
+@media (max-width: 480px) {
+  .app-footer-inner {
     flex-direction: column;
-    gap: 0.5rem;
+    align-items: stretch;
   }
-  
-  .user-info {
-    margin-bottom: 0.5rem;
+
+  .footer-logout {
+    width: 100%;
   }
 }
-</style> 
+</style>

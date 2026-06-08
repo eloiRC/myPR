@@ -1,0 +1,28 @@
+-- Migration: Add new Garmin columns to existing tables
+-- These tables may already exist with the old schema, so we use ALTER TABLE
+-- (DROP/CREATE would lose existing recovery and activity data)
+
+-- DailyRecovery new columns
+ALTER TABLE DailyRecovery ADD COLUMN SleepDeep REAL DEFAULT NULL;
+ALTER TABLE DailyRecovery ADD COLUMN SleepLight REAL DEFAULT NULL;
+ALTER TABLE DailyRecovery ADD COLUMN SleepREM REAL DEFAULT NULL;
+ALTER TABLE DailyRecovery ADD COLUMN HRVLastNight REAL DEFAULT NULL;
+ALTER TABLE DailyRecovery ADD COLUMN BodyBatteryDrained INTEGER DEFAULT NULL;
+ALTER TABLE DailyRecovery ADD COLUMN Calories INTEGER DEFAULT NULL;
+ALTER TABLE DailyRecovery ADD COLUMN ActiveCalories INTEGER DEFAULT NULL;
+ALTER TABLE DailyRecovery ADD COLUMN IntensityMinutes INTEGER DEFAULT NULL;
+ALTER TABLE DailyRecovery ADD COLUMN MaxHR INTEGER DEFAULT NULL;
+ALTER TABLE DailyRecovery ADD COLUMN MinHR INTEGER DEFAULT NULL;
+ALTER TABLE DailyRecovery ADD COLUMN VO2Max REAL DEFAULT NULL;
+ALTER TABLE DailyRecovery ADD COLUMN RespirationRate REAL DEFAULT NULL;
+ALTER TABLE DailyRecovery ADD COLUMN SpO2 REAL DEFAULT NULL;
+
+-- CardioActivity new columns
+ALTER TABLE CardioActivity ADD COLUMN MinElevation REAL DEFAULT NULL;
+ALTER TABLE CardioActivity ADD COLUMN MaxElevation REAL DEFAULT NULL;
+ALTER TABLE CardioActivity ADD COLUMN AnaerobicEsforc REAL DEFAULT NULL;
+ALTER TABLE CardioActivity ADD COLUMN AvgPower REAL DEFAULT NULL;
+ALTER TABLE CardioActivity ADD COLUMN MaxPower REAL DEFAULT NULL;
+ALTER TABLE CardioActivity ADD COLUMN VO2MaxValue REAL DEFAULT NULL;
+ALTER TABLE CardioActivity ADD COLUMN AvgCadence REAL DEFAULT NULL;
+ALTER TABLE CardioActivity ADD COLUMN AvgStrideLength REAL DEFAULT NULL;

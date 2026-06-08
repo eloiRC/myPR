@@ -85,10 +85,12 @@ const chartData = computed(() => {
     datasets: [
       {
         label: 'Peso total: (Tn)',
-        backgroundColor: '#FF8D67',
-        borderColor: '#FF8D67',
+        backgroundColor: '#f97316',
+        borderColor: '#f97316',
         borderWidth: 2,
-        pointBackgroundColor: '#FF8D67',
+        pointBackgroundColor: '#f97316',
+        tension: 0.35,
+        fill: true,
         data
         
       }
@@ -306,10 +308,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="entrenos-container">
-    <header class="header">
-      <h1>Mis Entrenos</h1>
-      <div class="header-buttons">
+  <div class="page">
+    <header class="page-header">
+      <h1>Mis entrenos</h1>
+      <div class="page-header-actions">
         <button @click="irAEjercicios" class="btn btn-secondary" :disabled="isLoading">
           Mis Ejercicios
         </button>
@@ -319,66 +321,30 @@ onMounted(() => {
       </div>
     </header>
     
-    <!-- Selector de rango de fechas -->
-    <div class="fecha-selector">
-      <button 
-        class="btn-navegacion" 
-        @click="navegarTiempo('anterior')"
-        :disabled="isLoading"
-      >
-        <span class="flecha">←</span>
-      </button>
-      
-      <div class="preset-buttons">
-        <button 
-          class="btn-fecha" 
-          :class="{ 'btn-fecha-activo': rangoSeleccionado === '7d' }"
-          @click="actualizarRangoFechas('7d', diasDesplazamiento)"
-        >
-          7 días
-        </button>
-        <button 
-          class="btn-fecha" 
-          :class="{ 'btn-fecha-activo': rangoSeleccionado === '30d' }"
-          @click="actualizarRangoFechas('30d', diasDesplazamiento)"
-        >
-          30 días
-        </button>
-        <button 
-          class="btn-fecha" 
-          :class="{ 'btn-fecha-activo': rangoSeleccionado === '90d' }"
-          @click="actualizarRangoFechas('90d', diasDesplazamiento)"
-        >
-          90 días
-        </button>
-      </div>
-      
-      <button 
-        class="btn-navegacion" 
-        @click="navegarTiempo('siguiente')"
-        :disabled="isLoading || diasDesplazamiento >= 0"
-      >
-        <span class="flecha">→</span>
-      </button>
-  
+    <div class="segment">
+      <button type="button" class="segment-nav" @click="navegarTiempo('anterior')" :disabled="isLoading" aria-label="Anterior">←</button>
+      <button type="button" class="segment-btn" :class="{ active: rangoSeleccionado === '7d' }" @click="actualizarRangoFechas('7d', diasDesplazamiento)">7 días</button>
+      <button type="button" class="segment-btn" :class="{ active: rangoSeleccionado === '30d' }" @click="actualizarRangoFechas('30d', diasDesplazamiento)">30 días</button>
+      <button type="button" class="segment-btn" :class="{ active: rangoSeleccionado === '90d' }" @click="actualizarRangoFechas('90d', diasDesplazamiento)">90 días</button>
+      <button type="button" class="segment-nav" @click="navegarTiempo('siguiente')" :disabled="isLoading || diasDesplazamiento >= 0" aria-label="Siguiente">→</button>
     </div>
 
-    <p class="horquilla-fechas" v-if="fechaInicio > 0 && fechaFin > 0">
+    <p class="caption" v-if="fechaInicio > 0 && fechaFin > 0">
       Desde: {{ formatDate(fechaInicio) }} - Hasta: {{ formatDate(fechaFin) }}
     </p>
     
     
     
-    <div v-if="isLoading" class="loading">
+    <div v-if="isLoading" class="state-box">
       <p>Cargando entrenos...</p>
     </div>
     
-    <div v-else-if="error" class="error">
+    <div v-else-if="error" class="state-box error">
       <p>{{ error }}</p>
       <button @click="loadEntrenos" class="btn">Reintentar</button>
     </div>
     
-    <div v-else-if="entrenos.length === 0" class="no-entrenos">
+    <div v-else-if="entrenos.length === 0" class="state-box">
       <p class="no-entrenos-text">
         No tienes entrenos en el período seleccionado.
       </p>
@@ -387,9 +353,9 @@ onMounted(() => {
     
     <div v-else>
       <!-- Gráfica de carga de entrenamiento -->
-      <div class="chart-container">
+      <div class="chart-panel">
         <h2>Carga de entrenamiento</h2>
-        <div class="chart">
+        <div class="chart-wrap">
           <Line :data="chartData" :options="chartOptions" />
         </div>
       </div>
@@ -398,13 +364,13 @@ onMounted(() => {
         <div 
           v-for="entreno in entrenosOrdenados" 
           :key="entreno.EntrenoId" 
-          class="entreno-card"
+          class="list-card"
           @click="verDetalleEntreno(entreno.EntrenoId)"
         >
-          <div class="entreno-info">
+          <div class="list-card-body">
             <h3>{{ entreno.Nom }}</h3>
-            <p class="date">{{ formatDate(entreno.Data) }}</p>
-            <p class="carga">Peso total: <strong class="num-carga">{{ entreno.CargaTotal }} Tn</strong></p>
+            <p class="list-card-meta">{{ formatDate(entreno.Data) }}</p>
+            <p class="carga">Peso total: <strong class="list-card-highlight">{{ entreno.CargaTotal }} Tn</strong></p>
           </div>
           <div class="entreno-actions">
             <button class="btn btn-danger" @click.stop="eliminarEntreno(entreno.EntrenoId)" :disabled="isLoading">Eliminar</button>
@@ -417,247 +383,13 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.entrenos-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 1rem;
-  padding-bottom: 80px; /* Espacio para el footer */
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-}
-
-.header-buttons {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
-
-.header h1 {
-  margin-bottom: 0;
-}
-
-/* Estilos para la gráfica */
-.chart-container {
-  background-color: var(--bg-secondary);
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-  border: 1px solid var(--border);
-}
-
-.chart-container h2 {
-  margin-top: 0;
-  margin-bottom: 1rem;
-  font-size: 1.2rem;
-  color: var(--text-primary);
-}
-
-.chart {
-  height: 250px;
-  position: relative;
-}
-
-.entreno-card {
-  background-color: var(--bg-secondary);
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  border: 1px solid var(--border);
-}
-
-.entreno-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.entreno-info {
-  flex: 1;
-}
-
 .entreno-actions {
-  display: flex;
-  align-items: center;
-}
-
-.entreno-info h3 {
-  margin: 0 0 0.5rem;
-  font-size: 1.1rem;
-}
-
-.date {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  margin: 0.5rem 0;
+  flex-shrink: 0;
 }
 
 .carga {
-  font-size: 1rem;
-  margin: 0.5rem 0;
- 
-}
-.num-carga{
-  color: var(--color-cobalt-blue);
-}
-
-.loading, .error, .no-entrenos {
-  text-align: center;
-  padding: 2rem;
-  background-color: var(--bg-secondary);
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  margin: 1.5rem 0;
-}
-
-.error {
-  color: var(--error);
-}
-
-.btn {
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.btn-primary {
-  background-color: var(--color-cobalt-blue);
-  color: white;
-  border: none;
-}
-
-.btn-primary:hover {
-  background-color: #1648a0;
-}
-
-.btn-secondary {
-  background-color: transparent;
-  border: 1px solid var(--accent-secondary);
-  color: var(--accent-secondary);
-}
-
-.btn-secondary:hover {
-  background-color: rgba(25, 86, 200, 0.1);
-}
-
-.btn-danger {
-  background-color: #c02a5d;
-  color: white;
-  border: none;
-}
-
-.btn-danger:hover {
-  background-color: #a1244e;
-}
-
-.btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.no-entrenos {
-  text-align: center;
-  padding: 3rem 2rem;
-  background-color: var(--bg-secondary);
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  margin: 1.5rem 0;
-}
-
-.no-entrenos-text {
-  margin-bottom: 1.5rem;
-  font-size: 1.1rem;
-  color: var(--text-secondary);
-}
-
-.btn-lg {
-  padding: 0.75rem 2rem;
-  font-size: 1.1rem;
-}
-
-/* Estilos para el selector de fechas */
-.fecha-selector {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  background-color: var(--bg-secondary);
-  padding: 1rem;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-}
-
-.preset-buttons {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.btn-navegacion {
-  background: none;
-  border: none;
-  color: var(--text-primary);
-  cursor: pointer;
-  padding: 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.2s;
-}
-
-.btn-navegacion:hover:not(:disabled) {
-  color: var(--color-cobalt-blue);
-}
-
-.btn-navegacion:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.flecha {
-  font-size: 1.5rem;
-  line-height: 1;
-}
-.btn-fecha {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border);
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s;
   font-size: 0.9rem;
-}
-.btn-fecha:hover {
-  background-color: var(--bg-primary);
-}
-.btn-fecha-activo {
-  background-color: var(--color-cobalt-blue);
-  color: white;
-  border-color: var(--color-cobalt-blue);
-}
-.btn-fecha-activo:hover {
-  background-color: #1648a0;
-}
-
-.horquilla-fechas {
-  text-align: center;
+  margin: 0.35rem 0 0;
   color: var(--text-secondary);
-  font-size: 0.9rem;
-  margin-top: 0.5rem;
-  margin-bottom: 1.5rem;
-  font-style: italic;
 }
 </style>

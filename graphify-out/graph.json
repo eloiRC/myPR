@@ -1,0 +1,4951 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {
+    "hyperedges": [
+      {
+        "id": "cloudflare_deployment",
+        "label": "Cloudflare Deployment Architecture",
+        "nodes": [
+          "mypr_backend",
+          "mypr_frontend",
+          "cloudflare_workers",
+          "cloudflare_pages",
+          "cloudflare_d1"
+        ],
+        "relation": "participate_in",
+        "confidence": "EXTRACTED",
+        "confidence_score": 1.0,
+        "source_file": "DEPLOY.md"
+      },
+      {
+        "id": "api_communication",
+        "label": "API Communication Between Frontend and Backend",
+        "nodes": [
+          "mypr_backend",
+          "mypr_frontend",
+          "jwt_auth",
+          "cors_config"
+        ],
+        "relation": "implement",
+        "confidence": "INFERRED",
+        "confidence_score": 0.85,
+        "source_file": "DEPLOY.md"
+      },
+      {
+        "id": "bot_icon_variants",
+        "label": "Bot Icon Variants",
+        "nodes": [
+          "bot_svg",
+          "bot_accent_png",
+          "bot_light_grey_png"
+        ],
+        "relation": "form",
+        "confidence": "INFERRED",
+        "confidence_score": 0.85,
+        "source_file": "mypr-fr/src/assets"
+      },
+      {
+        "id": "frontend_assets",
+        "label": "Frontend Asset Collection",
+        "nodes": [
+          "bot_svg",
+          "bot_accent_png",
+          "bot_light_grey_png",
+          "vue_logo_svg",
+          "mypr_frontend"
+        ],
+        "relation": "participate_in",
+        "confidence": "EXTRACTED",
+        "confidence_score": 1.0,
+        "source_file": "mypr-fr/src/assets"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "label": "package.json",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L1",
+      "id": "package_json",
+      "community": 2,
+      "norm_label": "package.json"
+    },
+    {
+      "label": "name",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L2",
+      "id": "mypr_package_name",
+      "community": 2,
+      "norm_label": "name"
+    },
+    {
+      "label": "scripts",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L3",
+      "id": "mypr_package_scripts",
+      "community": 2,
+      "norm_label": "scripts"
+    },
+    {
+      "label": "dev",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L4",
+      "id": "mypr_package_scripts_dev",
+      "community": 2,
+      "norm_label": "dev"
+    },
+    {
+      "label": "deploy",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L5",
+      "id": "mypr_package_scripts_deploy",
+      "community": 2,
+      "norm_label": "deploy"
+    },
+    {
+      "label": "deploy-front",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L6",
+      "id": "mypr_package_scripts_deploy_front",
+      "community": 2,
+      "norm_label": "deploy-front"
+    },
+    {
+      "label": "update-db",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L7",
+      "id": "mypr_package_scripts_update_db",
+      "community": 2,
+      "norm_label": "update-db"
+    },
+    {
+      "label": "cf-typegen",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L8",
+      "id": "mypr_package_scripts_cf_typegen",
+      "community": 2,
+      "norm_label": "cf-typegen"
+    },
+    {
+      "label": "sql:edit",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L9",
+      "id": "mypr_package_scripts_sql_edit",
+      "community": 2,
+      "norm_label": "sql:edit"
+    },
+    {
+      "label": "dependencies",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L11",
+      "id": "mypr_package_dependencies",
+      "community": 2,
+      "norm_label": "dependencies"
+    },
+    {
+      "label": "@google/generative-ai",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L12",
+      "id": "mypr_package_dependencies_google_generative_ai",
+      "community": 2,
+      "norm_label": "@google/generative-ai"
+    },
+    {
+      "label": "@hono/zod-validator",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L13",
+      "id": "mypr_package_dependencies_hono_zod_validator",
+      "community": 2,
+      "norm_label": "@hono/zod-validator"
+    },
+    {
+      "label": "@tsndr/cloudflare-worker-jwt",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L14",
+      "id": "mypr_package_dependencies_tsndr_cloudflare_worker_jwt",
+      "community": 2,
+      "norm_label": "@tsndr/cloudflare-worker-jwt"
+    },
+    {
+      "label": "hono",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L15",
+      "id": "mypr_package_dependencies_hono",
+      "community": 2,
+      "norm_label": "hono"
+    },
+    {
+      "label": "jose",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L16",
+      "id": "mypr_package_dependencies_jose",
+      "community": 2,
+      "norm_label": "jose"
+    },
+    {
+      "label": "openai",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L17",
+      "id": "mypr_package_dependencies_openai",
+      "community": 2,
+      "norm_label": "openai"
+    },
+    {
+      "label": "zod",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L18",
+      "id": "mypr_package_dependencies_zod",
+      "community": 2,
+      "norm_label": "zod"
+    },
+    {
+      "label": "devDependencies",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L20",
+      "id": "mypr_package_devdependencies",
+      "community": 2,
+      "norm_label": "devdependencies"
+    },
+    {
+      "label": "@cloudflare/workers-types",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L21",
+      "id": "mypr_package_devdependencies_cloudflare_workers_types",
+      "community": 2,
+      "norm_label": "@cloudflare/workers-types"
+    },
+    {
+      "label": "@types/vue-select",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L22",
+      "id": "mypr_package_devdependencies_types_vue_select",
+      "community": 2,
+      "norm_label": "@types/vue-select"
+    },
+    {
+      "label": "@vue/tsconfig",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L23",
+      "id": "mypr_package_devdependencies_vue_tsconfig",
+      "community": 2,
+      "norm_label": "@vue/tsconfig"
+    },
+    {
+      "label": "terser",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L24",
+      "id": "mypr_package_devdependencies_terser",
+      "community": 2,
+      "norm_label": "terser"
+    },
+    {
+      "label": "wrangler",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L25",
+      "id": "mypr_package_devdependencies_wrangler",
+      "community": 2,
+      "norm_label": "wrangler"
+    },
+    {
+      "label": "run-edit-sql.ps1",
+      "file_type": "code",
+      "source_file": "run-edit-sql.ps1",
+      "source_location": "L1",
+      "id": "run_edit_sql_ps1",
+      "community": 19,
+      "norm_label": "run-edit-sql.ps1"
+    },
+    {
+      "label": "tsconfig.json",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L1",
+      "id": "tsconfig_json",
+      "community": 8,
+      "norm_label": "tsconfig.json"
+    },
+    {
+      "label": "compilerOptions",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L2",
+      "id": "mypr_tsconfig_compileroptions",
+      "community": 8,
+      "norm_label": "compileroptions"
+    },
+    {
+      "label": "target",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L3",
+      "id": "mypr_tsconfig_compileroptions_target",
+      "community": 8,
+      "norm_label": "target"
+    },
+    {
+      "label": "module",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L4",
+      "id": "mypr_tsconfig_compileroptions_module",
+      "community": 8,
+      "norm_label": "module"
+    },
+    {
+      "label": "moduleResolution",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L5",
+      "id": "mypr_tsconfig_compileroptions_moduleresolution",
+      "community": 8,
+      "norm_label": "moduleresolution"
+    },
+    {
+      "label": "strict",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L6",
+      "id": "mypr_tsconfig_compileroptions_strict",
+      "community": 8,
+      "norm_label": "strict"
+    },
+    {
+      "label": "skipLibCheck",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L7",
+      "id": "mypr_tsconfig_compileroptions_skiplibcheck",
+      "community": 8,
+      "norm_label": "skiplibcheck"
+    },
+    {
+      "label": "lib",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L8",
+      "id": "mypr_tsconfig_compileroptions_lib",
+      "community": 8,
+      "norm_label": "lib"
+    },
+    {
+      "label": "types",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L11",
+      "id": "mypr_tsconfig_compileroptions_types",
+      "community": 8,
+      "norm_label": "types"
+    },
+    {
+      "label": "jsx",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L14",
+      "id": "mypr_tsconfig_compileroptions_jsx",
+      "community": 8,
+      "norm_label": "jsx"
+    },
+    {
+      "label": "jsxImportSource",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L15",
+      "id": "mypr_tsconfig_compileroptions_jsximportsource",
+      "community": 8,
+      "norm_label": "jsximportsource"
+    },
+    {
+      "label": "worker-configuration.d.ts",
+      "file_type": "code",
+      "source_file": "worker-configuration.d.ts",
+      "source_location": "L1",
+      "id": "worker_configuration_d_ts",
+      "community": 18,
+      "norm_label": "worker-configuration.d.ts"
+    },
+    {
+      "label": "CloudflareBindings",
+      "file_type": "code",
+      "source_file": "worker-configuration.d.ts",
+      "source_location": "L3",
+      "id": "mypr_worker_configuration_d_cloudflarebindings",
+      "community": 18,
+      "norm_label": "cloudflarebindings"
+    },
+    {
+      "label": "package.json",
+      "file_type": "code",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L1",
+      "id": "mypr_fr_package_json",
+      "community": 6,
+      "norm_label": "package.json"
+    },
+    {
+      "label": "name",
+      "file_type": "code",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L2",
+      "id": "mypr_fr_package_name",
+      "community": 6,
+      "norm_label": "name"
+    },
+    {
+      "label": "private",
+      "file_type": "code",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L3",
+      "id": "mypr_fr_package_private",
+      "community": 6,
+      "norm_label": "private"
+    },
+    {
+      "label": "version",
+      "file_type": "code",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L4",
+      "id": "mypr_fr_package_version",
+      "community": 6,
+      "norm_label": "version"
+    },
+    {
+      "label": "type",
+      "file_type": "code",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L5",
+      "id": "mypr_fr_package_type",
+      "community": 6,
+      "norm_label": "type"
+    },
+    {
+      "label": "scripts",
+      "file_type": "code",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L6",
+      "id": "mypr_fr_package_scripts",
+      "community": 6,
+      "norm_label": "scripts"
+    },
+    {
+      "label": "dev",
+      "file_type": "code",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L7",
+      "id": "mypr_fr_package_scripts_dev",
+      "community": 6,
+      "norm_label": "dev"
+    },
+    {
+      "label": "build",
+      "file_type": "code",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L8",
+      "id": "mypr_fr_package_scripts_build",
+      "community": 6,
+      "norm_label": "build"
+    },
+    {
+      "label": "preview",
+      "file_type": "code",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L9",
+      "id": "mypr_fr_package_scripts_preview",
+      "community": 6,
+      "norm_label": "preview"
+    },
+    {
+      "label": "dependencies",
+      "file_type": "code",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L11",
+      "id": "mypr_fr_package_dependencies",
+      "community": 6,
+      "norm_label": "dependencies"
+    },
+    {
+      "label": "vue",
+      "file_type": "code",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L12",
+      "id": "mypr_fr_package_dependencies_vue",
+      "community": 6,
+      "norm_label": "vue"
+    },
+    {
+      "label": "vue-router",
+      "file_type": "code",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L13",
+      "id": "mypr_fr_package_dependencies_vue_router",
+      "community": 6,
+      "norm_label": "vue-router"
+    },
+    {
+      "label": "devDependencies",
+      "file_type": "code",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L15",
+      "id": "mypr_fr_package_devdependencies",
+      "community": 7,
+      "norm_label": "devdependencies"
+    },
+    {
+      "label": "@vitejs/plugin-vue",
+      "file_type": "code",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L16",
+      "id": "mypr_fr_package_devdependencies_vitejs_plugin_vue",
+      "community": 7,
+      "norm_label": "@vitejs/plugin-vue"
+    },
+    {
+      "label": "@vue/tsconfig",
+      "file_type": "code",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L17",
+      "id": "mypr_fr_package_devdependencies_vue_tsconfig",
+      "community": 7,
+      "norm_label": "@vue/tsconfig"
+    },
+    {
+      "label": "chart.js",
+      "file_type": "code",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L18",
+      "id": "mypr_fr_package_devdependencies_chart_js",
+      "community": 7,
+      "norm_label": "chart.js"
+    },
+    {
+      "label": "pinia",
+      "file_type": "code",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L19",
+      "id": "mypr_fr_package_devdependencies_pinia",
+      "community": 7,
+      "norm_label": "pinia"
+    },
+    {
+      "label": "postcss",
+      "file_type": "code",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L20",
+      "id": "mypr_fr_package_devdependencies_postcss",
+      "community": 7,
+      "norm_label": "postcss"
+    },
+    {
+      "label": "terser",
+      "file_type": "code",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L21",
+      "id": "mypr_fr_package_devdependencies_terser",
+      "community": 7,
+      "norm_label": "terser"
+    },
+    {
+      "label": "typescript",
+      "file_type": "code",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L22",
+      "id": "mypr_fr_package_devdependencies_typescript",
+      "community": 7,
+      "norm_label": "typescript"
+    },
+    {
+      "label": "vite",
+      "file_type": "code",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L23",
+      "id": "mypr_fr_package_devdependencies_vite",
+      "community": 7,
+      "norm_label": "vite"
+    },
+    {
+      "label": "vite-plugin-pwa",
+      "file_type": "code",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L24",
+      "id": "mypr_fr_package_devdependencies_vite_plugin_pwa",
+      "community": 7,
+      "norm_label": "vite-plugin-pwa"
+    },
+    {
+      "label": "vue-chartjs",
+      "file_type": "code",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L25",
+      "id": "mypr_fr_package_devdependencies_vue_chartjs",
+      "community": 7,
+      "norm_label": "vue-chartjs"
+    },
+    {
+      "label": "vue-tsc",
+      "file_type": "code",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L26",
+      "id": "mypr_fr_package_devdependencies_vue_tsc",
+      "community": 7,
+      "norm_label": "vue-tsc"
+    },
+    {
+      "label": "postcss.config.mjs",
+      "file_type": "code",
+      "source_file": "mypr-fr/postcss.config.mjs",
+      "source_location": "L1",
+      "id": "mypr_fr_postcss_config_mjs",
+      "community": 20,
+      "norm_label": "postcss.config.mjs"
+    },
+    {
+      "label": "tsconfig.app.json",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.app.json",
+      "source_location": "L1",
+      "id": "mypr_fr_tsconfig_app_json",
+      "community": 10,
+      "norm_label": "tsconfig.app.json"
+    },
+    {
+      "label": "extends",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.app.json",
+      "source_location": "L2",
+      "id": "mypr_fr_tsconfig_app_extends",
+      "community": 10,
+      "norm_label": "extends"
+    },
+    {
+      "label": "compilerOptions",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.app.json",
+      "source_location": "L3",
+      "id": "mypr_fr_tsconfig_app_compileroptions",
+      "community": 10,
+      "norm_label": "compileroptions"
+    },
+    {
+      "label": "tsBuildInfoFile",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.app.json",
+      "source_location": "L4",
+      "id": "mypr_fr_tsconfig_app_compileroptions_tsbuildinfofile",
+      "community": 10,
+      "norm_label": "tsbuildinfofile"
+    },
+    {
+      "label": "strict",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.app.json",
+      "source_location": "L7",
+      "id": "mypr_fr_tsconfig_app_compileroptions_strict",
+      "community": 10,
+      "norm_label": "strict"
+    },
+    {
+      "label": "noUnusedLocals",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.app.json",
+      "source_location": "L8",
+      "id": "mypr_fr_tsconfig_app_compileroptions_nounusedlocals",
+      "community": 10,
+      "norm_label": "nounusedlocals"
+    },
+    {
+      "label": "noUnusedParameters",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.app.json",
+      "source_location": "L9",
+      "id": "mypr_fr_tsconfig_app_compileroptions_nounusedparameters",
+      "community": 10,
+      "norm_label": "nounusedparameters"
+    },
+    {
+      "label": "noFallthroughCasesInSwitch",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.app.json",
+      "source_location": "L10",
+      "id": "mypr_fr_tsconfig_app_compileroptions_nofallthroughcasesinswitch",
+      "community": 10,
+      "norm_label": "nofallthroughcasesinswitch"
+    },
+    {
+      "label": "noUncheckedSideEffectImports",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.app.json",
+      "source_location": "L11",
+      "id": "mypr_fr_tsconfig_app_compileroptions_nouncheckedsideeffectimports",
+      "community": 10,
+      "norm_label": "nouncheckedsideeffectimports"
+    },
+    {
+      "label": "include",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.app.json",
+      "source_location": "L13",
+      "id": "mypr_fr_tsconfig_app_include",
+      "community": 10,
+      "norm_label": "include"
+    },
+    {
+      "label": "tsconfig.json",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.json",
+      "source_location": "L1",
+      "id": "mypr_fr_tsconfig_json",
+      "community": 16,
+      "norm_label": "tsconfig.json"
+    },
+    {
+      "label": "files",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.json",
+      "source_location": "L2",
+      "id": "mypr_fr_tsconfig_files",
+      "community": 16,
+      "norm_label": "files"
+    },
+    {
+      "label": "references",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.json",
+      "source_location": "L3",
+      "id": "mypr_fr_tsconfig_references",
+      "community": 16,
+      "norm_label": "references"
+    },
+    {
+      "label": "tsconfig.node.json",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L1",
+      "id": "mypr_fr_tsconfig_node_json",
+      "community": 3,
+      "norm_label": "tsconfig.node.json"
+    },
+    {
+      "label": "compilerOptions",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L2",
+      "id": "mypr_fr_tsconfig_node_compileroptions",
+      "community": 3,
+      "norm_label": "compileroptions"
+    },
+    {
+      "label": "tsBuildInfoFile",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L3",
+      "id": "mypr_fr_tsconfig_node_compileroptions_tsbuildinfofile",
+      "community": 3,
+      "norm_label": "tsbuildinfofile"
+    },
+    {
+      "label": "target",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L4",
+      "id": "mypr_fr_tsconfig_node_compileroptions_target",
+      "community": 3,
+      "norm_label": "target"
+    },
+    {
+      "label": "lib",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L5",
+      "id": "mypr_fr_tsconfig_node_compileroptions_lib",
+      "community": 3,
+      "norm_label": "lib"
+    },
+    {
+      "label": "module",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L6",
+      "id": "mypr_fr_tsconfig_node_compileroptions_module",
+      "community": 3,
+      "norm_label": "module"
+    },
+    {
+      "label": "skipLibCheck",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L7",
+      "id": "mypr_fr_tsconfig_node_compileroptions_skiplibcheck",
+      "community": 3,
+      "norm_label": "skiplibcheck"
+    },
+    {
+      "label": "moduleResolution",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L10",
+      "id": "mypr_fr_tsconfig_node_compileroptions_moduleresolution",
+      "community": 3,
+      "norm_label": "moduleresolution"
+    },
+    {
+      "label": "allowImportingTsExtensions",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L11",
+      "id": "mypr_fr_tsconfig_node_compileroptions_allowimportingtsextensions",
+      "community": 3,
+      "norm_label": "allowimportingtsextensions"
+    },
+    {
+      "label": "isolatedModules",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L12",
+      "id": "mypr_fr_tsconfig_node_compileroptions_isolatedmodules",
+      "community": 3,
+      "norm_label": "isolatedmodules"
+    },
+    {
+      "label": "moduleDetection",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L13",
+      "id": "mypr_fr_tsconfig_node_compileroptions_moduledetection",
+      "community": 3,
+      "norm_label": "moduledetection"
+    },
+    {
+      "label": "noEmit",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L14",
+      "id": "mypr_fr_tsconfig_node_compileroptions_noemit",
+      "community": 3,
+      "norm_label": "noemit"
+    },
+    {
+      "label": "strict",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L17",
+      "id": "mypr_fr_tsconfig_node_compileroptions_strict",
+      "community": 3,
+      "norm_label": "strict"
+    },
+    {
+      "label": "noUnusedLocals",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L18",
+      "id": "mypr_fr_tsconfig_node_compileroptions_nounusedlocals",
+      "community": 3,
+      "norm_label": "nounusedlocals"
+    },
+    {
+      "label": "noUnusedParameters",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L19",
+      "id": "mypr_fr_tsconfig_node_compileroptions_nounusedparameters",
+      "community": 3,
+      "norm_label": "nounusedparameters"
+    },
+    {
+      "label": "noFallthroughCasesInSwitch",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L20",
+      "id": "mypr_fr_tsconfig_node_compileroptions_nofallthroughcasesinswitch",
+      "community": 3,
+      "norm_label": "nofallthroughcasesinswitch"
+    },
+    {
+      "label": "noUncheckedSideEffectImports",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L21",
+      "id": "mypr_fr_tsconfig_node_compileroptions_nouncheckedsideeffectimports",
+      "community": 3,
+      "norm_label": "nouncheckedsideeffectimports"
+    },
+    {
+      "label": "include",
+      "file_type": "code",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L23",
+      "id": "mypr_fr_tsconfig_node_include",
+      "community": 3,
+      "norm_label": "include"
+    },
+    {
+      "label": "vite.config.ts",
+      "file_type": "code",
+      "source_file": "mypr-fr/vite.config.ts",
+      "source_location": "L1",
+      "id": "mypr_fr_vite_config_ts",
+      "community": 21,
+      "norm_label": "vite.config.ts"
+    },
+    {
+      "label": "_routes.json",
+      "file_type": "code",
+      "source_file": "mypr-fr/_routes.json",
+      "source_location": "L1",
+      "id": "mypr_fr_routes_json",
+      "community": 12,
+      "norm_label": "_routes.json"
+    },
+    {
+      "label": "version",
+      "file_type": "code",
+      "source_file": "mypr-fr/_routes.json",
+      "source_location": "L2",
+      "id": "mypr_fr_routes_version",
+      "community": 12,
+      "norm_label": "version"
+    },
+    {
+      "label": "include",
+      "file_type": "code",
+      "source_file": "mypr-fr/_routes.json",
+      "source_location": "L3",
+      "id": "mypr_fr_routes_include",
+      "community": 12,
+      "norm_label": "include"
+    },
+    {
+      "label": "exclude",
+      "file_type": "code",
+      "source_file": "mypr-fr/_routes.json",
+      "source_location": "L4",
+      "id": "mypr_fr_routes_exclude",
+      "community": 12,
+      "norm_label": "exclude"
+    },
+    {
+      "label": "routes",
+      "file_type": "code",
+      "source_file": "mypr-fr/_routes.json",
+      "source_location": "L11",
+      "id": "mypr_fr_routes_routes",
+      "community": 12,
+      "norm_label": "routes"
+    },
+    {
+      "label": "extensions.json",
+      "file_type": "code",
+      "source_file": "mypr-fr/.vscode/extensions.json",
+      "source_location": "L1",
+      "id": "mypr_fr_vscode_extensions_json",
+      "community": 17,
+      "norm_label": "extensions.json"
+    },
+    {
+      "label": "recommendations",
+      "file_type": "code",
+      "source_file": "mypr-fr/.vscode/extensions.json",
+      "source_location": "L2",
+      "id": "vscode_extensions_recommendations",
+      "community": 17,
+      "norm_label": "recommendations"
+    },
+    {
+      "label": "App.vue",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/App.vue",
+      "source_location": "L1",
+      "id": "mypr_fr_src_app_vue",
+      "community": 1,
+      "norm_label": "app.vue"
+    },
+    {
+      "label": "main.ts",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/main.ts",
+      "source_location": "L1",
+      "id": "mypr_fr_src_main_ts",
+      "community": 1,
+      "norm_label": "main.ts"
+    },
+    {
+      "label": "app",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/main.ts",
+      "source_location": "L7",
+      "id": "src_main_app",
+      "community": 1,
+      "norm_label": "app"
+    },
+    {
+      "label": "pinia",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/main.ts",
+      "source_location": "L8",
+      "id": "src_main_pinia",
+      "community": 1,
+      "norm_label": "pinia"
+    },
+    {
+      "label": "vite-env.d.ts",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/vite-env.d.ts",
+      "source_location": "L1",
+      "id": "mypr_fr_src_vite_env_d_ts",
+      "community": 22,
+      "norm_label": "vite-env.d.ts"
+    },
+    {
+      "label": "BuscadorSelect.vue",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/components/BuscadorSelect.vue",
+      "source_location": "L1",
+      "id": "mypr_fr_src_components_buscadorselect_vue",
+      "community": 14,
+      "norm_label": "buscadorselect.vue"
+    },
+    {
+      "label": "text",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/components/BuscadorSelect.vue",
+      "source_location": "L26",
+      "id": "components_buscadorselect_text",
+      "community": 14,
+      "norm_label": "text"
+    },
+    {
+      "label": "selectedOption",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/components/BuscadorSelect.vue",
+      "source_location": "L67",
+      "id": "components_buscadorselect_selectedoption",
+      "community": 14,
+      "norm_label": "selectedoption"
+    },
+    {
+      "label": "Chatbot.vue",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L1",
+      "id": "mypr_fr_src_components_chatbot_vue",
+      "community": 5,
+      "norm_label": "chatbot.vue"
+    },
+    {
+      "label": "userMessage",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L60",
+      "id": "components_chatbot_usermessage",
+      "community": 5,
+      "norm_label": "usermessage"
+    },
+    {
+      "label": "currentTraining",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L88",
+      "id": "components_chatbot_currenttraining",
+      "community": 5,
+      "norm_label": "currenttraining"
+    },
+    {
+      "label": "rawHistory",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L95",
+      "id": "components_chatbot_rawhistory",
+      "community": 5,
+      "norm_label": "rawhistory"
+    },
+    {
+      "label": "firstUserIndex",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L97",
+      "id": "components_chatbot_firstuserindex",
+      "community": 5,
+      "norm_label": "firstuserindex"
+    },
+    {
+      "label": "history",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L100",
+      "id": "components_chatbot_history",
+      "community": 5,
+      "norm_label": "history"
+    },
+    {
+      "label": "token",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L105",
+      "id": "components_chatbot_token",
+      "community": 5,
+      "norm_label": "token"
+    },
+    {
+      "label": "reader",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L127",
+      "id": "components_chatbot_reader",
+      "community": 5,
+      "norm_label": "reader"
+    },
+    {
+      "label": "decoder",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L130",
+      "id": "components_chatbot_decoder",
+      "community": 5,
+      "norm_label": "decoder"
+    },
+    {
+      "label": "lines",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L141",
+      "id": "components_chatbot_lines",
+      "community": 5,
+      "norm_label": "lines"
+    },
+    {
+      "label": "eventData",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L147",
+      "id": "components_chatbot_eventdata",
+      "community": 5,
+      "norm_label": "eventdata"
+    },
+    {
+      "label": "botMsg",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L152",
+      "id": "components_chatbot_botmsg",
+      "community": 5,
+      "norm_label": "botmsg"
+    },
+    {
+      "label": "if()",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L195",
+      "id": "components_chatbot_if",
+      "community": 9,
+      "norm_label": "if()"
+    },
+    {
+      "label": "{ messages: savedMessages, isFirstMessage: savedIsFirstMessage }",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L209",
+      "id": "components_chatbot_messages_savedmessages_isfirstmessage_savedisfirstmessage",
+      "community": 5,
+      "norm_label": "{ messages: savedmessages, isfirstmessage: savedisfirstmessage }"
+    },
+    {
+      "label": "Footer.vue",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/components/Footer.vue",
+      "source_location": "L1",
+      "id": "mypr_fr_src_components_footer_vue",
+      "community": 23,
+      "norm_label": "footer.vue"
+    },
+    {
+      "label": "SerieItem.vue",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/components/SerieItem.vue",
+      "source_location": "L1",
+      "id": "mypr_fr_src_components_serieitem_vue",
+      "community": 15,
+      "norm_label": "serieitem.vue"
+    },
+    {
+      "label": "savedState",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/components/SerieItem.vue",
+      "source_location": "L41",
+      "id": "components_serieitem_savedstate",
+      "community": 15,
+      "norm_label": "savedstate"
+    },
+    {
+      "label": "token",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/components/SerieItem.vue",
+      "source_location": "L111",
+      "id": "components_serieitem_token",
+      "community": 15,
+      "norm_label": "token"
+    },
+    {
+      "label": "index.ts",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/router/index.ts",
+      "source_location": "L1",
+      "id": "mypr_fr_src_router_index_ts",
+      "community": 1,
+      "norm_label": "index.ts"
+    },
+    {
+      "label": "requireAuth()",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/router/index.ts",
+      "source_location": "L12",
+      "id": "router_index_requireauth",
+      "community": 1,
+      "norm_label": "requireauth()"
+    },
+    {
+      "label": "router",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/router/index.ts",
+      "source_location": "L21",
+      "id": "router_index_router",
+      "community": 1,
+      "norm_label": "router"
+    },
+    {
+      "label": "auth.ts",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/services/auth.ts",
+      "source_location": "L1",
+      "id": "mypr_fr_src_services_auth_ts",
+      "community": 11,
+      "norm_label": "auth.ts"
+    },
+    {
+      "label": "LoginResponse",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/services/auth.ts",
+      "source_location": "L5",
+      "id": "services_auth_loginresponse",
+      "community": 11,
+      "norm_label": "loginresponse"
+    },
+    {
+      "label": "LoginData",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/services/auth.ts",
+      "source_location": "L11",
+      "id": "services_auth_logindata",
+      "community": 11,
+      "norm_label": "logindata"
+    },
+    {
+      "label": "RegisterData",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/services/auth.ts",
+      "source_location": "L17",
+      "id": "services_auth_registerdata",
+      "community": 11,
+      "norm_label": "registerdata"
+    },
+    {
+      "label": "RegisterResponse",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/services/auth.ts",
+      "source_location": "L23",
+      "id": "services_auth_registerresponse",
+      "community": 11,
+      "norm_label": "registerresponse"
+    },
+    {
+      "label": "UserInfo",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/services/auth.ts",
+      "source_location": "L29",
+      "id": "services_auth_userinfo",
+      "community": 11,
+      "norm_label": "userinfo"
+    },
+    {
+      "label": "authService",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/services/auth.ts",
+      "source_location": "L37",
+      "id": "services_auth_authservice",
+      "community": 11,
+      "norm_label": "authservice"
+    },
+    {
+      "label": "chatgpt.ts",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/services/chatgpt.ts",
+      "source_location": "L1",
+      "id": "mypr_fr_src_services_chatgpt_ts",
+      "community": 9,
+      "norm_label": "chatgpt.ts"
+    },
+    {
+      "label": "EntrenoData",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/services/chatgpt.ts",
+      "source_location": "L4",
+      "id": "services_chatgpt_entrenodata",
+      "community": 9,
+      "norm_label": "entrenodata"
+    },
+    {
+      "label": "ChatGPTPayload",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/services/chatgpt.ts",
+      "source_location": "L15",
+      "id": "services_chatgpt_chatgptpayload",
+      "community": 9,
+      "norm_label": "chatgptpayload"
+    },
+    {
+      "label": "ChatMessage",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/services/chatgpt.ts",
+      "source_location": "L27",
+      "id": "services_chatgpt_chatmessage",
+      "community": 9,
+      "norm_label": "chatmessage"
+    },
+    {
+      "label": "getToken()",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/services/chatgpt.ts",
+      "source_location": "L34",
+      "id": "services_chatgpt_gettoken",
+      "community": 9,
+      "norm_label": "gettoken()"
+    },
+    {
+      "label": "ChatGPTService",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/services/chatgpt.ts",
+      "source_location": "L39",
+      "id": "services_chatgpt_chatgptservice",
+      "community": 9,
+      "norm_label": "chatgptservice"
+    },
+    {
+      "label": ".saveMessages()",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/services/chatgpt.ts",
+      "source_location": "L42",
+      "id": "services_chatgpt_chatgptservice_savemessages",
+      "community": 9,
+      "norm_label": ".savemessages()"
+    },
+    {
+      "label": ".loadMessages()",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/services/chatgpt.ts",
+      "source_location": "L48",
+      "id": "services_chatgpt_chatgptservice_loadmessages",
+      "community": 9,
+      "norm_label": ".loadmessages()"
+    },
+    {
+      "label": ".sendMessage()",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/services/chatgpt.ts",
+      "source_location": "L93",
+      "id": "services_chatgpt_chatgptservice_sendmessage",
+      "community": 9,
+      "norm_label": ".sendmessage()"
+    },
+    {
+      "label": ".testConnection()",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/services/chatgpt.ts",
+      "source_location": "L140",
+      "id": "services_chatgpt_chatgptservice_testconnection",
+      "community": 9,
+      "norm_label": ".testconnection()"
+    },
+    {
+      "label": "auth.ts",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/stores/auth.ts",
+      "source_location": "L1",
+      "id": "mypr_fr_src_stores_auth_ts",
+      "community": 1,
+      "norm_label": "auth.ts"
+    },
+    {
+      "label": "useAuthStore",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/stores/auth.ts",
+      "source_location": "L6",
+      "id": "stores_auth_useauthstore",
+      "community": 1,
+      "norm_label": "useauthstore"
+    },
+    {
+      "label": "ejercicioUtils.ts",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/utils/ejercicioUtils.ts",
+      "source_location": "L1",
+      "id": "mypr_fr_src_utils_ejercicioutils_ts",
+      "community": 1,
+      "norm_label": "ejercicioutils.ts"
+    },
+    {
+      "label": "formatearTexto()",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/utils/ejercicioUtils.ts",
+      "source_location": "L7",
+      "id": "utils_ejercicioutils_formateartexto",
+      "community": 1,
+      "norm_label": "formateartexto()"
+    },
+    {
+      "label": "NuevoEjercicio",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/utils/ejercicioUtils.ts",
+      "source_location": "L16",
+      "id": "utils_ejercicioutils_nuevoejercicio",
+      "community": 1,
+      "norm_label": "nuevoejercicio"
+    },
+    {
+      "label": "guardarNuevoEjercicio()",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/utils/ejercicioUtils.ts",
+      "source_location": "L23",
+      "id": "utils_ejercicioutils_guardarnuevoejercicio",
+      "community": 1,
+      "norm_label": "guardarnuevoejercicio()"
+    },
+    {
+      "label": "DetalleEjercicio.vue",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/views/DetalleEjercicio.vue",
+      "source_location": "L1",
+      "id": "mypr_fr_src_views_detalleejercicio_vue",
+      "community": 1,
+      "norm_label": "detalleejercicio.vue"
+    },
+    {
+      "label": "fecha",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/views/DetalleEjercicio.vue",
+      "source_location": "L74",
+      "id": "views_detalleejercicio_fecha",
+      "community": 1,
+      "norm_label": "fecha"
+    },
+    {
+      "label": "DetalleEntreno.vue",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/views/DetalleEntreno.vue",
+      "source_location": "L1",
+      "id": "mypr_fr_src_views_detalleentreno_vue",
+      "community": 1,
+      "norm_label": "detalleentreno.vue"
+    },
+    {
+      "label": "map",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/views/DetalleEntreno.vue",
+      "source_location": "L93",
+      "id": "views_detalleentreno_map",
+      "community": 1,
+      "norm_label": "map"
+    },
+    {
+      "label": "grupo",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/views/DetalleEntreno.vue",
+      "source_location": "L97",
+      "id": "views_detalleentreno_grupo",
+      "community": 1,
+      "norm_label": "grupo"
+    },
+    {
+      "label": "if()",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/views/DetalleEntreno.vue",
+      "source_location": "L256",
+      "id": "views_detalleentreno_if",
+      "community": 1,
+      "norm_label": "if()"
+    },
+    {
+      "label": "Ejercicios.vue",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/views/Ejercicios.vue",
+      "source_location": "L1",
+      "id": "mypr_fr_src_views_ejercicios_vue",
+      "community": 1,
+      "norm_label": "ejercicios.vue"
+    },
+    {
+      "label": "Entrenos.vue",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/views/Entrenos.vue",
+      "source_location": "L1",
+      "id": "mypr_fr_src_views_entrenos_vue",
+      "community": 1,
+      "norm_label": "entrenos.vue"
+    },
+    {
+      "label": "fecha",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/views/Entrenos.vue",
+      "source_location": "L49",
+      "id": "views_entrenos_fecha",
+      "community": 1,
+      "norm_label": "fecha"
+    },
+    {
+      "label": "fechaStr",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/views/Entrenos.vue",
+      "source_location": "L56",
+      "id": "views_entrenos_fechastr",
+      "community": 1,
+      "norm_label": "fechastr"
+    },
+    {
+      "label": "Login.vue",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/views/Login.vue",
+      "source_location": "L1",
+      "id": "mypr_fr_src_views_login_vue",
+      "community": 1,
+      "norm_label": "login.vue"
+    },
+    {
+      "label": "Register.vue",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/views/Register.vue",
+      "source_location": "L1",
+      "id": "mypr_fr_src_views_register_vue",
+      "community": 1,
+      "norm_label": "register.vue"
+    },
+    {
+      "label": "User.vue",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/views/User.vue",
+      "source_location": "L1",
+      "id": "mypr_fr_src_views_user_vue",
+      "community": 1,
+      "norm_label": "user.vue"
+    },
+    {
+      "label": "if()",
+      "file_type": "code",
+      "source_file": "mypr-fr/src/views/User.vue",
+      "source_location": "L58",
+      "id": "views_user_if",
+      "community": 1,
+      "norm_label": "if()"
+    },
+    {
+      "label": "index.ts",
+      "file_type": "code",
+      "source_file": "src/index.ts",
+      "source_location": "L1",
+      "id": "src_index_ts",
+      "community": 0,
+      "norm_label": "index.ts"
+    },
+    {
+      "label": "Bindings",
+      "file_type": "code",
+      "source_file": "src/index.ts",
+      "source_location": "L13",
+      "id": "src_index_bindings",
+      "community": 0,
+      "norm_label": "bindings"
+    },
+    {
+      "label": "app",
+      "file_type": "code",
+      "source_file": "src/index.ts",
+      "source_location": "L20",
+      "id": "src_index_app",
+      "community": 0,
+      "norm_label": "app"
+    },
+    {
+      "label": "addSerieToDb()",
+      "file_type": "code",
+      "source_file": "src/index.ts",
+      "source_location": "L51",
+      "id": "src_index_addserietodb",
+      "community": 0,
+      "norm_label": "addserietodb()"
+    },
+    {
+      "label": "data",
+      "file_type": "code",
+      "source_file": "src/index.ts",
+      "source_location": "L114",
+      "id": "src_index_data",
+      "community": 0,
+      "norm_label": "data"
+    },
+    {
+      "label": "ids",
+      "file_type": "code",
+      "source_file": "src/index.ts",
+      "source_location": "L306",
+      "id": "src_index_ids",
+      "community": 0,
+      "norm_label": "ids"
+    },
+    {
+      "label": "fromIdx",
+      "file_type": "code",
+      "source_file": "src/index.ts",
+      "source_location": "L307",
+      "id": "src_index_fromidx",
+      "community": 0,
+      "norm_label": "fromidx"
+    },
+    {
+      "label": "toIdx",
+      "file_type": "code",
+      "source_file": "src/index.ts",
+      "source_location": "L310",
+      "id": "src_index_toidx",
+      "community": 0,
+      "norm_label": "toidx"
+    },
+    {
+      "label": "reordered",
+      "file_type": "code",
+      "source_file": "src/index.ts",
+      "source_location": "L313",
+      "id": "src_index_reordered",
+      "community": 0,
+      "norm_label": "reordered"
+    },
+    {
+      "label": "[moved]",
+      "file_type": "code",
+      "source_file": "src/index.ts",
+      "source_location": "L314",
+      "id": "src_index_moved",
+      "community": 0,
+      "norm_label": "[moved]"
+    },
+    {
+      "label": "exercisesListString",
+      "file_type": "code",
+      "source_file": "src/index.ts",
+      "source_location": "L573",
+      "id": "src_index_exercisesliststring",
+      "community": 0,
+      "norm_label": "exercisesliststring"
+    },
+    {
+      "label": "trainingHistory",
+      "file_type": "code",
+      "source_file": "src/index.ts",
+      "source_location": "L575",
+      "id": "src_index_traininghistory",
+      "community": 0,
+      "norm_label": "traininghistory"
+    },
+    {
+      "label": "genAI",
+      "file_type": "code",
+      "source_file": "src/index.ts",
+      "source_location": "L667",
+      "id": "src_index_genai",
+      "community": 0,
+      "norm_label": "genai"
+    },
+    {
+      "label": "model",
+      "file_type": "code",
+      "source_file": "src/index.ts",
+      "source_location": "L669",
+      "id": "src_index_model",
+      "community": 0,
+      "norm_label": "model"
+    },
+    {
+      "label": "chatHistory",
+      "file_type": "code",
+      "source_file": "src/index.ts",
+      "source_location": "L680",
+      "id": "src_index_chathistory",
+      "community": 0,
+      "norm_label": "chathistory"
+    },
+    {
+      "label": "chatConfig",
+      "file_type": "code",
+      "source_file": "src/index.ts",
+      "source_location": "L685",
+      "id": "src_index_chatconfig",
+      "community": 0,
+      "norm_label": "chatconfig"
+    },
+    {
+      "label": "chat",
+      "file_type": "code",
+      "source_file": "src/index.ts",
+      "source_location": "L689",
+      "id": "src_index_chat",
+      "community": 0,
+      "norm_label": "chat"
+    },
+    {
+      "label": "stream",
+      "file_type": "code",
+      "source_file": "src/index.ts",
+      "source_location": "L697",
+      "id": "src_index_stream",
+      "community": 0,
+      "norm_label": "stream"
+    },
+    {
+      "label": "checkPr()",
+      "file_type": "code",
+      "source_file": "src/index.ts",
+      "source_location": "L807",
+      "id": "src_index_checkpr",
+      "community": 0,
+      "norm_label": "checkpr()"
+    },
+    {
+      "label": "updateCargaTotal()",
+      "file_type": "code",
+      "source_file": "src/index.ts",
+      "source_location": "L829",
+      "id": "src_index_updatecargatotal",
+      "community": 0,
+      "norm_label": "updatecargatotal()"
+    },
+    {
+      "label": "getUserStats()",
+      "file_type": "code",
+      "source_file": "src/index.ts",
+      "source_location": "L844",
+      "id": "src_index_getuserstats",
+      "community": 0,
+      "norm_label": "getuserstats()"
+    },
+    {
+      "label": "getFullSeriesListFromTraining()",
+      "file_type": "code",
+      "source_file": "src/index.ts",
+      "source_location": "L891",
+      "id": "src_index_getfullserieslistfromtraining",
+      "community": 0,
+      "norm_label": "getfullserieslistfromtraining()"
+    },
+    {
+      "label": "jwt.ts",
+      "file_type": "code",
+      "source_file": "src/jwt.ts",
+      "source_location": "L1",
+      "id": "src_jwt_ts",
+      "community": 0,
+      "norm_label": "jwt.ts"
+    },
+    {
+      "label": "generateJWT()",
+      "file_type": "code",
+      "source_file": "src/jwt.ts",
+      "source_location": "L7",
+      "id": "src_jwt_generatejwt",
+      "community": 0,
+      "norm_label": "generatejwt()"
+    },
+    {
+      "label": "verifyJWT()",
+      "file_type": "code",
+      "source_file": "src/jwt.ts",
+      "source_location": "L65",
+      "id": "src_jwt_verifyjwt",
+      "community": 0,
+      "norm_label": "verifyjwt()"
+    },
+    {
+      "label": "hashPassword()",
+      "file_type": "code",
+      "source_file": "src/jwt.ts",
+      "source_location": "L137",
+      "id": "src_jwt_hashpassword",
+      "community": 0,
+      "norm_label": "hashpassword()"
+    },
+    {
+      "label": "verifyPassword()",
+      "file_type": "code",
+      "source_file": "src/jwt.ts",
+      "source_location": "L175",
+      "id": "src_jwt_verifypassword",
+      "community": 0,
+      "norm_label": "verifypassword()"
+    },
+    {
+      "label": "schema.ts",
+      "file_type": "code",
+      "source_file": "src/schema.ts",
+      "source_location": "L1",
+      "id": "src_schema_ts",
+      "community": 0,
+      "norm_label": "schema.ts"
+    },
+    {
+      "label": "login",
+      "file_type": "code",
+      "source_file": "src/schema.ts",
+      "source_location": "L4",
+      "id": "src_schema_login",
+      "community": 0,
+      "norm_label": "login"
+    },
+    {
+      "label": "signup",
+      "file_type": "code",
+      "source_file": "src/schema.ts",
+      "source_location": "L9",
+      "id": "src_schema_signup",
+      "community": 0,
+      "norm_label": "signup"
+    },
+    {
+      "label": "petition",
+      "file_type": "code",
+      "source_file": "src/schema.ts",
+      "source_location": "L15",
+      "id": "src_schema_petition",
+      "community": 0,
+      "norm_label": "petition"
+    },
+    {
+      "label": "getGrupsMusculars",
+      "file_type": "code",
+      "source_file": "src/schema.ts",
+      "source_location": "L19",
+      "id": "src_schema_getgrupsmusculars",
+      "community": 0,
+      "norm_label": "getgrupsmusculars"
+    },
+    {
+      "label": "nouExercici",
+      "file_type": "code",
+      "source_file": "src/schema.ts",
+      "source_location": "L23",
+      "id": "src_schema_nouexercici",
+      "community": 0,
+      "norm_label": "nouexercici"
+    },
+    {
+      "label": "editExercici",
+      "file_type": "code",
+      "source_file": "src/schema.ts",
+      "source_location": "L29",
+      "id": "src_schema_editexercici",
+      "community": 0,
+      "norm_label": "editexercici"
+    },
+    {
+      "label": "getEntreno",
+      "file_type": "code",
+      "source_file": "src/schema.ts",
+      "source_location": "L36",
+      "id": "src_schema_getentreno",
+      "community": 0,
+      "norm_label": "getentreno"
+    },
+    {
+      "label": "getEntrenos",
+      "file_type": "code",
+      "source_file": "src/schema.ts",
+      "source_location": "L41",
+      "id": "src_schema_getentrenos",
+      "community": 0,
+      "norm_label": "getentrenos"
+    },
+    {
+      "label": "nouEntreno",
+      "file_type": "code",
+      "source_file": "src/schema.ts",
+      "source_location": "L49",
+      "id": "src_schema_nouentreno",
+      "community": 0,
+      "norm_label": "nouentreno"
+    },
+    {
+      "label": "editEntreno",
+      "file_type": "code",
+      "source_file": "src/schema.ts",
+      "source_location": "L56",
+      "id": "src_schema_editentreno",
+      "community": 0,
+      "norm_label": "editentreno"
+    },
+    {
+      "label": "novaSerie",
+      "file_type": "code",
+      "source_file": "src/schema.ts",
+      "source_location": "L64",
+      "id": "src_schema_novaserie",
+      "community": 0,
+      "norm_label": "novaserie"
+    },
+    {
+      "label": "editSerie",
+      "file_type": "code",
+      "source_file": "src/schema.ts",
+      "source_location": "L72",
+      "id": "src_schema_editserie",
+      "community": 0,
+      "norm_label": "editserie"
+    },
+    {
+      "label": "deleteSerie",
+      "file_type": "code",
+      "source_file": "src/schema.ts",
+      "source_location": "L81",
+      "id": "src_schema_deleteserie",
+      "community": 0,
+      "norm_label": "deleteserie"
+    },
+    {
+      "label": "deleteEntreno",
+      "file_type": "code",
+      "source_file": "src/schema.ts",
+      "source_location": "L86",
+      "id": "src_schema_deleteentreno",
+      "community": 0,
+      "norm_label": "deleteentreno"
+    },
+    {
+      "label": "getExercici",
+      "file_type": "code",
+      "source_file": "src/schema.ts",
+      "source_location": "L91",
+      "id": "src_schema_getexercici",
+      "community": 0,
+      "norm_label": "getexercici"
+    },
+    {
+      "label": "getPesosHistorial",
+      "file_type": "code",
+      "source_file": "src/schema.ts",
+      "source_location": "L96",
+      "id": "src_schema_getpesoshistorial",
+      "community": 0,
+      "norm_label": "getpesoshistorial"
+    },
+    {
+      "label": "getCargaHistorial",
+      "file_type": "code",
+      "source_file": "src/schema.ts",
+      "source_location": "L101",
+      "id": "src_schema_getcargahistorial",
+      "community": 0,
+      "norm_label": "getcargahistorial"
+    },
+    {
+      "label": "reorderSerie",
+      "file_type": "code",
+      "source_file": "src/schema.ts",
+      "source_location": "L106",
+      "id": "src_schema_reorderserie",
+      "community": 0,
+      "norm_label": "reorderserie"
+    },
+    {
+      "label": "chatGPT",
+      "file_type": "code",
+      "source_file": "src/schema.ts",
+      "source_location": "L113",
+      "id": "src_schema_chatgpt",
+      "community": 0,
+      "norm_label": "chatgpt"
+    },
+    {
+      "label": "updateUser",
+      "file_type": "code",
+      "source_file": "src/schema.ts",
+      "source_location": "L185",
+      "id": "src_schema_updateuser",
+      "community": 0,
+      "norm_label": "updateuser"
+    },
+    {
+      "label": "getUser",
+      "file_type": "code",
+      "source_file": "src/schema.ts",
+      "source_location": "L190",
+      "id": "src_schema_getuser",
+      "community": 0,
+      "norm_label": "getuser"
+    },
+    {
+      "label": "MyPR Application",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Workout tracking application for recording exercise series and personal records",
+      "id": "mypr_app",
+      "community": 4,
+      "norm_label": "mypr application"
+    },
+    {
+      "label": "MyPR Backend (Cloudflare Worker)",
+      "file_type": "code",
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "mypr_backend",
+      "community": 4,
+      "norm_label": "mypr backend (cloudflare worker)"
+    },
+    {
+      "label": "MyPR Frontend (Vue 3 SPA)",
+      "file_type": "code",
+      "source_file": "mypr-fr/index.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "mypr_frontend",
+      "community": 4,
+      "norm_label": "mypr frontend (vue 3 spa)"
+    },
+    {
+      "label": "Cloudflare Workers",
+      "file_type": "document",
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "cloudflare_workers",
+      "community": 4,
+      "norm_label": "cloudflare workers"
+    },
+    {
+      "label": "Cloudflare Pages",
+      "file_type": "document",
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "cloudflare_pages",
+      "community": 4,
+      "norm_label": "cloudflare pages"
+    },
+    {
+      "label": "Cloudflare D1 Database",
+      "file_type": "document",
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "SQLite-compatible edge database used for storing workout records; chosen for tight integration with Cloudflare Workers serverless platform",
+      "id": "cloudflare_d1",
+      "community": 4,
+      "norm_label": "cloudflare d1 database"
+    },
+    {
+      "label": "Wrangler CLI",
+      "file_type": "code",
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "wrangler_cli",
+      "community": 4,
+      "norm_label": "wrangler cli"
+    },
+    {
+      "label": "JWT Authentication",
+      "file_type": "code",
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Used to authenticate API requests between frontend and backend; jwt_secret must be configured as a Worker secret variable",
+      "id": "jwt_auth",
+      "community": 4,
+      "norm_label": "jwt authentication"
+    },
+    {
+      "label": "CORS Configuration",
+      "file_type": "code",
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Must be updated when frontend domain changes to allow cross-origin requests; configured in src/index.ts via the cors middleware",
+      "id": "cors_config",
+      "community": 4,
+      "norm_label": "cors configuration"
+    },
+    {
+      "label": "Custom Domain",
+      "file_type": "document",
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "custom_domain",
+      "community": 4,
+      "norm_label": "custom domain"
+    },
+    {
+      "label": "Vue 3 + TypeScript + Vite",
+      "file_type": "code",
+      "source_file": "mypr-fr/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "vue3_ts_vite",
+      "community": 4,
+      "norm_label": "vue 3 + typescript + vite"
+    },
+    {
+      "label": "Training Log Data (Exercise Series Records)",
+      "file_type": "document",
+      "source_file": "edit_result.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Database query result containing exercise, weight, reps, and date for each training session set",
+      "id": "training_log_data",
+      "community": 4,
+      "norm_label": "training log data (exercise series records)"
+    },
+    {
+      "label": "Vue 3 Script Setup SFCs",
+      "file_type": "code",
+      "source_file": "mypr-fr/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "vue_script_setup",
+      "community": 4,
+      "norm_label": "vue 3 script setup sfcs"
+    },
+    {
+      "label": "PWQ App Icon 192x192",
+      "file_type": "image",
+      "source_file": "public/pwq-192x192.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "pwq_192x192_png",
+      "community": 13,
+      "norm_label": "pwq app icon 192x192"
+    },
+    {
+      "label": "PWQ App Icon 512x512",
+      "file_type": "image",
+      "source_file": "public/pwq-512x512.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "pwq_512x512_png",
+      "community": 13,
+      "norm_label": "pwq app icon 512x512"
+    },
+    {
+      "label": "Trophy Icon",
+      "file_type": "image",
+      "source_file": "public/trophy.svg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "trophy_svg",
+      "community": 13,
+      "norm_label": "trophy icon"
+    },
+    {
+      "label": "Vite Logo",
+      "file_type": "image",
+      "source_file": "public/vite.svg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "vite_svg",
+      "community": 13,
+      "norm_label": "vite logo"
+    },
+    {
+      "label": "mypr-fr Application",
+      "file_type": "document",
+      "source_file": "public/",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "mypr_fr_app",
+      "community": 13,
+      "norm_label": "mypr-fr application"
+    },
+    {
+      "label": "Bot SVG Icon",
+      "file_type": "image",
+      "source_file": "mypr-fr/src/assets/bot.svg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "bot_svg",
+      "community": 4,
+      "norm_label": "bot svg icon"
+    },
+    {
+      "label": "Bot Accent PNG Icon",
+      "file_type": "image",
+      "source_file": "mypr-fr/src/assets/bot-accent.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "bot_accent_png",
+      "community": 4,
+      "norm_label": "bot accent png icon"
+    },
+    {
+      "label": "Bot Light Grey PNG Icon",
+      "file_type": "image",
+      "source_file": "mypr-fr/src/assets/bot-light-grey.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "bot_light_grey_png",
+      "community": 4,
+      "norm_label": "bot light grey png icon"
+    },
+    {
+      "label": "Vue.js Logo SVG",
+      "file_type": "image",
+      "source_file": "mypr-fr/src/assets/vue.svg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "vue_logo_svg",
+      "community": 4,
+      "norm_label": "vue.js logo svg"
+    }
+  ],
+  "links": [
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "package_json",
+      "target": "mypr_package_name",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "package_json",
+      "target": "mypr_package_scripts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "package_json",
+      "target": "mypr_package_dependencies",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "package_json",
+      "target": "mypr_package_devdependencies",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "mypr_package_scripts",
+      "target": "mypr_package_scripts_dev",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "mypr_package_scripts",
+      "target": "mypr_package_scripts_deploy",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "mypr_package_scripts",
+      "target": "mypr_package_scripts_deploy_front",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "mypr_package_scripts",
+      "target": "mypr_package_scripts_update_db",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "mypr_package_scripts",
+      "target": "mypr_package_scripts_cf_typegen",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "mypr_package_scripts",
+      "target": "mypr_package_scripts_sql_edit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "mypr_package_dependencies",
+      "target": "mypr_package_dependencies_google_generative_ai",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "mypr_package_dependencies",
+      "target": "mypr_package_dependencies_hono_zod_validator",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "mypr_package_dependencies",
+      "target": "mypr_package_dependencies_tsndr_cloudflare_worker_jwt",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "mypr_package_dependencies",
+      "target": "mypr_package_dependencies_hono",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "mypr_package_dependencies",
+      "target": "mypr_package_dependencies_jose",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "mypr_package_dependencies",
+      "target": "mypr_package_dependencies_openai",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "mypr_package_dependencies",
+      "target": "mypr_package_dependencies_zod",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "mypr_package_devdependencies",
+      "target": "mypr_package_devdependencies_cloudflare_workers_types",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "mypr_package_devdependencies",
+      "target": "mypr_package_devdependencies_types_vue_select",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "mypr_package_devdependencies",
+      "target": "mypr_package_devdependencies_vue_tsconfig",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L24",
+      "weight": 1.0,
+      "source": "mypr_package_devdependencies",
+      "target": "mypr_package_devdependencies_terser",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "mypr_package_devdependencies",
+      "target": "mypr_package_devdependencies_wrangler",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "tsconfig_json",
+      "target": "mypr_tsconfig_compileroptions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "mypr_tsconfig_compileroptions",
+      "target": "mypr_tsconfig_compileroptions_target",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "mypr_tsconfig_compileroptions",
+      "target": "mypr_tsconfig_compileroptions_module",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "mypr_tsconfig_compileroptions",
+      "target": "mypr_tsconfig_compileroptions_moduleresolution",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "mypr_tsconfig_compileroptions",
+      "target": "mypr_tsconfig_compileroptions_strict",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "mypr_tsconfig_compileroptions",
+      "target": "mypr_tsconfig_compileroptions_skiplibcheck",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "mypr_tsconfig_compileroptions",
+      "target": "mypr_tsconfig_compileroptions_lib",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "mypr_tsconfig_compileroptions",
+      "target": "mypr_tsconfig_compileroptions_types",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "mypr_tsconfig_compileroptions",
+      "target": "mypr_tsconfig_compileroptions_jsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "mypr_tsconfig_compileroptions",
+      "target": "mypr_tsconfig_compileroptions_jsximportsource",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "worker-configuration.d.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "worker_configuration_d_ts",
+      "target": "mypr_worker_configuration_d_cloudflarebindings",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "mypr_fr_package_json",
+      "target": "mypr_fr_package_name",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "mypr_fr_package_json",
+      "target": "mypr_fr_package_private",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "mypr_fr_package_json",
+      "target": "mypr_fr_package_version",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "mypr_fr_package_json",
+      "target": "mypr_fr_package_type",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "mypr_fr_package_json",
+      "target": "mypr_fr_package_scripts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "mypr_fr_package_json",
+      "target": "mypr_fr_package_dependencies",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "mypr_fr_package_json",
+      "target": "mypr_fr_package_devdependencies",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "mypr_fr_package_scripts",
+      "target": "mypr_fr_package_scripts_dev",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "mypr_fr_package_scripts",
+      "target": "mypr_fr_package_scripts_build",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "mypr_fr_package_scripts",
+      "target": "mypr_fr_package_scripts_preview",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "mypr_fr_package_dependencies",
+      "target": "mypr_fr_package_dependencies_vue",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "mypr_fr_package_dependencies",
+      "target": "mypr_fr_package_dependencies_vue_router",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "mypr_fr_package_devdependencies",
+      "target": "mypr_fr_package_devdependencies_vitejs_plugin_vue",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "mypr_fr_package_devdependencies",
+      "target": "mypr_fr_package_devdependencies_vue_tsconfig",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "mypr_fr_package_devdependencies",
+      "target": "mypr_fr_package_devdependencies_chart_js",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "mypr_fr_package_devdependencies",
+      "target": "mypr_fr_package_devdependencies_pinia",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "mypr_fr_package_devdependencies",
+      "target": "mypr_fr_package_devdependencies_postcss",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "mypr_fr_package_devdependencies",
+      "target": "mypr_fr_package_devdependencies_terser",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "mypr_fr_package_devdependencies",
+      "target": "mypr_fr_package_devdependencies_typescript",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "mypr_fr_package_devdependencies",
+      "target": "mypr_fr_package_devdependencies_vite",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L24",
+      "weight": 1.0,
+      "source": "mypr_fr_package_devdependencies",
+      "target": "mypr_fr_package_devdependencies_vite_plugin_pwa",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "mypr_fr_package_devdependencies",
+      "target": "mypr_fr_package_devdependencies_vue_chartjs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/package.json",
+      "source_location": "L26",
+      "weight": 1.0,
+      "source": "mypr_fr_package_devdependencies",
+      "target": "mypr_fr_package_devdependencies_vue_tsc",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.app.json",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_app_json",
+      "target": "mypr_fr_tsconfig_app_extends",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.app.json",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_app_json",
+      "target": "mypr_fr_tsconfig_app_compileroptions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.app.json",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_app_json",
+      "target": "mypr_fr_tsconfig_app_include",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.app.json",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_app_compileroptions",
+      "target": "mypr_fr_tsconfig_app_compileroptions_tsbuildinfofile",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.app.json",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_app_compileroptions",
+      "target": "mypr_fr_tsconfig_app_compileroptions_strict",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.app.json",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_app_compileroptions",
+      "target": "mypr_fr_tsconfig_app_compileroptions_nounusedlocals",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.app.json",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_app_compileroptions",
+      "target": "mypr_fr_tsconfig_app_compileroptions_nounusedparameters",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.app.json",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_app_compileroptions",
+      "target": "mypr_fr_tsconfig_app_compileroptions_nofallthroughcasesinswitch",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.app.json",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_app_compileroptions",
+      "target": "mypr_fr_tsconfig_app_compileroptions_nouncheckedsideeffectimports",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.json",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_json",
+      "target": "mypr_fr_tsconfig_files",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.json",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_json",
+      "target": "mypr_fr_tsconfig_references",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_node_json",
+      "target": "mypr_fr_tsconfig_node_compileroptions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_node_json",
+      "target": "mypr_fr_tsconfig_node_include",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_tsbuildinfofile",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_target",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_lib",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_module",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_skiplibcheck",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_moduleresolution",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_allowimportingtsextensions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_isolatedmodules",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_moduledetection",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_noemit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_strict",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_nounusedlocals",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_nounusedparameters",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_nofallthroughcasesinswitch",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/tsconfig.node.json",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_nouncheckedsideeffectimports",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/_routes.json",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "mypr_fr_routes_json",
+      "target": "mypr_fr_routes_version",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/_routes.json",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "mypr_fr_routes_json",
+      "target": "mypr_fr_routes_include",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/_routes.json",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "mypr_fr_routes_json",
+      "target": "mypr_fr_routes_exclude",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/_routes.json",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "mypr_fr_routes_json",
+      "target": "mypr_fr_routes_routes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/.vscode/extensions.json",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "mypr_fr_vscode_extensions_json",
+      "target": "vscode_extensions_recommendations",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/main.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "mypr_fr_src_main_ts",
+      "target": "mypr_fr_src_app_vue",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/main.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "mypr_fr_src_main_ts",
+      "target": "mypr_fr_src_router_index_ts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/main.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "mypr_fr_src_main_ts",
+      "target": "src_main_app",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/main.ts",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "mypr_fr_src_main_ts",
+      "target": "src_main_pinia",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/components/BuscadorSelect.vue",
+      "source_location": "L26",
+      "weight": 1.0,
+      "source": "mypr_fr_src_components_buscadorselect_vue",
+      "target": "components_buscadorselect_text",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/components/BuscadorSelect.vue",
+      "source_location": "L67",
+      "weight": 1.0,
+      "source": "mypr_fr_src_components_buscadorselect_vue",
+      "target": "components_buscadorselect_selectedoption",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L60",
+      "weight": 1.0,
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_usermessage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L88",
+      "weight": 1.0,
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_currenttraining",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L95",
+      "weight": 1.0,
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_rawhistory",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L97",
+      "weight": 1.0,
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_firstuserindex",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L100",
+      "weight": 1.0,
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_history",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L105",
+      "weight": 1.0,
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_token",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L127",
+      "weight": 1.0,
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_reader",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L130",
+      "weight": 1.0,
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_decoder",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L141",
+      "weight": 1.0,
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_lines",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L147",
+      "weight": 1.0,
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_eventdata",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L184",
+      "weight": 1.0,
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_botmsg",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L256",
+      "weight": 1.0,
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_if",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L209",
+      "weight": 1.0,
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_messages_savedmessages_isfirstmessage_savedisfirstmessage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "mypr-fr/src/components/Chatbot.vue",
+      "source_location": "L197",
+      "weight": 1.0,
+      "source": "components_chatbot_if",
+      "target": "services_chatgpt_chatgptservice_sendmessage"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/components/SerieItem.vue",
+      "source_location": "L41",
+      "weight": 1.0,
+      "source": "mypr_fr_src_components_serieitem_vue",
+      "target": "components_serieitem_savedstate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/components/SerieItem.vue",
+      "source_location": "L111",
+      "weight": 1.0,
+      "source": "mypr_fr_src_components_serieitem_vue",
+      "target": "components_serieitem_token",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/router/index.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "mypr_fr_src_router_index_ts",
+      "target": "mypr_fr_src_views_login_vue",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/router/index.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "mypr_fr_src_router_index_ts",
+      "target": "mypr_fr_src_views_register_vue",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/router/index.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "mypr_fr_src_router_index_ts",
+      "target": "mypr_fr_src_views_entrenos_vue",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/router/index.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "mypr_fr_src_router_index_ts",
+      "target": "mypr_fr_src_views_detalleentreno_vue",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/router/index.ts",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "mypr_fr_src_router_index_ts",
+      "target": "mypr_fr_src_views_ejercicios_vue",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/router/index.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "mypr_fr_src_router_index_ts",
+      "target": "mypr_fr_src_views_detalleejercicio_vue",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/router/index.ts",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "mypr_fr_src_router_index_ts",
+      "target": "mypr_fr_src_views_user_vue",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/router/index.ts",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "mypr_fr_src_router_index_ts",
+      "target": "mypr_fr_src_stores_auth_ts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/router/index.ts",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "mypr_fr_src_router_index_ts",
+      "target": "stores_auth_useauthstore",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/router/index.ts",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "mypr_fr_src_router_index_ts",
+      "target": "router_index_requireauth",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/router/index.ts",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "mypr_fr_src_router_index_ts",
+      "target": "router_index_router",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/router/index.ts",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "router_index_requireauth",
+      "target": "stores_auth_useauthstore",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/services/auth.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "mypr_fr_src_services_auth_ts",
+      "target": "services_auth_loginresponse",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/services/auth.ts",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "mypr_fr_src_services_auth_ts",
+      "target": "services_auth_logindata",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/services/auth.ts",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "mypr_fr_src_services_auth_ts",
+      "target": "services_auth_registerdata",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/services/auth.ts",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "mypr_fr_src_services_auth_ts",
+      "target": "services_auth_registerresponse",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/services/auth.ts",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "mypr_fr_src_services_auth_ts",
+      "target": "services_auth_userinfo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/services/auth.ts",
+      "source_location": "L37",
+      "weight": 1.0,
+      "source": "mypr_fr_src_services_auth_ts",
+      "target": "services_auth_authservice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/services/chatgpt.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "mypr_fr_src_services_chatgpt_ts",
+      "target": "services_chatgpt_entrenodata",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/services/chatgpt.ts",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "mypr_fr_src_services_chatgpt_ts",
+      "target": "services_chatgpt_chatgptpayload",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/services/chatgpt.ts",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "mypr_fr_src_services_chatgpt_ts",
+      "target": "services_chatgpt_chatmessage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/services/chatgpt.ts",
+      "source_location": "L34",
+      "weight": 1.0,
+      "source": "mypr_fr_src_services_chatgpt_ts",
+      "target": "services_chatgpt_gettoken",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/services/chatgpt.ts",
+      "source_location": "L39",
+      "weight": 1.0,
+      "source": "mypr_fr_src_services_chatgpt_ts",
+      "target": "services_chatgpt_chatgptservice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/services/chatgpt.ts",
+      "source_location": "L94",
+      "weight": 1.0,
+      "source": "services_chatgpt_chatgptservice_sendmessage",
+      "target": "services_chatgpt_gettoken",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/services/chatgpt.ts",
+      "source_location": "L141",
+      "weight": 1.0,
+      "source": "services_chatgpt_chatgptservice_testconnection",
+      "target": "services_chatgpt_gettoken",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/services/chatgpt.ts",
+      "source_location": "L42",
+      "weight": 1.0,
+      "source": "services_chatgpt_chatgptservice",
+      "target": "services_chatgpt_chatgptservice_savemessages",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/services/chatgpt.ts",
+      "source_location": "L48",
+      "weight": 1.0,
+      "source": "services_chatgpt_chatgptservice",
+      "target": "services_chatgpt_chatgptservice_loadmessages",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/services/chatgpt.ts",
+      "source_location": "L93",
+      "weight": 1.0,
+      "source": "services_chatgpt_chatgptservice",
+      "target": "services_chatgpt_chatgptservice_sendmessage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/services/chatgpt.ts",
+      "source_location": "L140",
+      "weight": 1.0,
+      "source": "services_chatgpt_chatgptservice",
+      "target": "services_chatgpt_chatgptservice_testconnection",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/stores/auth.ts",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "mypr_fr_src_stores_auth_ts",
+      "target": "stores_auth_useauthstore",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/utils/ejercicioUtils.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "mypr_fr_src_utils_ejercicioutils_ts",
+      "target": "mypr_fr_src_stores_auth_ts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/utils/ejercicioUtils.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "mypr_fr_src_utils_ejercicioutils_ts",
+      "target": "stores_auth_useauthstore",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "mypr-fr/src/utils/ejercicioUtils.ts",
+      "source_location": "L47",
+      "weight": 1.0,
+      "source": "utils_ejercicioutils_guardarnuevoejercicio",
+      "target": "stores_auth_useauthstore"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/utils/ejercicioUtils.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "mypr_fr_src_utils_ejercicioutils_ts",
+      "target": "utils_ejercicioutils_formateartexto",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/utils/ejercicioUtils.ts",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "mypr_fr_src_utils_ejercicioutils_ts",
+      "target": "utils_ejercicioutils_nuevoejercicio",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/utils/ejercicioUtils.ts",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "mypr_fr_src_utils_ejercicioutils_ts",
+      "target": "utils_ejercicioutils_guardarnuevoejercicio",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/utils/ejercicioUtils.ts",
+      "source_location": "L57",
+      "weight": 1.0,
+      "source": "utils_ejercicioutils_guardarnuevoejercicio",
+      "target": "utils_ejercicioutils_formateartexto",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/views/DetalleEjercicio.vue",
+      "source_location": "L108",
+      "weight": 1.0,
+      "source": "mypr_fr_src_views_detalleejercicio_vue",
+      "target": "views_detalleejercicio_fecha",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/views/DetalleEntreno.vue",
+      "source_location": "L93",
+      "weight": 1.0,
+      "source": "mypr_fr_src_views_detalleentreno_vue",
+      "target": "views_detalleentreno_map",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/views/DetalleEntreno.vue",
+      "source_location": "L97",
+      "weight": 1.0,
+      "source": "mypr_fr_src_views_detalleentreno_vue",
+      "target": "views_detalleentreno_grupo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/views/DetalleEntreno.vue",
+      "source_location": "L256",
+      "weight": 1.0,
+      "source": "mypr_fr_src_views_detalleentreno_vue",
+      "target": "views_detalleentreno_if",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/views/Entrenos.vue",
+      "source_location": "L66",
+      "weight": 1.0,
+      "source": "mypr_fr_src_views_entrenos_vue",
+      "target": "views_entrenos_fecha",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/views/Entrenos.vue",
+      "source_location": "L67",
+      "weight": 1.0,
+      "source": "mypr_fr_src_views_entrenos_vue",
+      "target": "views_entrenos_fechastr",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr/src/views/User.vue",
+      "source_location": "L58",
+      "weight": 1.0,
+      "source": "mypr_fr_src_views_user_vue",
+      "target": "views_user_if",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_schema_ts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_schema_nouexercici",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_schema_petition",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_schema_getentrenos",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_schema_novaserie",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_schema_getentreno",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_schema_editserie",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_schema_signup",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_schema_login",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_schema_deleteserie",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_schema_editexercici",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_schema_getgrupsmusculars",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_schema_getexercici",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_schema_getpesoshistorial",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_schema_nouentreno",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_schema_editentreno",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_schema_getcargahistorial",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_schema_chatgpt",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_schema_updateuser",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_schema_getuser",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_schema_deleteentreno",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_schema_reorderserie",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_jwt_ts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_jwt_hashpassword",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_jwt_verifypassword",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_jwt_generatejwt",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_jwt_verifyjwt",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_index_bindings",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_index_app",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L51",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_index_addserietodb",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L114",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_index_data",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L306",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_index_ids",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L307",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_index_fromidx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L310",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_index_toidx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L313",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_index_reordered",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L314",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_index_moved",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L573",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_index_exercisesliststring",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L575",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_index_traininghistory",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L667",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_index_genai",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L669",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_index_model",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L680",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_index_chathistory",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L685",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_index_chatconfig",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L689",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_index_chat",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L697",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_index_stream",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L807",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_index_checkpr",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L829",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_index_updatecargatotal",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L844",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_index_getuserstats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L891",
+      "weight": 1.0,
+      "source": "src_index_ts",
+      "target": "src_index_getfullserieslistfromtraining",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/jwt.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_jwt_ts",
+      "target": "src_jwt_generatejwt",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/jwt.ts",
+      "source_location": "L65",
+      "weight": 1.0,
+      "source": "src_jwt_ts",
+      "target": "src_jwt_verifyjwt",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/jwt.ts",
+      "source_location": "L137",
+      "weight": 1.0,
+      "source": "src_jwt_ts",
+      "target": "src_jwt_hashpassword",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/jwt.ts",
+      "source_location": "L175",
+      "weight": 1.0,
+      "source": "src_jwt_ts",
+      "target": "src_jwt_verifypassword",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/schema.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_schema_ts",
+      "target": "src_schema_login",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/schema.ts",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "src_schema_ts",
+      "target": "src_schema_signup",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/schema.ts",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "src_schema_ts",
+      "target": "src_schema_petition",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/schema.ts",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "src_schema_ts",
+      "target": "src_schema_getgrupsmusculars",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/schema.ts",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "src_schema_ts",
+      "target": "src_schema_nouexercici",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/schema.ts",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "src_schema_ts",
+      "target": "src_schema_editexercici",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/schema.ts",
+      "source_location": "L36",
+      "weight": 1.0,
+      "source": "src_schema_ts",
+      "target": "src_schema_getentreno",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/schema.ts",
+      "source_location": "L41",
+      "weight": 1.0,
+      "source": "src_schema_ts",
+      "target": "src_schema_getentrenos",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/schema.ts",
+      "source_location": "L49",
+      "weight": 1.0,
+      "source": "src_schema_ts",
+      "target": "src_schema_nouentreno",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/schema.ts",
+      "source_location": "L56",
+      "weight": 1.0,
+      "source": "src_schema_ts",
+      "target": "src_schema_editentreno",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/schema.ts",
+      "source_location": "L64",
+      "weight": 1.0,
+      "source": "src_schema_ts",
+      "target": "src_schema_novaserie",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/schema.ts",
+      "source_location": "L72",
+      "weight": 1.0,
+      "source": "src_schema_ts",
+      "target": "src_schema_editserie",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/schema.ts",
+      "source_location": "L81",
+      "weight": 1.0,
+      "source": "src_schema_ts",
+      "target": "src_schema_deleteserie",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/schema.ts",
+      "source_location": "L86",
+      "weight": 1.0,
+      "source": "src_schema_ts",
+      "target": "src_schema_deleteentreno",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/schema.ts",
+      "source_location": "L91",
+      "weight": 1.0,
+      "source": "src_schema_ts",
+      "target": "src_schema_getexercici",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/schema.ts",
+      "source_location": "L96",
+      "weight": 1.0,
+      "source": "src_schema_ts",
+      "target": "src_schema_getpesoshistorial",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/schema.ts",
+      "source_location": "L101",
+      "weight": 1.0,
+      "source": "src_schema_ts",
+      "target": "src_schema_getcargahistorial",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/schema.ts",
+      "source_location": "L106",
+      "weight": 1.0,
+      "source": "src_schema_ts",
+      "target": "src_schema_reorderserie",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/schema.ts",
+      "source_location": "L113",
+      "weight": 1.0,
+      "source": "src_schema_ts",
+      "target": "src_schema_chatgpt",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/schema.ts",
+      "source_location": "L185",
+      "weight": 1.0,
+      "source": "src_schema_ts",
+      "target": "src_schema_updateuser",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/schema.ts",
+      "source_location": "L190",
+      "weight": 1.0,
+      "source": "src_schema_ts",
+      "target": "src_schema_getuser",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 0.9,
+      "source": "mypr_app",
+      "target": "mypr_backend"
+    },
+    {
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 0.9,
+      "source": "mypr_app",
+      "target": "mypr_frontend"
+    },
+    {
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "edit_result.txt",
+      "source_location": null,
+      "weight": 0.85,
+      "source": "mypr_app",
+      "target": "training_log_data"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "mypr_backend",
+      "target": "cloudflare_workers"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "mypr_backend",
+      "target": "cloudflare_d1"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "mypr_backend",
+      "target": "wrangler_cli"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "mypr_backend",
+      "target": "jwt_auth"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "mypr_backend",
+      "target": "cors_config"
+    },
+    {
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "weight": 0.85,
+      "rationale": "Frontend communicates with backend via REST API; evidenced by CORS and JWT configuration sections",
+      "source": "mypr_backend",
+      "target": "mypr_frontend"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "mypr_frontend",
+      "target": "cloudflare_pages"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "mypr-fr/README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "mypr_frontend",
+      "target": "vue3_ts_vite"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "mypr-fr/README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "mypr_frontend",
+      "target": "vue_script_setup"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "mypr-fr/src/assets/bot.svg",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "bot_svg",
+      "target": "mypr_frontend"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "mypr-fr/src/assets/bot-accent.png",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "bot_accent_png",
+      "target": "mypr_frontend"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "mypr-fr/src/assets/bot-light-grey.png",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "bot_light_grey_png",
+      "target": "mypr_frontend"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "mypr-fr/src/assets/vue.svg",
+      "source_location": null,
+      "weight": 0.9,
+      "source": "vue_logo_svg",
+      "target": "mypr_frontend"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "custom_domain",
+      "target": "cloudflare_pages"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "cors_config",
+      "target": "custom_domain"
+    },
+    {
+      "relation": "represents",
+      "confidence": "INFERRED",
+      "confidence_score": 0.7,
+      "source_file": "public/pwq-192x192.png",
+      "source_location": null,
+      "weight": 0.7,
+      "source": "pwq_192x192_png",
+      "target": "mypr_fr_app"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "public/",
+      "source_location": null,
+      "weight": 0.95,
+      "source": "pwq_192x192_png",
+      "target": "pwq_512x512_png"
+    },
+    {
+      "relation": "represents",
+      "confidence": "INFERRED",
+      "confidence_score": 0.7,
+      "source_file": "public/pwq-512x512.png",
+      "source_location": null,
+      "weight": 0.7,
+      "source": "pwq_512x512_png",
+      "target": "mypr_fr_app"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "public/trophy.svg",
+      "source_location": null,
+      "weight": 0.8,
+      "source": "trophy_svg",
+      "target": "mypr_fr_app"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "public/vite.svg",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "vite_svg",
+      "target": "mypr_fr_app"
+    },
+    {
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "mypr-fr/src/assets/bot-accent.png",
+      "source_location": null,
+      "weight": 0.8,
+      "source": "bot_accent_png",
+      "target": "bot_svg"
+    },
+    {
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "mypr-fr/src/assets/bot-light-grey.png",
+      "source_location": null,
+      "weight": 0.8,
+      "source": "bot_light_grey_png",
+      "target": "bot_svg"
+    },
+    {
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "mypr-fr/src/assets",
+      "source_location": null,
+      "weight": 0.7,
+      "source": "bot_accent_png",
+      "target": "bot_light_grey_png"
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "cloudflare_deployment",
+      "label": "Cloudflare Deployment Architecture",
+      "nodes": [
+        "mypr_backend",
+        "mypr_frontend",
+        "cloudflare_workers",
+        "cloudflare_pages",
+        "cloudflare_d1"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DEPLOY.md"
+    },
+    {
+      "id": "api_communication",
+      "label": "API Communication Between Frontend and Backend",
+      "nodes": [
+        "mypr_backend",
+        "mypr_frontend",
+        "jwt_auth",
+        "cors_config"
+      ],
+      "relation": "implement",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "DEPLOY.md"
+    },
+    {
+      "id": "bot_icon_variants",
+      "label": "Bot Icon Variants",
+      "nodes": [
+        "bot_svg",
+        "bot_accent_png",
+        "bot_light_grey_png"
+      ],
+      "relation": "form",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "mypr-fr/src/assets"
+    },
+    {
+      "id": "frontend_assets",
+      "label": "Frontend Asset Collection",
+      "nodes": [
+        "bot_svg",
+        "bot_accent_png",
+        "bot_light_grey_png",
+        "vue_logo_svg",
+        "mypr_frontend"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "mypr-fr/src/assets"
+    }
+  ],
+  "built_at_commit": "4cea9d61edd26b1e5b83b3993c34f502b1b13607"
+}

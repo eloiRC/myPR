@@ -15,13 +15,19 @@ Este documento contiene las instrucciones para desplegar la aplicación MyPR en 
 
    Configura las variables secretas necesarias para el funcionamiento del backend:
 
-   ```bash
-   wrangler secret put jwt_secret
-   # Ingresa tu clave secreta para JWT cuando se te solicite
-   
-   wrangler secret put test_password
-   # Ingresa la contraseña de prueba cuando se te solicite
-   ```
+    ```bash
+    wrangler secret put jwt_secret
+    # Ingresa tu clave secreta para JWT cuando se te solicite
+    
+    wrangler secret put test_password
+    # Ingresa la contraseña de prueba cuando se te solicite
+
+    wrangler secret put GARMIN_API_KEY
+    # Ingresa una clave aleatoria (ej. generada con OpenSSL o uuidgen)
+
+    wrangler secret put GARMIN_ENCRYPTION_KEY
+    # Ingresa una clave aleatoria de 64+ caracteres para AES-256-GCM
+    ```
 
 2. **Verificar la configuración de la base de datos D1**
 
@@ -37,12 +43,19 @@ Este documento contiene las instrucciones para desplegar la aplicación MyPR en 
    ]
    ```
 
-   Si necesitas crear una nueva base de datos:
+    Si necesitas crear una nueva base de datos:
 
-   ```bash
-   wrangler d1 create mypr
-   # Luego actualiza el database_id en wrangler.jsonc
-   ```
+    ```bash
+    wrangler d1 create mypr
+    # Luego actualiza el database_id en wrangler.jsonc
+    ```
+
+2b. **Aplicar migraciones de base de datos**
+
+    ```bash
+    # Crear tablas Garmin (si no existen)
+    wrangler d1 execute mypr --remote --file=migrations/0001_create_garmin_tables.sql
+    ```
 
 3. **Desplegar el Worker**
 
@@ -119,6 +132,30 @@ Luego, vuelve a desplegar el Worker:
 ```bash
 wrangler deploy
 ```
+
+## Configuración de Garmin Connect Sync (GitHub Actions)
+
+El script `scripts/garmin_sync.py` se ejecuta diariamente a las 07:00 UTC mediante un GitHub Action.
+
+### 1. Configurar secrets en GitHub
+
+En tu repositorio de GitHub (`Settings → Secrets and variables → Actions`), añade:
+
+| Secret | Valor |
+|--------|-------|
+| `MYPR_API_URL` | `https://mypr.eloirebollo97.workers.dev` |
+| `MYPR_API_KEY` | La misma que configuraste en `wrangler secret put GARMIN_API_KEY` |
+
+```bash
+# Los valores de ejemplo usados en este despliegue:
+# GARMIN_API_KEY=1pAilRH8OCeIFdhfDBJcKn7T5xogSzPw4Wb9rtjkQ0sGUYNq
+# GARMIN_ENCRYPTION_KEY=LV9gnlwYSfBQy1c2mhFt7qZW0rud36OCvzT8G5boJkEUeNAPKHxsjIXR4aiDMp
+```
+
+### 2. Verificar el workflow
+
+El archivo `.github/workflows/garmin-sync.yml` se ejecutará automáticamente cada día.
+Puedes ejecutarlo manualmente desde la pestaña "Actions" de GitHub.
 
 ## Solución de problemas
 

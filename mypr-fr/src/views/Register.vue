@@ -58,12 +58,16 @@ const handleRegister = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center p-4">
-    <div class="card register-card">
-      <h1 class="text-center">Registro de Usuario</h1>
-      
-      <form @submit.prevent="handleRegister" class="register-form">
-        <div class="form-control">
+  <div class="auth-page">
+    <div class="card auth-card">
+      <div class="auth-brand">
+        <span class="auth-logo">MyPR</span>
+        <h1>Crear cuenta</h1>
+        <p class="auth-subtitle">Empieza a registrar tus entrenamientos hoy</p>
+      </div>
+
+      <form @submit.prevent="handleRegister" class="auth-form">
+        <div class="form-group">
           <label for="email">Correo Electrónico</label>
           <input 
             id="email" 
@@ -75,7 +79,7 @@ const handleRegister = async () => {
           />
         </div>
         
-        <div class="form-control">
+        <div class="form-group">
           <label for="password">Contraseña</label>
           <input 
             id="password" 
@@ -87,7 +91,7 @@ const handleRegister = async () => {
           />
         </div>
 
-        <div class="form-control">
+        <div class="form-group">
           <label for="confirmPassword">Confirmar Contraseña</label>
           <input 
             id="confirmPassword" 
@@ -103,57 +107,14 @@ const handleRegister = async () => {
           {{ errorMessage }}
         </div>
         
-        <button 
-          type="submit" 
-          class="btn btn-primary register-button" 
-          :disabled="isLoading"
-        >
+        <button type="submit" class="btn btn-primary auth-submit" :disabled="isLoading">
           {{ isLoading ? 'Registrando...' : 'Registrarse' }}
         </button>
 
-        <div class="text-center link-under-button">
-          <router-link to="/login" class="text-primary hover:underline">
-            ¿Ya tienes una cuenta? Inicia sesión
-          </router-link>
-        </div>
+        <router-link to="/login" class="auth-link">
+          ¿Ya tienes cuenta? Inicia sesión
+        </router-link>
       </form>
     </div>
   </div>
 </template>
-
-<style scoped>
-.link-under-button {
-  margin-top: 1rem;
-  
-}
-a{
-  color: grey!important;
-}
-.register-card {
-  width: 100%;
-  max-width: 400px;
-}
-
-.register-form {
-  margin-top: 1.5rem;
-}
-
-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-}
-
-.register-button {
-  width: 100%;
-  margin-top: 1rem;
-  padding: 0.75rem;
-  font-size: 1rem;
-}
-
-.error-message {
-  color: var(--error);
-  margin: 0.5rem 0;
-  font-size: 0.875rem;
-}
-</style> 

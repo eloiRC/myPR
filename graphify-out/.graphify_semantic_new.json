@@ -1,0 +1,596 @@
+{
+  "nodes": [
+    {
+      "id": "mypr_app",
+      "label": "MyPR Application",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Workout tracking application for recording exercise series and personal records"
+    },
+    {
+      "id": "mypr_backend",
+      "label": "MyPR Backend (Cloudflare Worker)",
+      "file_type": "code",
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "mypr_frontend",
+      "label": "MyPR Frontend (Vue 3 SPA)",
+      "file_type": "code",
+      "source_file": "mypr-fr/index.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "cloudflare_workers",
+      "label": "Cloudflare Workers",
+      "file_type": "document",
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "cloudflare_pages",
+      "label": "Cloudflare Pages",
+      "file_type": "document",
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "cloudflare_d1",
+      "label": "Cloudflare D1 Database",
+      "file_type": "document",
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "SQLite-compatible edge database used for storing workout records; chosen for tight integration with Cloudflare Workers serverless platform"
+    },
+    {
+      "id": "wrangler_cli",
+      "label": "Wrangler CLI",
+      "file_type": "code",
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "jwt_auth",
+      "label": "JWT Authentication",
+      "file_type": "code",
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Used to authenticate API requests between frontend and backend; jwt_secret must be configured as a Worker secret variable"
+    },
+    {
+      "id": "cors_config",
+      "label": "CORS Configuration",
+      "file_type": "code",
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Must be updated when frontend domain changes to allow cross-origin requests; configured in src/index.ts via the cors middleware"
+    },
+    {
+      "id": "custom_domain",
+      "label": "Custom Domain",
+      "file_type": "document",
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "vue3_ts_vite",
+      "label": "Vue 3 + TypeScript + Vite",
+      "file_type": "code",
+      "source_file": "mypr-fr/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "training_log_data",
+      "label": "Training Log Data (Exercise Series Records)",
+      "file_type": "document",
+      "source_file": "edit_result.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Database query result containing exercise, weight, reps, and date for each training session set"
+    },
+    {
+      "id": "vue_script_setup",
+      "label": "Vue 3 Script Setup SFCs",
+      "file_type": "code",
+      "source_file": "mypr-fr/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "pwq_192x192_png",
+      "label": "PWQ App Icon 192x192",
+      "file_type": "image",
+      "source_file": "public/pwq-192x192.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "pwq_512x512_png",
+      "label": "PWQ App Icon 512x512",
+      "file_type": "image",
+      "source_file": "public/pwq-512x512.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "trophy_svg",
+      "label": "Trophy Icon",
+      "file_type": "image",
+      "source_file": "public/trophy.svg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "vite_svg",
+      "label": "Vite Logo",
+      "file_type": "image",
+      "source_file": "public/vite.svg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "mypr_fr_app",
+      "label": "mypr-fr Application",
+      "file_type": "document",
+      "source_file": "public/",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "bot_svg",
+      "label": "Bot SVG Icon",
+      "file_type": "image",
+      "source_file": "mypr-fr/src/assets/bot.svg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "bot_accent_png",
+      "label": "Bot Accent PNG Icon",
+      "file_type": "image",
+      "source_file": "mypr-fr/src/assets/bot-accent.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "bot_light_grey_png",
+      "label": "Bot Light Grey PNG Icon",
+      "file_type": "image",
+      "source_file": "mypr-fr/src/assets/bot-light-grey.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "vue_logo_svg",
+      "label": "Vue.js Logo SVG",
+      "file_type": "image",
+      "source_file": "mypr-fr/src/assets/vue.svg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "mypr_frontend",
+      "label": "myPR Frontend Application",
+      "file_type": "code",
+      "source_file": "mypr-fr",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "mypr_app",
+      "target": "mypr_backend",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 0.9
+    },
+    {
+      "source": "mypr_app",
+      "target": "mypr_frontend",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 0.9
+    },
+    {
+      "source": "mypr_app",
+      "target": "training_log_data",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "edit_result.txt",
+      "source_location": null,
+      "weight": 0.85
+    },
+    {
+      "source": "mypr_backend",
+      "target": "cloudflare_workers",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_backend",
+      "target": "cloudflare_d1",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_backend",
+      "target": "wrangler_cli",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_backend",
+      "target": "jwt_auth",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_backend",
+      "target": "cors_config",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_backend",
+      "target": "mypr_frontend",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "weight": 0.85,
+      "rationale": "Frontend communicates with backend via REST API; evidenced by CORS and JWT configuration sections"
+    },
+    {
+      "source": "mypr_frontend",
+      "target": "cloudflare_pages",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_frontend",
+      "target": "vue3_ts_vite",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "mypr-fr/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_frontend",
+      "target": "vue_script_setup",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "mypr-fr/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "cors_config",
+      "target": "custom_domain",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "custom_domain",
+      "target": "cloudflare_pages",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DEPLOY.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "pwq_192x192_png",
+      "target": "mypr_fr_app",
+      "relation": "represents",
+      "confidence": "INFERRED",
+      "confidence_score": 0.7,
+      "source_file": "public/pwq-192x192.png",
+      "source_location": null,
+      "weight": 0.7
+    },
+    {
+      "source": "pwq_512x512_png",
+      "target": "mypr_fr_app",
+      "relation": "represents",
+      "confidence": "INFERRED",
+      "confidence_score": 0.7,
+      "source_file": "public/pwq-512x512.png",
+      "source_location": null,
+      "weight": 0.7
+    },
+    {
+      "source": "pwq_192x192_png",
+      "target": "pwq_512x512_png",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "public/",
+      "source_location": null,
+      "weight": 0.95
+    },
+    {
+      "source": "trophy_svg",
+      "target": "mypr_fr_app",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "public/trophy.svg",
+      "source_location": null,
+      "weight": 0.8
+    },
+    {
+      "source": "vite_svg",
+      "target": "mypr_fr_app",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "public/vite.svg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "bot_svg",
+      "target": "mypr_frontend",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "mypr-fr/src/assets/bot.svg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "bot_accent_png",
+      "target": "mypr_frontend",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "mypr-fr/src/assets/bot-accent.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "bot_light_grey_png",
+      "target": "mypr_frontend",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "mypr-fr/src/assets/bot-light-grey.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "vue_logo_svg",
+      "target": "mypr_frontend",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "mypr-fr/src/assets/vue.svg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "bot_accent_png",
+      "target": "bot_svg",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "mypr-fr/src/assets/bot-accent.png",
+      "source_location": null,
+      "weight": 0.8
+    },
+    {
+      "source": "bot_light_grey_png",
+      "target": "bot_svg",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "mypr-fr/src/assets/bot-light-grey.png",
+      "source_location": null,
+      "weight": 0.8
+    },
+    {
+      "source": "bot_accent_png",
+      "target": "bot_light_grey_png",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "mypr-fr/src/assets",
+      "source_location": null,
+      "weight": 0.7
+    },
+    {
+      "source": "vue_logo_svg",
+      "target": "mypr_frontend",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "mypr-fr/src/assets/vue.svg",
+      "source_location": null,
+      "weight": 0.9
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "cloudflare_deployment",
+      "label": "Cloudflare Deployment Architecture",
+      "nodes": [
+        "mypr_backend",
+        "mypr_frontend",
+        "cloudflare_workers",
+        "cloudflare_pages",
+        "cloudflare_d1"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DEPLOY.md"
+    },
+    {
+      "id": "api_communication",
+      "label": "API Communication Between Frontend and Backend",
+      "nodes": [
+        "mypr_backend",
+        "mypr_frontend",
+        "jwt_auth",
+        "cors_config"
+      ],
+      "relation": "implement",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "DEPLOY.md"
+    },
+    {
+      "id": "bot_icon_variants",
+      "label": "Bot Icon Variants",
+      "nodes": [
+        "bot_svg",
+        "bot_accent_png",
+        "bot_light_grey_png"
+      ],
+      "relation": "form",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "mypr-fr/src/assets"
+    },
+    {
+      "id": "frontend_assets",
+      "label": "Frontend Asset Collection",
+      "nodes": [
+        "bot_svg",
+        "bot_accent_png",
+        "bot_light_grey_png",
+        "vue_logo_svg",
+        "mypr_frontend"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "mypr-fr/src/assets"
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

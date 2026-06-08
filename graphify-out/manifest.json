@@ -1,0 +1,267 @@
+{
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\add_chatbot_prompt.sql": {
+    "mtime": 1763597081.2770667,
+    "ast_hash": "8d341f5b54cd549a34d99fdd15a1919d",
+    "semantic_hash": "8d341f5b54cd549a34d99fdd15a1919d"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\drop.sql": {
+    "mtime": 1741129734.362202,
+    "ast_hash": "ac076473a13bac28dbeb432fe987f657",
+    "semantic_hash": "ac076473a13bac28dbeb432fe987f657"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\package.json": {
+    "mtime": 1764021539.9722812,
+    "ast_hash": "900a10dca2c36e516fa8ea792f396ae3",
+    "semantic_hash": "900a10dca2c36e516fa8ea792f396ae3"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\run-edit-sql.ps1": {
+    "mtime": 1764020649.505144,
+    "ast_hash": "e43b921f8eb3d0c03eec1fe14134e083",
+    "semantic_hash": "e43b921f8eb3d0c03eec1fe14134e083"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\tsconfig.json": {
+    "mtime": 1740005790.539972,
+    "ast_hash": "6f357f9c9d016deaff5a540a7ca8b46b",
+    "semantic_hash": "6f357f9c9d016deaff5a540a7ca8b46b"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\worker-configuration.d.ts": {
+    "mtime": 1740005631.3809824,
+    "ast_hash": "164a2207d25439b497322b112900daee",
+    "semantic_hash": "164a2207d25439b497322b112900daee"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\package.json": {
+    "mtime": 1764099512.2340133,
+    "ast_hash": "5c4b47d0b56b799bee85063c5e84b067",
+    "semantic_hash": "5c4b47d0b56b799bee85063c5e84b067"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\postcss.config.mjs": {
+    "mtime": 1740963519.7825375,
+    "ast_hash": "d1b03f14b129e9acaa1cb97c59b3f292",
+    "semantic_hash": "d1b03f14b129e9acaa1cb97c59b3f292"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\tsconfig.app.json": {
+    "mtime": 1741216851.9628198,
+    "ast_hash": "5daa25e4df1df333139580649b794d37",
+    "semantic_hash": "5daa25e4df1df333139580649b794d37"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\tsconfig.json": {
+    "mtime": 1740958504.6214323,
+    "ast_hash": "a3d39fa780ebff65444de257f291ce6c",
+    "semantic_hash": "a3d39fa780ebff65444de257f291ce6c"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\tsconfig.node.json": {
+    "mtime": 1740958504.6254313,
+    "ast_hash": "b39b0c04c8b06a94fa53e598a344f2b4",
+    "semantic_hash": "b39b0c04c8b06a94fa53e598a344f2b4"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\vite.config.ts": {
+    "mtime": 1764099554.7938924,
+    "ast_hash": "dd37e87365c1d315859752cff19e8d51",
+    "semantic_hash": "dd37e87365c1d315859752cff19e8d51"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\_routes.json": {
+    "mtime": 1740971442.584465,
+    "ast_hash": "b8689fdc6b08f039684c2b20a653d6bf",
+    "semantic_hash": "b8689fdc6b08f039684c2b20a653d6bf"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\.vscode\\extensions.json": {
+    "mtime": 1740958504.590934,
+    "ast_hash": "886c161c2f2d9388473a64033e7d1931",
+    "semantic_hash": "886c161c2f2d9388473a64033e7d1931"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\src\\App.vue": {
+    "mtime": 1779129376.8849308,
+    "ast_hash": "8c70a778d19b44322716beb69359bf00",
+    "semantic_hash": "8c70a778d19b44322716beb69359bf00"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\src\\main.ts": {
+    "mtime": 1764099577.3754115,
+    "ast_hash": "a8fc322376a01be75af10a95d0e16ddd",
+    "semantic_hash": "a8fc322376a01be75af10a95d0e16ddd"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\src\\vite-env.d.ts": {
+    "mtime": 1764021220.1073062,
+    "ast_hash": "8c5448a1905bfe02ab12335d6aa3d96a",
+    "semantic_hash": "8c5448a1905bfe02ab12335d6aa3d96a"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\src\\components\\BuscadorSelect.vue": {
+    "mtime": 1764027369.8617396,
+    "ast_hash": "83698430f1c0696aa9b84a43c71c77c5",
+    "semantic_hash": "83698430f1c0696aa9b84a43c71c77c5"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\src\\components\\Chatbot.vue": {
+    "mtime": 1776376265.1762373,
+    "ast_hash": "48f95b7520270d24c7c33c48bc04ee29",
+    "semantic_hash": "48f95b7520270d24c7c33c48bc04ee29"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\src\\components\\Footer.vue": {
+    "mtime": 1779129370.482302,
+    "ast_hash": "549bbd90d21bffe90c7678f3862fa361",
+    "semantic_hash": "549bbd90d21bffe90c7678f3862fa361"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\src\\components\\SerieItem.vue": {
+    "mtime": 1764710959.439108,
+    "ast_hash": "585df8116ea1938441de82622a382f86",
+    "semantic_hash": "585df8116ea1938441de82622a382f86"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\src\\router\\index.ts": {
+    "mtime": 1764100766.0451589,
+    "ast_hash": "7f77bc330fea1d85eaef1dfce4b0b1d1",
+    "semantic_hash": "7f77bc330fea1d85eaef1dfce4b0b1d1"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\src\\services\\auth.ts": {
+    "mtime": 1741817009.4402125,
+    "ast_hash": "2d0b6fc770a67038c33f32e95be05919",
+    "semantic_hash": "2d0b6fc770a67038c33f32e95be05919"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\src\\services\\chatgpt.ts": {
+    "mtime": 1764020649.505144,
+    "ast_hash": "5544197237ba8bd4a5f44c0e37c335a5",
+    "semantic_hash": "5544197237ba8bd4a5f44c0e37c335a5"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\src\\stores\\auth.ts": {
+    "mtime": 1764102773.6743214,
+    "ast_hash": "56a2c2e5673bf68a14cbd50926c3f795",
+    "semantic_hash": "56a2c2e5673bf68a14cbd50926c3f795"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\src\\utils\\ejercicioUtils.ts": {
+    "mtime": 1764102258.4436352,
+    "ast_hash": "6b5236b2df95a2315893264bc624353d",
+    "semantic_hash": "6b5236b2df95a2315893264bc624353d"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\src\\views\\DetalleEjercicio.vue": {
+    "mtime": 1779128588.202173,
+    "ast_hash": "6b46648201b528635bcfe183f2c3af20",
+    "semantic_hash": "6b46648201b528635bcfe183f2c3af20"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\src\\views\\DetalleEntreno.vue": {
+    "mtime": 1779128552.8353946,
+    "ast_hash": "dc2c6e5fc34a55c2a5ce91487b03a41a",
+    "semantic_hash": "dc2c6e5fc34a55c2a5ce91487b03a41a"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\src\\views\\Ejercicios.vue": {
+    "mtime": 1779128499.8781118,
+    "ast_hash": "ee02c2558d5e68d1f886ffd91fb9e1fc",
+    "semantic_hash": "ee02c2558d5e68d1f886ffd91fb9e1fc"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\src\\views\\Entrenos.vue": {
+    "mtime": 1779128461.306836,
+    "ast_hash": "227f396d10b1fde17c2e29952a0ee9d5",
+    "semantic_hash": "227f396d10b1fde17c2e29952a0ee9d5"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\src\\views\\Login.vue": {
+    "mtime": 1779128900.9374208,
+    "ast_hash": "9eff2a2ff13b957b8c76190991ab35c0",
+    "semantic_hash": "9eff2a2ff13b957b8c76190991ab35c0"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\src\\views\\Register.vue": {
+    "mtime": 1779128892.4598863,
+    "ast_hash": "861dce78c578deef1b57fe8b716933a9",
+    "semantic_hash": "861dce78c578deef1b57fe8b716933a9"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\src\\views\\User.vue": {
+    "mtime": 1779128511.255733,
+    "ast_hash": "a985646584f72271c5be8cc3180906a2",
+    "semantic_hash": "a985646584f72271c5be8cc3180906a2"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\src\\alter_entreno.sql": {
+    "mtime": 1741009037.9493592,
+    "ast_hash": "a4918e974eea37949f8cc720e21275a5",
+    "semantic_hash": "a4918e974eea37949f8cc720e21275a5"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\src\\alter_series_order.sql": {
+    "mtime": 1764710170.6968992,
+    "ast_hash": "930ed92de0bc0438127ed8abbcaa3eec",
+    "semantic_hash": "930ed92de0bc0438127ed8abbcaa3eec"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\src\\edit.sql": {
+    "mtime": 1763596512.461936,
+    "ast_hash": "94ac36b5da352e4edc23ee54acacce93",
+    "semantic_hash": "94ac36b5da352e4edc23ee54acacce93"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\src\\index.ts": {
+    "mtime": 1779129286.009842,
+    "ast_hash": "8584651042e24a28eea64880807c2664",
+    "semantic_hash": "8584651042e24a28eea64880807c2664"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\src\\jwt.ts": {
+    "mtime": 1741037567.988037,
+    "ast_hash": "5f56f495ec4738245370e1f7c341cb01",
+    "semantic_hash": "5f56f495ec4738245370e1f7c341cb01"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\src\\schema.sql": {
+    "mtime": 1741817494.2184308,
+    "ast_hash": "59f69292b01a4500b94bcf34fc654fd7",
+    "semantic_hash": "59f69292b01a4500b94bcf34fc654fd7"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\src\\schema.ts": {
+    "mtime": 1764710175.1850338,
+    "ast_hash": "2dd42ffd467d0bea7f4f8c15741168c6",
+    "semantic_hash": "2dd42ffd467d0bea7f4f8c15741168c6"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\DEPLOY.md": {
+    "mtime": 1740971479.1515484,
+    "ast_hash": "2e809bea6c3f774558ac38369dec4d8f",
+    "semantic_hash": "2e809bea6c3f774558ac38369dec4d8f"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\edit_result.txt": {
+    "mtime": 1779310216.496837,
+    "ast_hash": "dff69e84f5a99b6c5b338c229716edcd",
+    "semantic_hash": "dff69e84f5a99b6c5b338c229716edcd"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\README.md": {
+    "mtime": 1739912253.0,
+    "ast_hash": "84ef212d816eff608aaed2a4987ad85b",
+    "semantic_hash": "84ef212d816eff608aaed2a4987ad85b"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\index.html": {
+    "mtime": 1779128371.135424,
+    "ast_hash": "f0ae627b655a9c0120adf904bcfa1db4",
+    "semantic_hash": "f0ae627b655a9c0120adf904bcfa1db4"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\README.md": {
+    "mtime": 1740958504.6294317,
+    "ast_hash": "64ba9c1ddf7098960f302d6dcbd66522",
+    "semantic_hash": "64ba9c1ddf7098960f302d6dcbd66522"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\public\\pwq-192x192.png": {
+    "mtime": 1764099912.8950958,
+    "ast_hash": "15c53c3f22e2051e4b456f78b6ed9ddc",
+    "semantic_hash": "15c53c3f22e2051e4b456f78b6ed9ddc"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\public\\pwq-512x512.png": {
+    "mtime": 1764099882.6342857,
+    "ast_hash": "846c183aa3218e852183857bad947f4e",
+    "semantic_hash": "846c183aa3218e852183857bad947f4e"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\public\\trophy.svg": {
+    "mtime": 1741016103.1737108,
+    "ast_hash": "6b6e00e997a0b8cde778106b4ff252e6",
+    "semantic_hash": "6b6e00e997a0b8cde778106b4ff252e6"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\public\\vite.svg": {
+    "mtime": 1740958504.6576598,
+    "ast_hash": "8e3a10e157f75ada21ab742c022d5430",
+    "semantic_hash": "8e3a10e157f75ada21ab742c022d5430"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\src\\assets\\bot-accent.png": {
+    "mtime": 1754516194.7594643,
+    "ast_hash": "666854cb9fa6176ba6f20186f5a67c68",
+    "semantic_hash": "666854cb9fa6176ba6f20186f5a67c68"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\src\\assets\\bot-light-grey.png": {
+    "mtime": 1754516328.6851587,
+    "ast_hash": "be4df1b9ee6f59dd84cefb536f1abcdf",
+    "semantic_hash": "be4df1b9ee6f59dd84cefb536f1abcdf"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\src\\assets\\bot.svg": {
+    "mtime": 1754514501.314965,
+    "ast_hash": "d441cffab0c6d6d2e2b397dca4e5c962",
+    "semantic_hash": "d441cffab0c6d6d2e2b397dca4e5c962"
+  },
+  "C:\\Users\\eloir\\Documents\\projectes\\myPR\\mypr-fr\\src\\assets\\vue.svg": {
+    "mtime": 1740958504.6576598,
+    "ast_hash": "081c348d068770af78fcd90980521318",
+    "semantic_hash": "081c348d068770af78fcd90980521318"
+  }
+}

@@ -1,0 +1,4282 @@
+{
+  "nodes": [
+    {
+      "id": "package_json",
+      "label": "package.json",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L1"
+    },
+    {
+      "id": "mypr_package_name",
+      "label": "name",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L2"
+    },
+    {
+      "id": "mypr_package_scripts",
+      "label": "scripts",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L3"
+    },
+    {
+      "id": "mypr_package_scripts_dev",
+      "label": "dev",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L4"
+    },
+    {
+      "id": "mypr_package_scripts_deploy",
+      "label": "deploy",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L5"
+    },
+    {
+      "id": "mypr_package_scripts_deploy_front",
+      "label": "deploy-front",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L6"
+    },
+    {
+      "id": "mypr_package_scripts_update_db",
+      "label": "update-db",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L7"
+    },
+    {
+      "id": "mypr_package_scripts_cf_typegen",
+      "label": "cf-typegen",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L8"
+    },
+    {
+      "id": "mypr_package_scripts_sql_edit",
+      "label": "sql:edit",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L9"
+    },
+    {
+      "id": "mypr_package_dependencies",
+      "label": "dependencies",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L11"
+    },
+    {
+      "id": "mypr_package_dependencies_google_generative_ai",
+      "label": "@google/generative-ai",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L12"
+    },
+    {
+      "id": "mypr_package_dependencies_hono_zod_validator",
+      "label": "@hono/zod-validator",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L13"
+    },
+    {
+      "id": "mypr_package_dependencies_tsndr_cloudflare_worker_jwt",
+      "label": "@tsndr/cloudflare-worker-jwt",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L14"
+    },
+    {
+      "id": "mypr_package_dependencies_hono",
+      "label": "hono",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L15"
+    },
+    {
+      "id": "mypr_package_dependencies_jose",
+      "label": "jose",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L16"
+    },
+    {
+      "id": "mypr_package_dependencies_openai",
+      "label": "openai",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L17"
+    },
+    {
+      "id": "mypr_package_dependencies_zod",
+      "label": "zod",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L18"
+    },
+    {
+      "id": "mypr_package_devdependencies",
+      "label": "devDependencies",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L20"
+    },
+    {
+      "id": "mypr_package_devdependencies_cloudflare_workers_types",
+      "label": "@cloudflare/workers-types",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L21"
+    },
+    {
+      "id": "mypr_package_devdependencies_types_vue_select",
+      "label": "@types/vue-select",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L22"
+    },
+    {
+      "id": "mypr_package_devdependencies_vue_tsconfig",
+      "label": "@vue/tsconfig",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L23"
+    },
+    {
+      "id": "mypr_package_devdependencies_terser",
+      "label": "terser",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L24"
+    },
+    {
+      "id": "mypr_package_devdependencies_wrangler",
+      "label": "wrangler",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L25"
+    },
+    {
+      "id": "run_edit_sql_ps1",
+      "label": "run-edit-sql.ps1",
+      "file_type": "code",
+      "source_file": "run-edit-sql.ps1",
+      "source_location": "L1"
+    },
+    {
+      "id": "tsconfig_json",
+      "label": "tsconfig.json",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L1"
+    },
+    {
+      "id": "mypr_tsconfig_compileroptions",
+      "label": "compilerOptions",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L2"
+    },
+    {
+      "id": "mypr_tsconfig_compileroptions_target",
+      "label": "target",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L3"
+    },
+    {
+      "id": "mypr_tsconfig_compileroptions_module",
+      "label": "module",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L4"
+    },
+    {
+      "id": "mypr_tsconfig_compileroptions_moduleresolution",
+      "label": "moduleResolution",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L5"
+    },
+    {
+      "id": "mypr_tsconfig_compileroptions_strict",
+      "label": "strict",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L6"
+    },
+    {
+      "id": "mypr_tsconfig_compileroptions_skiplibcheck",
+      "label": "skipLibCheck",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L7"
+    },
+    {
+      "id": "mypr_tsconfig_compileroptions_lib",
+      "label": "lib",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L8"
+    },
+    {
+      "id": "mypr_tsconfig_compileroptions_types",
+      "label": "types",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L11"
+    },
+    {
+      "id": "mypr_tsconfig_compileroptions_jsx",
+      "label": "jsx",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L14"
+    },
+    {
+      "id": "mypr_tsconfig_compileroptions_jsximportsource",
+      "label": "jsxImportSource",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L15"
+    },
+    {
+      "id": "worker_configuration_d_ts",
+      "label": "worker-configuration.d.ts",
+      "file_type": "code",
+      "source_file": "worker-configuration.d.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "mypr_worker_configuration_d_cloudflarebindings",
+      "label": "CloudflareBindings",
+      "file_type": "code",
+      "source_file": "worker-configuration.d.ts",
+      "source_location": "L3"
+    },
+    {
+      "id": "mypr_fr_package_json",
+      "label": "package.json",
+      "file_type": "code",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L1"
+    },
+    {
+      "id": "mypr_fr_package_name",
+      "label": "name",
+      "file_type": "code",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L2"
+    },
+    {
+      "id": "mypr_fr_package_private",
+      "label": "private",
+      "file_type": "code",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L3"
+    },
+    {
+      "id": "mypr_fr_package_version",
+      "label": "version",
+      "file_type": "code",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L4"
+    },
+    {
+      "id": "mypr_fr_package_type",
+      "label": "type",
+      "file_type": "code",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L5"
+    },
+    {
+      "id": "mypr_fr_package_scripts",
+      "label": "scripts",
+      "file_type": "code",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L6"
+    },
+    {
+      "id": "mypr_fr_package_scripts_dev",
+      "label": "dev",
+      "file_type": "code",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L7"
+    },
+    {
+      "id": "mypr_fr_package_scripts_build",
+      "label": "build",
+      "file_type": "code",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L8"
+    },
+    {
+      "id": "mypr_fr_package_scripts_preview",
+      "label": "preview",
+      "file_type": "code",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L9"
+    },
+    {
+      "id": "mypr_fr_package_dependencies",
+      "label": "dependencies",
+      "file_type": "code",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L11"
+    },
+    {
+      "id": "mypr_fr_package_dependencies_vue",
+      "label": "vue",
+      "file_type": "code",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L12"
+    },
+    {
+      "id": "mypr_fr_package_dependencies_vue_router",
+      "label": "vue-router",
+      "file_type": "code",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L13"
+    },
+    {
+      "id": "mypr_fr_package_devdependencies",
+      "label": "devDependencies",
+      "file_type": "code",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L15"
+    },
+    {
+      "id": "mypr_fr_package_devdependencies_vitejs_plugin_vue",
+      "label": "@vitejs/plugin-vue",
+      "file_type": "code",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L16"
+    },
+    {
+      "id": "mypr_fr_package_devdependencies_vue_tsconfig",
+      "label": "@vue/tsconfig",
+      "file_type": "code",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L17"
+    },
+    {
+      "id": "mypr_fr_package_devdependencies_chart_js",
+      "label": "chart.js",
+      "file_type": "code",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L18"
+    },
+    {
+      "id": "mypr_fr_package_devdependencies_pinia",
+      "label": "pinia",
+      "file_type": "code",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L19"
+    },
+    {
+      "id": "mypr_fr_package_devdependencies_postcss",
+      "label": "postcss",
+      "file_type": "code",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L20"
+    },
+    {
+      "id": "mypr_fr_package_devdependencies_terser",
+      "label": "terser",
+      "file_type": "code",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L21"
+    },
+    {
+      "id": "mypr_fr_package_devdependencies_typescript",
+      "label": "typescript",
+      "file_type": "code",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L22"
+    },
+    {
+      "id": "mypr_fr_package_devdependencies_vite",
+      "label": "vite",
+      "file_type": "code",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L23"
+    },
+    {
+      "id": "mypr_fr_package_devdependencies_vite_plugin_pwa",
+      "label": "vite-plugin-pwa",
+      "file_type": "code",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L24"
+    },
+    {
+      "id": "mypr_fr_package_devdependencies_vue_chartjs",
+      "label": "vue-chartjs",
+      "file_type": "code",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L25"
+    },
+    {
+      "id": "mypr_fr_package_devdependencies_vue_tsc",
+      "label": "vue-tsc",
+      "file_type": "code",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L26"
+    },
+    {
+      "id": "mypr_fr_postcss_config_mjs",
+      "label": "postcss.config.mjs",
+      "file_type": "code",
+      "source_file": "mypr-fr\\postcss.config.mjs",
+      "source_location": "L1"
+    },
+    {
+      "id": "mypr_fr_tsconfig_app_json",
+      "label": "tsconfig.app.json",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.app.json",
+      "source_location": "L1"
+    },
+    {
+      "id": "mypr_fr_tsconfig_app_extends",
+      "label": "extends",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.app.json",
+      "source_location": "L2"
+    },
+    {
+      "id": "mypr_fr_tsconfig_app_compileroptions",
+      "label": "compilerOptions",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.app.json",
+      "source_location": "L3"
+    },
+    {
+      "id": "mypr_fr_tsconfig_app_compileroptions_tsbuildinfofile",
+      "label": "tsBuildInfoFile",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.app.json",
+      "source_location": "L4"
+    },
+    {
+      "id": "mypr_fr_tsconfig_app_compileroptions_strict",
+      "label": "strict",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.app.json",
+      "source_location": "L7"
+    },
+    {
+      "id": "mypr_fr_tsconfig_app_compileroptions_nounusedlocals",
+      "label": "noUnusedLocals",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.app.json",
+      "source_location": "L8"
+    },
+    {
+      "id": "mypr_fr_tsconfig_app_compileroptions_nounusedparameters",
+      "label": "noUnusedParameters",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.app.json",
+      "source_location": "L9"
+    },
+    {
+      "id": "mypr_fr_tsconfig_app_compileroptions_nofallthroughcasesinswitch",
+      "label": "noFallthroughCasesInSwitch",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.app.json",
+      "source_location": "L10"
+    },
+    {
+      "id": "mypr_fr_tsconfig_app_compileroptions_nouncheckedsideeffectimports",
+      "label": "noUncheckedSideEffectImports",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.app.json",
+      "source_location": "L11"
+    },
+    {
+      "id": "mypr_fr_tsconfig_app_include",
+      "label": "include",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.app.json",
+      "source_location": "L13"
+    },
+    {
+      "id": "mypr_fr_tsconfig_json",
+      "label": "tsconfig.json",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.json",
+      "source_location": "L1"
+    },
+    {
+      "id": "mypr_fr_tsconfig_files",
+      "label": "files",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.json",
+      "source_location": "L2"
+    },
+    {
+      "id": "mypr_fr_tsconfig_references",
+      "label": "references",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.json",
+      "source_location": "L3"
+    },
+    {
+      "id": "mypr_fr_tsconfig_node_json",
+      "label": "tsconfig.node.json",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L1"
+    },
+    {
+      "id": "mypr_fr_tsconfig_node_compileroptions",
+      "label": "compilerOptions",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L2"
+    },
+    {
+      "id": "mypr_fr_tsconfig_node_compileroptions_tsbuildinfofile",
+      "label": "tsBuildInfoFile",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L3"
+    },
+    {
+      "id": "mypr_fr_tsconfig_node_compileroptions_target",
+      "label": "target",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L4"
+    },
+    {
+      "id": "mypr_fr_tsconfig_node_compileroptions_lib",
+      "label": "lib",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L5"
+    },
+    {
+      "id": "mypr_fr_tsconfig_node_compileroptions_module",
+      "label": "module",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L6"
+    },
+    {
+      "id": "mypr_fr_tsconfig_node_compileroptions_skiplibcheck",
+      "label": "skipLibCheck",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L7"
+    },
+    {
+      "id": "mypr_fr_tsconfig_node_compileroptions_moduleresolution",
+      "label": "moduleResolution",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L10"
+    },
+    {
+      "id": "mypr_fr_tsconfig_node_compileroptions_allowimportingtsextensions",
+      "label": "allowImportingTsExtensions",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L11"
+    },
+    {
+      "id": "mypr_fr_tsconfig_node_compileroptions_isolatedmodules",
+      "label": "isolatedModules",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L12"
+    },
+    {
+      "id": "mypr_fr_tsconfig_node_compileroptions_moduledetection",
+      "label": "moduleDetection",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L13"
+    },
+    {
+      "id": "mypr_fr_tsconfig_node_compileroptions_noemit",
+      "label": "noEmit",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L14"
+    },
+    {
+      "id": "mypr_fr_tsconfig_node_compileroptions_strict",
+      "label": "strict",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L17"
+    },
+    {
+      "id": "mypr_fr_tsconfig_node_compileroptions_nounusedlocals",
+      "label": "noUnusedLocals",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L18"
+    },
+    {
+      "id": "mypr_fr_tsconfig_node_compileroptions_nounusedparameters",
+      "label": "noUnusedParameters",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L19"
+    },
+    {
+      "id": "mypr_fr_tsconfig_node_compileroptions_nofallthroughcasesinswitch",
+      "label": "noFallthroughCasesInSwitch",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L20"
+    },
+    {
+      "id": "mypr_fr_tsconfig_node_compileroptions_nouncheckedsideeffectimports",
+      "label": "noUncheckedSideEffectImports",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L21"
+    },
+    {
+      "id": "mypr_fr_tsconfig_node_include",
+      "label": "include",
+      "file_type": "code",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L23"
+    },
+    {
+      "id": "mypr_fr_vite_config_ts",
+      "label": "vite.config.ts",
+      "file_type": "code",
+      "source_file": "mypr-fr\\vite.config.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "mypr_fr_routes_json",
+      "label": "_routes.json",
+      "file_type": "code",
+      "source_file": "mypr-fr\\_routes.json",
+      "source_location": "L1"
+    },
+    {
+      "id": "mypr_fr_routes_version",
+      "label": "version",
+      "file_type": "code",
+      "source_file": "mypr-fr\\_routes.json",
+      "source_location": "L2"
+    },
+    {
+      "id": "mypr_fr_routes_include",
+      "label": "include",
+      "file_type": "code",
+      "source_file": "mypr-fr\\_routes.json",
+      "source_location": "L3"
+    },
+    {
+      "id": "mypr_fr_routes_exclude",
+      "label": "exclude",
+      "file_type": "code",
+      "source_file": "mypr-fr\\_routes.json",
+      "source_location": "L4"
+    },
+    {
+      "id": "mypr_fr_routes_routes",
+      "label": "routes",
+      "file_type": "code",
+      "source_file": "mypr-fr\\_routes.json",
+      "source_location": "L11"
+    },
+    {
+      "id": "mypr_fr_vscode_extensions_json",
+      "label": "extensions.json",
+      "file_type": "code",
+      "source_file": "mypr-fr\\.vscode\\extensions.json",
+      "source_location": "L1"
+    },
+    {
+      "id": "vscode_extensions_recommendations",
+      "label": "recommendations",
+      "file_type": "code",
+      "source_file": "mypr-fr\\.vscode\\extensions.json",
+      "source_location": "L2"
+    },
+    {
+      "id": "mypr_fr_src_app_vue",
+      "label": "App.vue",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\App.vue",
+      "source_location": "L1"
+    },
+    {
+      "id": "mypr_fr_src_main_ts",
+      "label": "main.ts",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\main.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_main_app",
+      "label": "app",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\main.ts",
+      "source_location": "L7"
+    },
+    {
+      "id": "src_main_pinia",
+      "label": "pinia",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\main.ts",
+      "source_location": "L8"
+    },
+    {
+      "id": "mypr_fr_src_vite_env_d_ts",
+      "label": "vite-env.d.ts",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\vite-env.d.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "mypr_fr_src_components_buscadorselect_vue",
+      "label": "BuscadorSelect.vue",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\components\\BuscadorSelect.vue",
+      "source_location": "L1"
+    },
+    {
+      "id": "components_buscadorselect_text",
+      "label": "text",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\components\\BuscadorSelect.vue",
+      "source_location": "L26"
+    },
+    {
+      "id": "components_buscadorselect_selectedoption",
+      "label": "selectedOption",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\components\\BuscadorSelect.vue",
+      "source_location": "L67"
+    },
+    {
+      "id": "mypr_fr_src_components_chatbot_vue",
+      "label": "Chatbot.vue",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L1"
+    },
+    {
+      "id": "components_chatbot_usermessage",
+      "label": "userMessage",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L60"
+    },
+    {
+      "id": "components_chatbot_currenttraining",
+      "label": "currentTraining",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L88"
+    },
+    {
+      "id": "components_chatbot_rawhistory",
+      "label": "rawHistory",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L95"
+    },
+    {
+      "id": "components_chatbot_firstuserindex",
+      "label": "firstUserIndex",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L97"
+    },
+    {
+      "id": "components_chatbot_history",
+      "label": "history",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L100"
+    },
+    {
+      "id": "components_chatbot_token",
+      "label": "token",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L105"
+    },
+    {
+      "id": "components_chatbot_reader",
+      "label": "reader",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L127"
+    },
+    {
+      "id": "components_chatbot_decoder",
+      "label": "decoder",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L130"
+    },
+    {
+      "id": "components_chatbot_lines",
+      "label": "lines",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L141"
+    },
+    {
+      "id": "components_chatbot_eventdata",
+      "label": "eventData",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L147"
+    },
+    {
+      "id": "components_chatbot_botmsg",
+      "label": "botMsg",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L152"
+    },
+    {
+      "id": "components_chatbot_if",
+      "label": "if()",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L195"
+    },
+    {
+      "id": "components_chatbot_messages_savedmessages_isfirstmessage_savedisfirstmessage",
+      "label": "{ messages: savedMessages, isFirstMessage: savedIsFirstMessage }",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L209"
+    },
+    {
+      "id": "mypr_fr_src_components_footer_vue",
+      "label": "Footer.vue",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\components\\Footer.vue",
+      "source_location": "L1"
+    },
+    {
+      "id": "mypr_fr_src_components_serieitem_vue",
+      "label": "SerieItem.vue",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\components\\SerieItem.vue",
+      "source_location": "L1"
+    },
+    {
+      "id": "components_serieitem_savedstate",
+      "label": "savedState",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\components\\SerieItem.vue",
+      "source_location": "L41"
+    },
+    {
+      "id": "components_serieitem_token",
+      "label": "token",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\components\\SerieItem.vue",
+      "source_location": "L111"
+    },
+    {
+      "id": "mypr_fr_src_router_index_ts",
+      "label": "index.ts",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\router\\index.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "router_index_requireauth",
+      "label": "requireAuth()",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\router\\index.ts",
+      "source_location": "L12"
+    },
+    {
+      "id": "router_index_router",
+      "label": "router",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\router\\index.ts",
+      "source_location": "L21"
+    },
+    {
+      "id": "mypr_fr_src_services_auth_ts",
+      "label": "auth.ts",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\services\\auth.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_auth_loginresponse",
+      "label": "LoginResponse",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\services\\auth.ts",
+      "source_location": "L5"
+    },
+    {
+      "id": "services_auth_logindata",
+      "label": "LoginData",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\services\\auth.ts",
+      "source_location": "L11"
+    },
+    {
+      "id": "services_auth_registerdata",
+      "label": "RegisterData",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\services\\auth.ts",
+      "source_location": "L17"
+    },
+    {
+      "id": "services_auth_registerresponse",
+      "label": "RegisterResponse",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\services\\auth.ts",
+      "source_location": "L23"
+    },
+    {
+      "id": "services_auth_userinfo",
+      "label": "UserInfo",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\services\\auth.ts",
+      "source_location": "L29"
+    },
+    {
+      "id": "services_auth_authservice",
+      "label": "authService",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\services\\auth.ts",
+      "source_location": "L37"
+    },
+    {
+      "id": "mypr_fr_src_services_chatgpt_ts",
+      "label": "chatgpt.ts",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\services\\chatgpt.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_chatgpt_entrenodata",
+      "label": "EntrenoData",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\services\\chatgpt.ts",
+      "source_location": "L4"
+    },
+    {
+      "id": "services_chatgpt_chatgptpayload",
+      "label": "ChatGPTPayload",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\services\\chatgpt.ts",
+      "source_location": "L15"
+    },
+    {
+      "id": "services_chatgpt_chatmessage",
+      "label": "ChatMessage",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\services\\chatgpt.ts",
+      "source_location": "L27"
+    },
+    {
+      "id": "services_chatgpt_gettoken",
+      "label": "getToken()",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\services\\chatgpt.ts",
+      "source_location": "L34"
+    },
+    {
+      "id": "services_chatgpt_chatgptservice",
+      "label": "ChatGPTService",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\services\\chatgpt.ts",
+      "source_location": "L39"
+    },
+    {
+      "id": "services_chatgpt_chatgptservice_savemessages",
+      "label": ".saveMessages()",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\services\\chatgpt.ts",
+      "source_location": "L42"
+    },
+    {
+      "id": "services_chatgpt_chatgptservice_loadmessages",
+      "label": ".loadMessages()",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\services\\chatgpt.ts",
+      "source_location": "L48"
+    },
+    {
+      "id": "services_chatgpt_chatgptservice_sendmessage",
+      "label": ".sendMessage()",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\services\\chatgpt.ts",
+      "source_location": "L93"
+    },
+    {
+      "id": "services_chatgpt_chatgptservice_testconnection",
+      "label": ".testConnection()",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\services\\chatgpt.ts",
+      "source_location": "L140"
+    },
+    {
+      "id": "mypr_fr_src_stores_auth_ts",
+      "label": "auth.ts",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\stores\\auth.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "stores_auth_useauthstore",
+      "label": "useAuthStore",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\stores\\auth.ts",
+      "source_location": "L6"
+    },
+    {
+      "id": "mypr_fr_src_utils_ejercicioutils_ts",
+      "label": "ejercicioUtils.ts",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\utils\\ejercicioUtils.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "utils_ejercicioutils_formateartexto",
+      "label": "formatearTexto()",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\utils\\ejercicioUtils.ts",
+      "source_location": "L7"
+    },
+    {
+      "id": "utils_ejercicioutils_nuevoejercicio",
+      "label": "NuevoEjercicio",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\utils\\ejercicioUtils.ts",
+      "source_location": "L16"
+    },
+    {
+      "id": "utils_ejercicioutils_guardarnuevoejercicio",
+      "label": "guardarNuevoEjercicio()",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\utils\\ejercicioUtils.ts",
+      "source_location": "L23"
+    },
+    {
+      "id": "mypr_fr_src_views_detalleejercicio_vue",
+      "label": "DetalleEjercicio.vue",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\views\\DetalleEjercicio.vue",
+      "source_location": "L1"
+    },
+    {
+      "id": "views_detalleejercicio_fecha",
+      "label": "fecha",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\views\\DetalleEjercicio.vue",
+      "source_location": "L74"
+    },
+    {
+      "id": "mypr_fr_src_views_detalleentreno_vue",
+      "label": "DetalleEntreno.vue",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\views\\DetalleEntreno.vue",
+      "source_location": "L1"
+    },
+    {
+      "id": "views_detalleentreno_map",
+      "label": "map",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\views\\DetalleEntreno.vue",
+      "source_location": "L93"
+    },
+    {
+      "id": "views_detalleentreno_grupo",
+      "label": "grupo",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\views\\DetalleEntreno.vue",
+      "source_location": "L97"
+    },
+    {
+      "id": "views_detalleentreno_if",
+      "label": "if()",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\views\\DetalleEntreno.vue",
+      "source_location": "L256"
+    },
+    {
+      "id": "mypr_fr_src_views_ejercicios_vue",
+      "label": "Ejercicios.vue",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\views\\Ejercicios.vue",
+      "source_location": "L1"
+    },
+    {
+      "id": "mypr_fr_src_views_entrenos_vue",
+      "label": "Entrenos.vue",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\views\\Entrenos.vue",
+      "source_location": "L1"
+    },
+    {
+      "id": "views_entrenos_fecha",
+      "label": "fecha",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\views\\Entrenos.vue",
+      "source_location": "L49"
+    },
+    {
+      "id": "views_entrenos_fechastr",
+      "label": "fechaStr",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\views\\Entrenos.vue",
+      "source_location": "L56"
+    },
+    {
+      "id": "mypr_fr_src_views_login_vue",
+      "label": "Login.vue",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\views\\Login.vue",
+      "source_location": "L1"
+    },
+    {
+      "id": "mypr_fr_src_views_register_vue",
+      "label": "Register.vue",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\views\\Register.vue",
+      "source_location": "L1"
+    },
+    {
+      "id": "mypr_fr_src_views_user_vue",
+      "label": "User.vue",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\views\\User.vue",
+      "source_location": "L1"
+    },
+    {
+      "id": "views_user_if",
+      "label": "if()",
+      "file_type": "code",
+      "source_file": "mypr-fr\\src\\views\\User.vue",
+      "source_location": "L58"
+    },
+    {
+      "id": "src_index_ts",
+      "label": "index.ts",
+      "file_type": "code",
+      "source_file": "src\\index.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_index_bindings",
+      "label": "Bindings",
+      "file_type": "code",
+      "source_file": "src\\index.ts",
+      "source_location": "L13"
+    },
+    {
+      "id": "src_index_app",
+      "label": "app",
+      "file_type": "code",
+      "source_file": "src\\index.ts",
+      "source_location": "L20"
+    },
+    {
+      "id": "src_index_addserietodb",
+      "label": "addSerieToDb()",
+      "file_type": "code",
+      "source_file": "src\\index.ts",
+      "source_location": "L51"
+    },
+    {
+      "id": "src_index_data",
+      "label": "data",
+      "file_type": "code",
+      "source_file": "src\\index.ts",
+      "source_location": "L114"
+    },
+    {
+      "id": "src_index_ids",
+      "label": "ids",
+      "file_type": "code",
+      "source_file": "src\\index.ts",
+      "source_location": "L306"
+    },
+    {
+      "id": "src_index_fromidx",
+      "label": "fromIdx",
+      "file_type": "code",
+      "source_file": "src\\index.ts",
+      "source_location": "L307"
+    },
+    {
+      "id": "src_index_toidx",
+      "label": "toIdx",
+      "file_type": "code",
+      "source_file": "src\\index.ts",
+      "source_location": "L310"
+    },
+    {
+      "id": "src_index_reordered",
+      "label": "reordered",
+      "file_type": "code",
+      "source_file": "src\\index.ts",
+      "source_location": "L313"
+    },
+    {
+      "id": "src_index_moved",
+      "label": "[moved]",
+      "file_type": "code",
+      "source_file": "src\\index.ts",
+      "source_location": "L314"
+    },
+    {
+      "id": "src_index_exercisesliststring",
+      "label": "exercisesListString",
+      "file_type": "code",
+      "source_file": "src\\index.ts",
+      "source_location": "L573"
+    },
+    {
+      "id": "src_index_traininghistory",
+      "label": "trainingHistory",
+      "file_type": "code",
+      "source_file": "src\\index.ts",
+      "source_location": "L575"
+    },
+    {
+      "id": "src_index_genai",
+      "label": "genAI",
+      "file_type": "code",
+      "source_file": "src\\index.ts",
+      "source_location": "L667"
+    },
+    {
+      "id": "src_index_model",
+      "label": "model",
+      "file_type": "code",
+      "source_file": "src\\index.ts",
+      "source_location": "L669"
+    },
+    {
+      "id": "src_index_chathistory",
+      "label": "chatHistory",
+      "file_type": "code",
+      "source_file": "src\\index.ts",
+      "source_location": "L680"
+    },
+    {
+      "id": "src_index_chatconfig",
+      "label": "chatConfig",
+      "file_type": "code",
+      "source_file": "src\\index.ts",
+      "source_location": "L685"
+    },
+    {
+      "id": "src_index_chat",
+      "label": "chat",
+      "file_type": "code",
+      "source_file": "src\\index.ts",
+      "source_location": "L689"
+    },
+    {
+      "id": "src_index_stream",
+      "label": "stream",
+      "file_type": "code",
+      "source_file": "src\\index.ts",
+      "source_location": "L697"
+    },
+    {
+      "id": "src_index_checkpr",
+      "label": "checkPr()",
+      "file_type": "code",
+      "source_file": "src\\index.ts",
+      "source_location": "L807"
+    },
+    {
+      "id": "src_index_updatecargatotal",
+      "label": "updateCargaTotal()",
+      "file_type": "code",
+      "source_file": "src\\index.ts",
+      "source_location": "L829"
+    },
+    {
+      "id": "src_index_getuserstats",
+      "label": "getUserStats()",
+      "file_type": "code",
+      "source_file": "src\\index.ts",
+      "source_location": "L844"
+    },
+    {
+      "id": "src_index_getfullserieslistfromtraining",
+      "label": "getFullSeriesListFromTraining()",
+      "file_type": "code",
+      "source_file": "src\\index.ts",
+      "source_location": "L891"
+    },
+    {
+      "id": "src_jwt_ts",
+      "label": "jwt.ts",
+      "file_type": "code",
+      "source_file": "src\\jwt.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_jwt_generatejwt",
+      "label": "generateJWT()",
+      "file_type": "code",
+      "source_file": "src\\jwt.ts",
+      "source_location": "L7"
+    },
+    {
+      "id": "src_jwt_verifyjwt",
+      "label": "verifyJWT()",
+      "file_type": "code",
+      "source_file": "src\\jwt.ts",
+      "source_location": "L65"
+    },
+    {
+      "id": "src_jwt_hashpassword",
+      "label": "hashPassword()",
+      "file_type": "code",
+      "source_file": "src\\jwt.ts",
+      "source_location": "L137"
+    },
+    {
+      "id": "src_jwt_verifypassword",
+      "label": "verifyPassword()",
+      "file_type": "code",
+      "source_file": "src\\jwt.ts",
+      "source_location": "L175"
+    },
+    {
+      "id": "src_schema_ts",
+      "label": "schema.ts",
+      "file_type": "code",
+      "source_file": "src\\schema.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_schema_login",
+      "label": "login",
+      "file_type": "code",
+      "source_file": "src\\schema.ts",
+      "source_location": "L4"
+    },
+    {
+      "id": "src_schema_signup",
+      "label": "signup",
+      "file_type": "code",
+      "source_file": "src\\schema.ts",
+      "source_location": "L9"
+    },
+    {
+      "id": "src_schema_petition",
+      "label": "petition",
+      "file_type": "code",
+      "source_file": "src\\schema.ts",
+      "source_location": "L15"
+    },
+    {
+      "id": "src_schema_getgrupsmusculars",
+      "label": "getGrupsMusculars",
+      "file_type": "code",
+      "source_file": "src\\schema.ts",
+      "source_location": "L19"
+    },
+    {
+      "id": "src_schema_nouexercici",
+      "label": "nouExercici",
+      "file_type": "code",
+      "source_file": "src\\schema.ts",
+      "source_location": "L23"
+    },
+    {
+      "id": "src_schema_editexercici",
+      "label": "editExercici",
+      "file_type": "code",
+      "source_file": "src\\schema.ts",
+      "source_location": "L29"
+    },
+    {
+      "id": "src_schema_getentreno",
+      "label": "getEntreno",
+      "file_type": "code",
+      "source_file": "src\\schema.ts",
+      "source_location": "L36"
+    },
+    {
+      "id": "src_schema_getentrenos",
+      "label": "getEntrenos",
+      "file_type": "code",
+      "source_file": "src\\schema.ts",
+      "source_location": "L41"
+    },
+    {
+      "id": "src_schema_nouentreno",
+      "label": "nouEntreno",
+      "file_type": "code",
+      "source_file": "src\\schema.ts",
+      "source_location": "L49"
+    },
+    {
+      "id": "src_schema_editentreno",
+      "label": "editEntreno",
+      "file_type": "code",
+      "source_file": "src\\schema.ts",
+      "source_location": "L56"
+    },
+    {
+      "id": "src_schema_novaserie",
+      "label": "novaSerie",
+      "file_type": "code",
+      "source_file": "src\\schema.ts",
+      "source_location": "L64"
+    },
+    {
+      "id": "src_schema_editserie",
+      "label": "editSerie",
+      "file_type": "code",
+      "source_file": "src\\schema.ts",
+      "source_location": "L72"
+    },
+    {
+      "id": "src_schema_deleteserie",
+      "label": "deleteSerie",
+      "file_type": "code",
+      "source_file": "src\\schema.ts",
+      "source_location": "L81"
+    },
+    {
+      "id": "src_schema_deleteentreno",
+      "label": "deleteEntreno",
+      "file_type": "code",
+      "source_file": "src\\schema.ts",
+      "source_location": "L86"
+    },
+    {
+      "id": "src_schema_getexercici",
+      "label": "getExercici",
+      "file_type": "code",
+      "source_file": "src\\schema.ts",
+      "source_location": "L91"
+    },
+    {
+      "id": "src_schema_getpesoshistorial",
+      "label": "getPesosHistorial",
+      "file_type": "code",
+      "source_file": "src\\schema.ts",
+      "source_location": "L96"
+    },
+    {
+      "id": "src_schema_getcargahistorial",
+      "label": "getCargaHistorial",
+      "file_type": "code",
+      "source_file": "src\\schema.ts",
+      "source_location": "L101"
+    },
+    {
+      "id": "src_schema_reorderserie",
+      "label": "reorderSerie",
+      "file_type": "code",
+      "source_file": "src\\schema.ts",
+      "source_location": "L106"
+    },
+    {
+      "id": "src_schema_chatgpt",
+      "label": "chatGPT",
+      "file_type": "code",
+      "source_file": "src\\schema.ts",
+      "source_location": "L113"
+    },
+    {
+      "id": "src_schema_updateuser",
+      "label": "updateUser",
+      "file_type": "code",
+      "source_file": "src\\schema.ts",
+      "source_location": "L185"
+    },
+    {
+      "id": "src_schema_getuser",
+      "label": "getUser",
+      "file_type": "code",
+      "source_file": "src\\schema.ts",
+      "source_location": "L190"
+    }
+  ],
+  "edges": [
+    {
+      "source": "package_json",
+      "target": "mypr_package_name",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "package_json",
+      "target": "mypr_package_scripts",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_package_scripts",
+      "target": "mypr_package_scripts_dev",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_package_scripts",
+      "target": "mypr_package_scripts_deploy",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_package_scripts",
+      "target": "mypr_package_scripts_deploy_front",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_package_scripts",
+      "target": "mypr_package_scripts_update_db",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_package_scripts",
+      "target": "mypr_package_scripts_cf_typegen",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_package_scripts",
+      "target": "mypr_package_scripts_sql_edit",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "package_json",
+      "target": "mypr_package_dependencies",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_package_dependencies",
+      "target": "mypr_package_dependencies_google_generative_ai",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_package_dependencies_google_generative_ai",
+      "target": "google_generative_ai",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L12",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_package_dependencies",
+      "target": "mypr_package_dependencies_hono_zod_validator",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_package_dependencies_hono_zod_validator",
+      "target": "hono_zod_validator",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L13",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_package_dependencies",
+      "target": "mypr_package_dependencies_tsndr_cloudflare_worker_jwt",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_package_dependencies_tsndr_cloudflare_worker_jwt",
+      "target": "tsndr_cloudflare_worker_jwt",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L14",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_package_dependencies",
+      "target": "mypr_package_dependencies_hono",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_package_dependencies_hono",
+      "target": "hono",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L15",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_package_dependencies",
+      "target": "mypr_package_dependencies_jose",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_package_dependencies_jose",
+      "target": "jose",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L16",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_package_dependencies",
+      "target": "mypr_package_dependencies_openai",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_package_dependencies_openai",
+      "target": "openai",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L17",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_package_dependencies",
+      "target": "mypr_package_dependencies_zod",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_package_dependencies_zod",
+      "target": "zod",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L18",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "package_json",
+      "target": "mypr_package_devdependencies",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_package_devdependencies",
+      "target": "mypr_package_devdependencies_cloudflare_workers_types",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_package_devdependencies_cloudflare_workers_types",
+      "target": "cloudflare_workers_types",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L21",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_package_devdependencies",
+      "target": "mypr_package_devdependencies_types_vue_select",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_package_devdependencies_types_vue_select",
+      "target": "types_vue_select",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L22",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_package_devdependencies",
+      "target": "mypr_package_devdependencies_vue_tsconfig",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_package_devdependencies_vue_tsconfig",
+      "target": "vue_tsconfig",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L23",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_package_devdependencies",
+      "target": "mypr_package_devdependencies_terser",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_package_devdependencies_terser",
+      "target": "terser",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L24",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_package_devdependencies",
+      "target": "mypr_package_devdependencies_wrangler",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_package_devdependencies_wrangler",
+      "target": "wrangler",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L25",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "tsconfig_json",
+      "target": "mypr_tsconfig_compileroptions",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_tsconfig_compileroptions",
+      "target": "mypr_tsconfig_compileroptions_target",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_tsconfig_compileroptions",
+      "target": "mypr_tsconfig_compileroptions_module",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_tsconfig_compileroptions",
+      "target": "mypr_tsconfig_compileroptions_moduleresolution",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_tsconfig_compileroptions",
+      "target": "mypr_tsconfig_compileroptions_strict",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_tsconfig_compileroptions",
+      "target": "mypr_tsconfig_compileroptions_skiplibcheck",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_tsconfig_compileroptions",
+      "target": "mypr_tsconfig_compileroptions_lib",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_tsconfig_compileroptions_lib",
+      "target": "ref_esnext",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L8",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_tsconfig_compileroptions",
+      "target": "mypr_tsconfig_compileroptions_types",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_tsconfig_compileroptions_types",
+      "target": "ref_cloudflare_workers_types_2023_07_01",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L11",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_tsconfig_compileroptions",
+      "target": "mypr_tsconfig_compileroptions_jsx",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_tsconfig_compileroptions",
+      "target": "mypr_tsconfig_compileroptions_jsximportsource",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "worker_configuration_d_ts",
+      "target": "mypr_worker_configuration_d_cloudflarebindings",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "worker-configuration.d.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_package_json",
+      "target": "mypr_fr_package_name",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_package_json",
+      "target": "mypr_fr_package_private",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_package_json",
+      "target": "mypr_fr_package_version",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_package_json",
+      "target": "mypr_fr_package_type",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_package_json",
+      "target": "mypr_fr_package_scripts",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_package_scripts",
+      "target": "mypr_fr_package_scripts_dev",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_package_scripts",
+      "target": "mypr_fr_package_scripts_build",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_package_scripts",
+      "target": "mypr_fr_package_scripts_preview",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_package_json",
+      "target": "mypr_fr_package_dependencies",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_package_dependencies",
+      "target": "mypr_fr_package_dependencies_vue",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_package_dependencies_vue",
+      "target": "vue",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L12",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_fr_package_dependencies",
+      "target": "mypr_fr_package_dependencies_vue_router",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_package_dependencies_vue_router",
+      "target": "vue_router",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L13",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_fr_package_json",
+      "target": "mypr_fr_package_devdependencies",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_package_devdependencies",
+      "target": "mypr_fr_package_devdependencies_vitejs_plugin_vue",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_package_devdependencies_vitejs_plugin_vue",
+      "target": "vitejs_plugin_vue",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L16",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_fr_package_devdependencies",
+      "target": "mypr_fr_package_devdependencies_vue_tsconfig",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_package_devdependencies_vue_tsconfig",
+      "target": "vue_tsconfig",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L17",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_fr_package_devdependencies",
+      "target": "mypr_fr_package_devdependencies_chart_js",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_package_devdependencies_chart_js",
+      "target": "chart_js",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L18",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_fr_package_devdependencies",
+      "target": "mypr_fr_package_devdependencies_pinia",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_package_devdependencies_pinia",
+      "target": "pinia",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L19",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_fr_package_devdependencies",
+      "target": "mypr_fr_package_devdependencies_postcss",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_package_devdependencies_postcss",
+      "target": "postcss",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L20",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_fr_package_devdependencies",
+      "target": "mypr_fr_package_devdependencies_terser",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_package_devdependencies_terser",
+      "target": "terser",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L21",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_fr_package_devdependencies",
+      "target": "mypr_fr_package_devdependencies_typescript",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_package_devdependencies_typescript",
+      "target": "typescript",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L22",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_fr_package_devdependencies",
+      "target": "mypr_fr_package_devdependencies_vite",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_package_devdependencies_vite",
+      "target": "vite",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L23",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_fr_package_devdependencies",
+      "target": "mypr_fr_package_devdependencies_vite_plugin_pwa",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_package_devdependencies_vite_plugin_pwa",
+      "target": "vite_plugin_pwa",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L24",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_fr_package_devdependencies",
+      "target": "mypr_fr_package_devdependencies_vue_chartjs",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_package_devdependencies_vue_chartjs",
+      "target": "vue_chartjs",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L25",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_fr_package_devdependencies",
+      "target": "mypr_fr_package_devdependencies_vue_tsc",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_package_devdependencies_vue_tsc",
+      "target": "vue_tsc",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\package.json",
+      "source_location": "L26",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_fr_tsconfig_app_json",
+      "target": "mypr_fr_tsconfig_app_extends",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.app.json",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_app_json",
+      "target": "ref_vue_tsconfig_tsconfig_dom_json",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.app.json",
+      "source_location": "L2",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_fr_tsconfig_app_json",
+      "target": "mypr_fr_tsconfig_app_compileroptions",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.app.json",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_app_compileroptions",
+      "target": "mypr_fr_tsconfig_app_compileroptions_tsbuildinfofile",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.app.json",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_app_compileroptions",
+      "target": "mypr_fr_tsconfig_app_compileroptions_strict",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.app.json",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_app_compileroptions",
+      "target": "mypr_fr_tsconfig_app_compileroptions_nounusedlocals",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.app.json",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_app_compileroptions",
+      "target": "mypr_fr_tsconfig_app_compileroptions_nounusedparameters",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.app.json",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_app_compileroptions",
+      "target": "mypr_fr_tsconfig_app_compileroptions_nofallthroughcasesinswitch",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.app.json",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_app_compileroptions",
+      "target": "mypr_fr_tsconfig_app_compileroptions_nouncheckedsideeffectimports",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.app.json",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_app_json",
+      "target": "mypr_fr_tsconfig_app_include",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.app.json",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_app_include",
+      "target": "ref_src_ts",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.app.json",
+      "source_location": "L13",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_fr_tsconfig_app_include",
+      "target": "ref_src_tsx",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.app.json",
+      "source_location": "L13",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_fr_tsconfig_app_include",
+      "target": "ref_src_vue",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.app.json",
+      "source_location": "L13",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_fr_tsconfig_json",
+      "target": "mypr_fr_tsconfig_files",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.json",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_json",
+      "target": "mypr_fr_tsconfig_references",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.json",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_node_json",
+      "target": "mypr_fr_tsconfig_node_compileroptions",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_tsbuildinfofile",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_target",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_lib",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_node_compileroptions_lib",
+      "target": "ref_es2023",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L5",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_module",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_skiplibcheck",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_moduleresolution",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_allowimportingtsextensions",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_isolatedmodules",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_moduledetection",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_noemit",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_strict",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_nounusedlocals",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_nounusedparameters",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_nofallthroughcasesinswitch",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_node_compileroptions",
+      "target": "mypr_fr_tsconfig_node_compileroptions_nouncheckedsideeffectimports",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_node_json",
+      "target": "mypr_fr_tsconfig_node_include",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_tsconfig_node_include",
+      "target": "ref_vite_config_ts",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\tsconfig.node.json",
+      "source_location": "L23",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_fr_vite_config_ts",
+      "target": "vite",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\vite.config.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_vite_config_ts",
+      "target": "plugin_vue",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\vite.config.ts",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_vite_config_ts",
+      "target": "vite_plugin_pwa",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\vite.config.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_routes_json",
+      "target": "mypr_fr_routes_version",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\_routes.json",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_routes_json",
+      "target": "mypr_fr_routes_include",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\_routes.json",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_routes_include",
+      "target": "ref",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\_routes.json",
+      "source_location": "L3",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_fr_routes_json",
+      "target": "mypr_fr_routes_exclude",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\_routes.json",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_routes_exclude",
+      "target": "ref_assets",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\_routes.json",
+      "source_location": "L4",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_fr_routes_exclude",
+      "target": "ref_headers",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\_routes.json",
+      "source_location": "L4",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_fr_routes_exclude",
+      "target": "ref_redirects",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\_routes.json",
+      "source_location": "L4",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_fr_routes_exclude",
+      "target": "ref_favicon_ico",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\_routes.json",
+      "source_location": "L4",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_fr_routes_exclude",
+      "target": "ref_robots_txt",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\_routes.json",
+      "source_location": "L4",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_fr_routes_json",
+      "target": "mypr_fr_routes_routes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\_routes.json",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_vscode_extensions_json",
+      "target": "vscode_extensions_recommendations",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\.vscode\\extensions.json",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "vscode_extensions_recommendations",
+      "target": "ref_vue_volar",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\.vscode\\extensions.json",
+      "source_location": "L2",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "mypr_fr_src_main_ts",
+      "target": "vue",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\main.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_main_ts",
+      "target": "pinia",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\main.ts",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_main_ts",
+      "target": "c_users_eloir_documents_projectes_mypr_mypr_fr_src_style_css",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\main.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_main_ts",
+      "target": "mypr_fr_src_app_vue",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\main.ts",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_main_ts",
+      "target": "mypr_fr_src_router_index_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\main.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_main_ts",
+      "target": "src_main_app",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\main.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_main_ts",
+      "target": "src_main_pinia",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\main.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_components_buscadorselect_vue",
+      "target": "components_buscadorselect_text",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\components\\BuscadorSelect.vue",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_components_buscadorselect_vue",
+      "target": "components_buscadorselect_selectedoption",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\components\\BuscadorSelect.vue",
+      "source_location": "L67",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_usermessage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L60",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_currenttraining",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L88",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_rawhistory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L95",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_firstuserindex",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L97",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_history",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L100",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_token",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L105",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_reader",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L127",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_decoder",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L130",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_lines",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L141",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_eventdata",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L147",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_botmsg",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L152",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_botmsg",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L158",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_botmsg",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L166",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_botmsg",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L184",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_if",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L195",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_if",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L202",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_messages_savedmessages_isfirstmessage_savedisfirstmessage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L209",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_components_chatbot_vue",
+      "target": "components_chatbot_if",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L256",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_components_serieitem_vue",
+      "target": "components_serieitem_savedstate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\components\\SerieItem.vue",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_components_serieitem_vue",
+      "target": "components_serieitem_token",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\components\\SerieItem.vue",
+      "source_location": "L111",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_router_index_ts",
+      "target": "vue_router",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\router\\index.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_router_index_ts",
+      "target": "mypr_fr_src_views_login_vue",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\router\\index.ts",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_router_index_ts",
+      "target": "mypr_fr_src_views_register_vue",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\router\\index.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_router_index_ts",
+      "target": "mypr_fr_src_views_entrenos_vue",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\router\\index.ts",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_router_index_ts",
+      "target": "mypr_fr_src_views_detalleentreno_vue",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\router\\index.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_router_index_ts",
+      "target": "mypr_fr_src_views_ejercicios_vue",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\router\\index.ts",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_router_index_ts",
+      "target": "mypr_fr_src_views_detalleejercicio_vue",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\router\\index.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_router_index_ts",
+      "target": "mypr_fr_src_views_user_vue",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\router\\index.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_router_index_ts",
+      "target": "mypr_fr_src_stores_auth_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\router\\index.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_router_index_ts",
+      "target": "stores_auth_useauthstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\router\\index.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_router_index_ts",
+      "target": "router_index_requireauth",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\router\\index.ts",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_router_index_ts",
+      "target": "router_index_router",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\router\\index.ts",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_services_auth_ts",
+      "target": "services_auth_loginresponse",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\services\\auth.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_services_auth_ts",
+      "target": "services_auth_logindata",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\services\\auth.ts",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_services_auth_ts",
+      "target": "services_auth_registerdata",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\services\\auth.ts",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_services_auth_ts",
+      "target": "services_auth_registerresponse",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\services\\auth.ts",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_services_auth_ts",
+      "target": "services_auth_userinfo",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\services\\auth.ts",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_services_auth_ts",
+      "target": "services_auth_authservice",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\services\\auth.ts",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_services_chatgpt_ts",
+      "target": "services_chatgpt_entrenodata",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\services\\chatgpt.ts",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_services_chatgpt_ts",
+      "target": "services_chatgpt_chatgptpayload",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\services\\chatgpt.ts",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_services_chatgpt_ts",
+      "target": "services_chatgpt_chatmessage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\services\\chatgpt.ts",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_services_chatgpt_ts",
+      "target": "services_chatgpt_gettoken",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\services\\chatgpt.ts",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_services_chatgpt_ts",
+      "target": "services_chatgpt_chatgptservice",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\services\\chatgpt.ts",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "services_chatgpt_chatgptservice",
+      "target": "services_chatgpt_chatgptservice_savemessages",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\services\\chatgpt.ts",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "services_chatgpt_chatgptservice",
+      "target": "services_chatgpt_chatgptservice_loadmessages",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\services\\chatgpt.ts",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "services_chatgpt_chatgptservice",
+      "target": "services_chatgpt_chatgptservice_sendmessage",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\services\\chatgpt.ts",
+      "source_location": "L93",
+      "weight": 1.0
+    },
+    {
+      "source": "services_chatgpt_chatgptservice",
+      "target": "services_chatgpt_chatgptservice_testconnection",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\services\\chatgpt.ts",
+      "source_location": "L140",
+      "weight": 1.0
+    },
+    {
+      "source": "services_chatgpt_chatgptservice_sendmessage",
+      "target": "services_chatgpt_gettoken",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\services\\chatgpt.ts",
+      "source_location": "L94",
+      "weight": 1.0
+    },
+    {
+      "source": "services_chatgpt_chatgptservice_testconnection",
+      "target": "services_chatgpt_gettoken",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\services\\chatgpt.ts",
+      "source_location": "L141",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_stores_auth_ts",
+      "target": "pinia",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\stores\\auth.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_stores_auth_ts",
+      "target": "vue",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\stores\\auth.ts",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_stores_auth_ts",
+      "target": "stores_auth_useauthstore",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\stores\\auth.ts",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_utils_ejercicioutils_ts",
+      "target": "mypr_fr_src_stores_auth_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\utils\\ejercicioUtils.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_utils_ejercicioutils_ts",
+      "target": "stores_auth_useauthstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\utils\\ejercicioUtils.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_utils_ejercicioutils_ts",
+      "target": "utils_ejercicioutils_formateartexto",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\utils\\ejercicioUtils.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_utils_ejercicioutils_ts",
+      "target": "utils_ejercicioutils_nuevoejercicio",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\utils\\ejercicioUtils.ts",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_utils_ejercicioutils_ts",
+      "target": "utils_ejercicioutils_guardarnuevoejercicio",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\utils\\ejercicioUtils.ts",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "utils_ejercicioutils_guardarnuevoejercicio",
+      "target": "utils_ejercicioutils_formateartexto",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\utils\\ejercicioUtils.ts",
+      "source_location": "L57",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_views_detalleejercicio_vue",
+      "target": "views_detalleejercicio_fecha",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\views\\DetalleEjercicio.vue",
+      "source_location": "L74",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_views_detalleejercicio_vue",
+      "target": "views_detalleejercicio_fecha",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\views\\DetalleEjercicio.vue",
+      "source_location": "L108",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_views_detalleentreno_vue",
+      "target": "views_detalleentreno_map",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\views\\DetalleEntreno.vue",
+      "source_location": "L93",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_views_detalleentreno_vue",
+      "target": "views_detalleentreno_grupo",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\views\\DetalleEntreno.vue",
+      "source_location": "L97",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_views_detalleentreno_vue",
+      "target": "views_detalleentreno_if",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\views\\DetalleEntreno.vue",
+      "source_location": "L256",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_views_entrenos_vue",
+      "target": "views_entrenos_fecha",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\views\\Entrenos.vue",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_views_entrenos_vue",
+      "target": "views_entrenos_fechastr",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\views\\Entrenos.vue",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_views_entrenos_vue",
+      "target": "views_entrenos_fecha",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\views\\Entrenos.vue",
+      "source_location": "L66",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_views_entrenos_vue",
+      "target": "views_entrenos_fechastr",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\views\\Entrenos.vue",
+      "source_location": "L67",
+      "weight": 1.0
+    },
+    {
+      "source": "mypr_fr_src_views_user_vue",
+      "target": "views_user_if",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\views\\User.vue",
+      "source_location": "L58",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "hono",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "logger",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "zod_validator",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "http_exception",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "cors",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "jwt",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_schema_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_schema_nouexercici",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_schema_petition",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_schema_getentrenos",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_schema_novaserie",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_schema_getentreno",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_schema_editserie",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_schema_signup",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_schema_login",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_schema_deleteserie",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_schema_editexercici",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_schema_getgrupsmusculars",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_schema_getexercici",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_schema_getpesoshistorial",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_schema_nouentreno",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_schema_editentreno",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_schema_getcargahistorial",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_schema_chatgpt",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_schema_updateuser",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_schema_getuser",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_schema_deleteentreno",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_schema_reorderserie",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_jwt_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_jwt_hashpassword",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_jwt_verifypassword",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_jwt_generatejwt",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_jwt_verifyjwt",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "generative_ai",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "v4",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_index_bindings",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_index_app",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_index_addserietodb",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L51",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_index_data",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L114",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_index_ids",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L306",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_index_fromidx",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L307",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_index_toidx",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L310",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_index_reordered",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L313",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_index_moved",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L314",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_index_exercisesliststring",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L573",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_index_traininghistory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L575",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_index_genai",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L667",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_index_model",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L669",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_index_chathistory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L680",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_index_chatconfig",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L685",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_index_chat",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L689",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_index_stream",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L697",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_index_checkpr",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L807",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_index_updatecargatotal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L829",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_index_getuserstats",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L844",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_index_getfullserieslistfromtraining",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\index.ts",
+      "source_location": "L891",
+      "weight": 1.0
+    },
+    {
+      "source": "src_jwt_ts",
+      "target": "src_jwt_generatejwt",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\jwt.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_jwt_ts",
+      "target": "src_jwt_verifyjwt",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\jwt.ts",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "src_jwt_ts",
+      "target": "src_jwt_hashpassword",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\jwt.ts",
+      "source_location": "L137",
+      "weight": 1.0
+    },
+    {
+      "source": "src_jwt_ts",
+      "target": "src_jwt_verifypassword",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\jwt.ts",
+      "source_location": "L175",
+      "weight": 1.0
+    },
+    {
+      "source": "src_schema_ts",
+      "target": "zod",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\schema.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "src_schema_ts",
+      "target": "v4",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\schema.ts",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "src_schema_ts",
+      "target": "src_schema_login",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\schema.ts",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "src_schema_ts",
+      "target": "src_schema_signup",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\schema.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "src_schema_ts",
+      "target": "src_schema_petition",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\schema.ts",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "src_schema_ts",
+      "target": "src_schema_getgrupsmusculars",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\schema.ts",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "src_schema_ts",
+      "target": "src_schema_nouexercici",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\schema.ts",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "src_schema_ts",
+      "target": "src_schema_editexercici",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\schema.ts",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "src_schema_ts",
+      "target": "src_schema_getentreno",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\schema.ts",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "src_schema_ts",
+      "target": "src_schema_getentrenos",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\schema.ts",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "src_schema_ts",
+      "target": "src_schema_nouentreno",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\schema.ts",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "src_schema_ts",
+      "target": "src_schema_editentreno",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\schema.ts",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "src_schema_ts",
+      "target": "src_schema_novaserie",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\schema.ts",
+      "source_location": "L64",
+      "weight": 1.0
+    },
+    {
+      "source": "src_schema_ts",
+      "target": "src_schema_editserie",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\schema.ts",
+      "source_location": "L72",
+      "weight": 1.0
+    },
+    {
+      "source": "src_schema_ts",
+      "target": "src_schema_deleteserie",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\schema.ts",
+      "source_location": "L81",
+      "weight": 1.0
+    },
+    {
+      "source": "src_schema_ts",
+      "target": "src_schema_deleteentreno",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\schema.ts",
+      "source_location": "L86",
+      "weight": 1.0
+    },
+    {
+      "source": "src_schema_ts",
+      "target": "src_schema_getexercici",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\schema.ts",
+      "source_location": "L91",
+      "weight": 1.0
+    },
+    {
+      "source": "src_schema_ts",
+      "target": "src_schema_getpesoshistorial",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\schema.ts",
+      "source_location": "L96",
+      "weight": 1.0
+    },
+    {
+      "source": "src_schema_ts",
+      "target": "src_schema_getcargahistorial",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\schema.ts",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "src_schema_ts",
+      "target": "src_schema_reorderserie",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\schema.ts",
+      "source_location": "L106",
+      "weight": 1.0
+    },
+    {
+      "source": "src_schema_ts",
+      "target": "src_schema_chatgpt",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\schema.ts",
+      "source_location": "L113",
+      "weight": 1.0
+    },
+    {
+      "source": "src_schema_ts",
+      "target": "src_schema_updateuser",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\schema.ts",
+      "source_location": "L185",
+      "weight": 1.0
+    },
+    {
+      "source": "src_schema_ts",
+      "target": "src_schema_getuser",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\schema.ts",
+      "source_location": "L190",
+      "weight": 1.0
+    },
+    {
+      "source": "router_index_requireauth",
+      "target": "stores_auth_useauthstore",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "mypr-fr\\src\\router\\index.ts",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "components_chatbot_if",
+      "target": "services_chatgpt_chatgptservice_sendmessage",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "mypr-fr\\src\\components\\Chatbot.vue",
+      "source_location": "L197",
+      "weight": 1.0
+    },
+    {
+      "source": "utils_ejercicioutils_guardarnuevoejercicio",
+      "target": "stores_auth_useauthstore",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "mypr-fr\\src\\utils\\ejercicioUtils.ts",
+      "source_location": "L47",
+      "weight": 1.0
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

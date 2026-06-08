@@ -1,57 +1,47 @@
 <script setup lang="ts">
-// No necesitamos importar componentes específicos aquí
-// ya que el router se encargará de mostrar el componente correcto
 import { onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import Footer from './components/Footer.vue';
 
-// Obtener la ruta actual
 const route = useRoute();
-function nonFooter(){
-  if(route.path === '/register' || route.path === '/login'){
-    return true
-  }else{
-    return false
-  }
+
+function hideFooter() {
+  return route.path === '/register' || route.path === '/login';
 }
 
-
-
-
 onMounted(() => {
-  // Aplicar la clase dark al elemento html para activar el modo oscuro por defecto
   document.documentElement.classList.add('dark');
 });
-
-
 </script>
 
 <template>
-  <div class="app-container" :class="{ 'with-footer': !nonFooter()}">
-    <router-view />
-    <Footer v-show="!nonFooter()" />
+  <div class="app-shell">
+    <main class="app-main">
+      <router-view />
+    </main>
+    <Footer v-if="!hideFooter()" />
   </div>
 </template>
 
 <style>
-/* Algunos estilos globales */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-.app-container {
+.app-shell {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   background-color: var(--bg-primary);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(45, 212, 191, 0.08), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(249, 115, 22, 0.05), transparent);
   color: var(--text-primary);
 }
 
+.app-main {
+  flex: 1 0 auto;
+}
 
-
-/* Estilos para scrollbar personalizados para tema oscuro */
 ::-webkit-scrollbar {
-  width: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -59,54 +49,16 @@ onMounted(() => {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 5px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-tertiary);
+  background: var(--text-muted);
 }
 
-/* Estilos para selección de texto */
 ::selection {
-  background-color: rgba(25, 86, 200, 0.3); /* cobalt_blue-500 con opacidad */
+  background-color: rgba(45, 212, 191, 0.35);
   color: var(--text-primary);
-}
-
-/* Variables CSS para acceder a los colores desde cualquier componente */
-:root {
-  --color-cobalt-blue: #0F8B8D;
-  --color-cobalt-blue-dark: #0a4f50;
-  --color-razzmatazz: #FF8D67;
-  --color-sandy-brown: #B91372;
-  --color-naples-yellow: #143642;
-  --color-beige: #DAD2D8;
-  --color-delft-blue: #3a4569;
-
-  /* Tema oscuro por defecto */
-  --bg-primary: #121212;
-  --bg-secondary: #1e1e1e;
-  --text-primary: #ffffff;
-  --text-secondary: #b3b3b3;
-  --border: #333333;
-  --accent-primary: var(--color-cobalt-blue);
-  --accent-primary-dark:var(--color-cobalt-blue-dark);
-  --accent-secondary: var(--color-razzmatazz);
-  --accent-tertiary: var(--color-naples-yellow);  
-  --accent-quaternary: var(--color-sandy-brown);
-  --error: #ff5252;
-}
-
-/* Tema claro (no activado por defecto) */
-.light {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f5f5f5;
-  --text-primary: #121212;
-  --text-secondary: #666666;
-  --border: #dddddd;
-  --accent-primary: var(--color-cobalt-blue);
-  --accent-secondary: var(--color-razzmatazz);
-  --accent-tertiary: var(--color-naples-yellow);
-  --error: #ff5252;
 }
 </style>

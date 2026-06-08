@@ -85,10 +85,12 @@ const chartData = computed(() => {
     datasets: [
       {
         label: 'Peso Máximo (kg)',
-        backgroundColor: '#FF8D67',
-        borderColor: '#FF8D67',
+        backgroundColor: '#f97316',
+        borderColor: '#f97316',
         borderWidth: 2,
-        pointBackgroundColor: '#FF8D67',
+        pointBackgroundColor: '#f97316',
+        tension: 0.35,
+        fill: true,
         data
       }
     ]
@@ -117,10 +119,12 @@ const chartDataCarga = computed(() => {
     datasets: [
       {
         label: 'Carga Total (kg)',
-        backgroundColor: '#0F8B8D',
-        borderColor: '#0F8B8D',
+        backgroundColor: '#14b8a6',
+        borderColor: '#14b8a6',
         borderWidth: 2,
-        pointBackgroundColor: '#0F8B8D',
+        pointBackgroundColor: '#14b8a6',
+        tension: 0.35,
+        fill: true,
         data
       }
     ]
@@ -321,10 +325,10 @@ onMounted(loadEjercicio);
 </script>
 
 <template>
-  <div class="ejercicio-detalle-container">
-    <header class="header">
-      <h1 class="ejercicio-title">{{ ejercicio?.Nom }}</h1>
-      <div class="header-buttons">
+  <div class="page">
+    <header class="page-header">
+      <h1 class="page-title">{{ ejercicio?.Nom }}</h1>
+      <div class="page-header-actions">
         <button @click="volverAEjercicios" class="btn btn-secondary">
         &larr; Volver
       </button>
@@ -333,19 +337,19 @@ onMounted(loadEjercicio);
       
     </header>
     
-    <div v-if="isLoading" class="loading">
+    <div v-if="isLoading" class="state-box">
       <p>Cargando datos del ejercicio...</p>
     </div>
     
-    <div v-else-if="error" class="error">
+    <div v-else-if="error" class="state-box error">
       <p>{{ error }}</p>
       <button @click="loadEjercicio" class="btn">Reintentar</button>
     </div>
     
     <div v-else-if="ejercicio" class="ejercicio-content">
       <!-- Información del ejercicio -->
-      <div class="ejercicio-info">
-        <div class="pr-actual">
+      <div class="card card-elevated">
+        <div class="pr-display">
           <h2>PR Actual</h2>
           <p class="pr-valor">{{ ejercicio.PR }} kg</p>
         </div>
@@ -353,44 +357,44 @@ onMounted(loadEjercicio);
         <div class="grupos-musculares">
           <h3>Grupos Musculares</h3>
           <div class="grupos-tags">
-            <span v-if="ejercicio.GrupMuscular1" class="grupo-tag">
+            <span v-if="ejercicio.GrupMuscular1" class="chip">
               {{ getNombreGrupoMuscular(ejercicio.GrupMuscular1) }}
             </span>
-            <span v-if="ejercicio.GrupMuscular2" class="grupo-tag">
+            <span v-if="ejercicio.GrupMuscular2" class="chip">
               {{ getNombreGrupoMuscular(ejercicio.GrupMuscular2) }}
             </span>
-            <span v-if="ejercicio.GrupMuscular3" class="grupo-tag">
+            <span v-if="ejercicio.GrupMuscular3" class="chip">
               {{ getNombreGrupoMuscular(ejercicio.GrupMuscular3) }}
             </span>
-            <span v-if="ejercicio.GrupMuscular4" class="grupo-tag">
+            <span v-if="ejercicio.GrupMuscular4" class="chip">
               {{ getNombreGrupoMuscular(ejercicio.GrupMuscular4) }}
             </span>
-            <span v-if="ejercicio.GrupMuscular5" class="grupo-tag">
+            <span v-if="ejercicio.GrupMuscular5" class="chip">
               {{ getNombreGrupoMuscular(ejercicio.GrupMuscular5) }}
             </span>
           </div>
         </div>
       </div>
       <div class="entrenos-list">
-        <h2>Entreno del PR</h2>
+        <h2 class="section-title">Entreno del PR</h2>
         <br>
         <div 
-        class="entreno-card"
+        class="list-card"
         @click="verDetalleEntreno(ejercicio.entrenoPr.EntrenoId)">
           
-          <div class="entreno-info">
+          <div class="list-card-body">
             <h3>{{ ejercicio.entrenoPr.Nom }}</h3>
-            <p class="date">{{ formatDate(ejercicio.entrenoPr.Data) }}</p>
-            <p class="carga">Peso total: <strong class="num-carga">{{ejercicio.entrenoPr.CargaTotal}} Kg</strong></p>
+            <p class="list-card-meta">{{ formatDate(ejercicio.entrenoPr.Data) }}</p>
+            <p class="carga">Peso total: <strong class="list-card-highlight">{{ejercicio.entrenoPr.CargaTotal}} Kg</strong></p>
           </div>
           
         </div>
       </div>
       
       <!-- Gráfica de evolución -->
-      <div class="grafica-container">
+      <div class="chart-panel">
         <h2>Evolución del Peso Máximo</h2>
-        <div v-if="chartData" class="grafica">
+        <div v-if="chartData" class="chart-wrap">
           <Line :data="chartData" :options="chartOptions" />
         </div>
         <div v-else class="no-datos">
@@ -399,9 +403,9 @@ onMounted(loadEjercicio);
       </div>
 
       <!-- Gráfica de carga -->
-      <div class="grafica-container">
+      <div class="chart-panel">
         <h2>Evolución de la Carga Total</h2>
-        <div v-if="chartDataCarga" class="grafica">
+        <div v-if="chartDataCarga" class="chart-wrap">
           <Line :data="chartDataCarga" :options="chartOptionsCarga" />
         </div>
         <div v-else class="no-datos">
@@ -413,65 +417,19 @@ onMounted(loadEjercicio);
 </template>
 
 <style scoped>
-.ejercicio-detalle-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 1rem;
-  padding-bottom: 80px;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-}
-
-.header-buttons {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
-
-.ejercicio-title {
-  margin: 0;
-  font-size: 1.8rem;
-}
-
 .ejercicio-content {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-}
-
-.ejercicio-info {
-  background-color: var(--bg-secondary);
-  border-radius: 8px;
-  padding: 1.5rem;
-  border: 1px solid var(--border);
-}
-
-.pr-actual {
-  text-align: center;
-  margin-bottom: 1.5rem;
-}
-
-.pr-actual h2 {
-  margin: 0 0 0.5rem;
-  font-size: 1.2rem;
-  color: var(--text-secondary);
-}
-
-.pr-valor {
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: var(--color-cobalt-blue);
-  margin: 0;
+  gap: 1.25rem;
 }
 
 .grupos-musculares h3 {
-  margin: 0 0 1rem;
-  font-size: 1.1rem;
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
 }
 
 .grupos-tags {
@@ -480,117 +438,17 @@ onMounted(loadEjercicio);
   gap: 0.5rem;
 }
 
-.grupo-tag {
-  background-color: var(--bg-primary);
-  padding: 0.25rem 0.75rem;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  border: 1px solid var(--border);
-}
-
-.grafica-container {
-  background-color: var(--bg-secondary);
-  border-radius: 8px;
-  padding: 1.5rem;
-  border: 1px solid var(--border);
-}
-
-.grafica-container h2 {
-  margin: 0 0 1.5rem;
-  font-size: 1.2rem;
-}
-
-.grafica {
-  height: 300px;
-  position: relative;
-}
-
 .no-datos {
   text-align: center;
   padding: 2rem;
-  color: var(--text-secondary);
-  font-style: italic;
-}
-
-.loading, .error {
-  text-align: center;
-  padding: 2rem;
-  background-color: var(--bg-secondary);
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  margin: 1.5rem 0;
-}
-
-.error {
-  color: var(--error);
-}
-
-.btn {
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.btn-primary {
-  background-color: var(--color-cobalt-blue);
-  color: white;
-  border: none;
-}
-
-.btn-primary:hover {
-  background-color: #1648a0;
-}
-
-.btn-secondary {
-  background-color: transparent;
-  border: 1px solid var(--accent-secondary);
-  color: var(--accent-secondary);
-}
-
-.btn-secondary:hover {
-  background-color: rgba(25, 86, 200, 0.1);
-}
-.entreno-card {
-  background-color: var(--bg-secondary);
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  border: 1px solid var(--border);
-}
-
-.entreno-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.entreno-info {
-  flex: 1;
-}
-
-.entreno-info h3 {
-  margin: 0 0 0.5rem;
-  font-size: 1.1rem;
-}
-
-.date {
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-size: 0.9rem;
-  margin: 0.5rem 0;
 }
 
 .carga {
-  font-size: 1rem;
-  margin: 0.5rem 0;
- 
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0.35rem 0 0;
 }
-.num-carga{
-  color: var(--color-cobalt-blue);
-}
+
 </style>
