@@ -3,8 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { formatearTexto, guardarNuevoEjercicio } from '../utils/ejercicioUtils';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787'; // Usa la variable de entorno o el valor por defecto
+import { apiFetch } from '../services/api';
 
 const authStore = useAuthStore();
 
@@ -38,6 +37,7 @@ const gruposMusculares = ref<GrupoMuscular[]>([]);
 const isLoading = ref(true);
 const error = ref('');
 const showForm = ref(false);
+const busquedaNombre = ref('');
 const filtroGrupoMuscular = ref<number | null>(null);
 const editandoEjercicio = ref<Ejercicio | null>(null);
 
@@ -55,17 +55,26 @@ const ejercicioEditado = ref({
 
 // Ejercicios filtrados por grupo muscular
 const ejerciciosFiltrados = computed(() => {
-  if (filtroGrupoMuscular.value === null) {
-    return ejercicios.value;
+  let resultado = ejercicios.value;
+
+  if (filtroGrupoMuscular.value !== null) {
+    resultado = resultado.filter(ejercicio =>
+      ejercicio.GrupMuscular1 === filtroGrupoMuscular.value ||
+      ejercicio.GrupMuscular2 === filtroGrupoMuscular.value ||
+      ejercicio.GrupMuscular3 === filtroGrupoMuscular.value ||
+      ejercicio.GrupMuscular4 === filtroGrupoMuscular.value ||
+      ejercicio.GrupMuscular5 === filtroGrupoMuscular.value
+    );
   }
-  
-  return ejercicios.value.filter(ejercicio => 
-    ejercicio.GrupMuscular1 === filtroGrupoMuscular.value ||
-    ejercicio.GrupMuscular2 === filtroGrupoMuscular.value ||
-    ejercicio.GrupMuscular3 === filtroGrupoMuscular.value ||
-    ejercicio.GrupMuscular4 === filtroGrupoMuscular.value ||
-    ejercicio.GrupMuscular5 === filtroGrupoMuscular.value
-  );
+
+  const term = busquedaNombre.value.trim().toLowerCase();
+  if (term) {
+    resultado = resultado.filter(ejercicio =>
+      ejercicio.Nom.toLowerCase().includes(term)
+    );
+  }
+
+  return resultado;
 });
 
 // Limpiar el filtro
@@ -83,36 +92,14 @@ const loadEjercicios = async () => {
   try {
     isLoading.value = true;
     
-    // Obtener el token de autenticación
-    const token = authStore.token;
-    
-    // Hacer la solicitud a la API
-    const response = await fetch(API_URL+'/api/getExercicis', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token })
-    });
-    
-    if (!response.ok) {
-      throw new Error('Error al cargar los ejercicios');
-    }
-    
-    const data = await response.json();
-    console.log('Ejercicios recibidos:', data);
-    
-    // Asegurarnos de que los datos recibidos sean un array
+    const data = await apiFetch<any[]>('/api/getExercicis', {});
+
     if (Array.isArray(data)) {
       ejercicios.value = data;
-    } else if (data && typeof data === 'object') {
-      ejercicios.value = data.results || [];
     } else {
       ejercicios.value = [];
-      console.error('Formato de datos inesperado:', data);
     }
-    
-    // Cargar los grupos musculares
+
     await loadGruposMusculares();
   } catch (err: any) {
     error.value = err.message || 'Error al cargar los ejercicios';
@@ -125,31 +112,8 @@ const loadEjercicios = async () => {
 // Cargar los grupos musculares
 const loadGruposMusculares = async () => {
   try {
-    const token = authStore.token;
-    
-    const response = await fetch(API_URL+'/api/getGrupsMusculars', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token })
-    });
-    
-    if (!response.ok) {
-      throw new Error('Error al cargar los grupos musculares');
-    }
-    
-    const data = await response.json();
-    console.log('Grupos musculares recibidos:', data);
-    
-    if (Array.isArray(data)) {
-      gruposMusculares.value = data;
-    } else if (data && typeof data === 'object') {
-      gruposMusculares.value = data.results || [];
-    } else {
-      gruposMusculares.value = [];
-      console.error('Formato de datos inesperado:', data);
-    }
+    const data = await apiFetch<any[]>('/api/getGrupsMusculars', {});
+    gruposMusculares.value = Array.isArray(data) ? data : [];
   } catch (err: any) {
     console.error('Error al cargar grupos musculares:', err);
   }
@@ -282,38 +246,13 @@ const guardarEdicionEjercicio = async () => {
   try {
     isLoading.value = true;
     
-    const token = authStore.token;
-    
-    // Preparar los datos para la solicitud
-    const requestData = {
-      token,
+    await apiFetch('/api/editExercici', {
       exerciciId: editandoEjercicio.value.ExerciciId,
       nom: formatearTexto(ejercicioEditado.value.nombre),
       grupsMusculars: ejercicioEditado.value.gruposMusculares.filter(gm => gm !== null)
-    };
-    
-    console.log('Datos a enviar para edición:', requestData);
-    
-    // Hacer la solicitud a la API
-    const response = await fetch(API_URL+'/api/editExercici', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestData)
     });
-    
-    if (!response.ok) {
-      throw new Error('Error al editar el ejercicio');
-    }
-    
-    const data = await response.json();
-    console.log('Ejercicio editado:', data);
-    
-    // Resetear el estado de edición
+
     cancelarEdicionEjercicio();
-    
-    // Recargar los ejercicios
     await loadEjercicios();
   } catch (err: any) {
     error.value = err.message || 'Error al editar el ejercicio';
@@ -468,6 +407,11 @@ function alertWindow(message:string){
     
     <div v-else>
       <h2 class="section-title">Lista de ejercicios</h2>
+      
+      <div class="search-row">
+        <input type="text" v-model="busquedaNombre" class="form-control" placeholder="🔍 Buscar por nombre..." />
+        <button v-if="busquedaNombre" @click="busquedaNombre = ''" class="btn btn-secondary btn-sm">×</button>
+      </div>
       
       <div class="resultados-filtro">
         <p>
@@ -625,5 +569,16 @@ function alertWindow(message:string){
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+.search-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+.search-row .form-control {
+  flex: 1;
 }
 </style>

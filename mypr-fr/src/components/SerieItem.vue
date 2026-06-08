@@ -1,21 +1,19 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
-import authService from '../services/auth';
+import { ref, computed } from 'vue';
 import BuscadorSelect from './BuscadorSelect.vue';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787';
+import { apiFetch } from '../services/api';
 
 // Props
 interface Props {
   serie: any;
   ejercicios: any[];
-  grupoMuscularNombre?: string;
+  grupoMuscularNombre?: string[];
 }
 
 const props = defineProps<Props>();
 
 // Emits
-const emit = defineEmits(['serieUpdated', 'serieDeleted', 'openModalEjercicio', 'goToEjercicio', 'dragStart', 'drop']);
+const emit = defineEmits(['serieUpdated', 'serieDeleted', 'serieCompletadaToggled', 'openModalEjercicio', 'goToEjercicio', 'dragStart', 'drop']);
 
 // Estado local
 const isEditing = ref(false);
@@ -26,53 +24,14 @@ const serieEditada = ref({
   reps: 0
 });
 
-// Estado completado
-const isCompleted = ref(false);
-
-// Variables para triple pulsación
-const tapCount = ref(0);
-const lastTapTime = ref<number>(0);
-const TAP_WINDOW_MS = 800;
-
-// Cargar estado
-onMounted(() => {
-  if (props.serie && props.serie.SerieId) {
-    const key = `serie_completed_${props.serie.SerieId}`;
-    const savedState = localStorage.getItem(key);
-    
-    if (savedState !== null) {
-      isCompleted.value = savedState === 'true';
-    } else if (props.serie._isManualInput) {
-      isCompleted.value = true;
-      localStorage.setItem(key, 'true');
-    }
-  }
-});
-
-watch(isCompleted, (newValue) => {
-  if (props.serie && props.serie.SerieId) {
-    if (newValue) {
-      localStorage.setItem(`serie_completed_${props.serie.SerieId}`, 'true');
-    } else {
-      localStorage.removeItem(`serie_completed_${props.serie.SerieId}`);
-    }
-  }
-});
+// Estado completado desde prop
+const isCompleted = computed(() => (props.serie?.Completada ?? 0) === 1);
 
 // --- Triple click / tap para marcar completado ---
 const onCardClick = () => {
   if (isEditing.value || isLoading.value) return;
-  const now = Date.now();
-  if (now - lastTapTime.value > TAP_WINDOW_MS) {
-    tapCount.value = 0;
-  }
-  tapCount.value += 1;
-  lastTapTime.value = now;
-  if (tapCount.value >= 3) {
-    isCompleted.value = !isCompleted.value;
-    tapCount.value = 0;
-    if (navigator.vibrate) navigator.vibrate(50);
-  }
+  if (navigator.vibrate) navigator.vibrate(50);
+  emit('serieCompletadaToggled', props.serie.SerieId);
 };
 
 // --- Drag & Drop ---
@@ -108,21 +67,13 @@ const nombreEjercicio = computed(() => {
 const saveEdit = async () => {
   try {
     isLoading.value = true;
-    const token = authService.getToken();
-    const response = await fetch(API_URL + '/api/editSerie', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        token,
-        serieId: props.serie.SerieId,
-        entrenoId: props.serie.EntrenoId,
-        exerciciId: serieEditada.value.ejercicioId,
-        kg: serieEditada.value.kg,
-        reps: serieEditada.value.reps
-      })
+    const data = await apiFetch<any>('/api/editSerie', {
+      serieId: props.serie.SerieId,
+      entrenoId: props.serie.EntrenoId,
+      exerciciId: serieEditada.value.ejercicioId,
+      kg: serieEditada.value.kg,
+      reps: serieEditada.value.reps
     });
-    if (!response.ok) throw new Error('Error al editar la serie');
-    const data = await response.json();
     emit('serieUpdated', {
       data,
       serieId: props.serie.SerieId,
@@ -144,15 +95,7 @@ const deleteSerie = async () => {
   if(!confirm('¿Estás seguro de que quieres eliminar esta serie?')) return;
   try {
     isLoading.value = true;
-    const token = authService.getToken();
-    const response = await fetch(API_URL + '/api/deleteSerie', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, serieId: props.serie.SerieId })
-    });
-    if (!response.ok) throw new Error('Error al eliminar');
-    const data = await response.json();
-    localStorage.removeItem(`serie_completed_${props.serie.SerieId}`);
+    const data = await apiFetch<any>('/api/deleteSerie', { serieId: props.serie.SerieId });
     emit('serieDeleted', {
       data,
       serieId: props.serie.SerieId,
@@ -202,9 +145,9 @@ const deleteSerie = async () => {
       </div>
       
       <div class="serie-right-column" :class="{ 'text-dimmed': isCompleted }">
-        <div class="grupo-muscular-container" v-if="grupoMuscularNombre">
-          <span class="grupo-muscular">{{ grupoMuscularNombre }}</span>
-        </div>
+<div class="grupo-muscular-container" v-if="grupoMuscularNombre && grupoMuscularNombre.length">
+  <span v-for="(nom, i) in grupoMuscularNombre" :key="i" class="grupo-muscular">{{ nom }}</span>
+</div>
         <div class="serie-actions">
           <button class="btn btn-secondary btn-sm" @click.stop="startEdit" :disabled="isLoading">Editar</button>
           <button class="btn btn-danger btn-sm" @click.stop="deleteSerie" :disabled="isLoading">Eliminar</button>

@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import authService from '../services/auth';
+import { useAuthStore } from '../stores/auth';
 import { computed } from 'vue';
 
 const router = useRouter();
-const userInfo = computed(() => authService.getUserInfo());
+const authStore = useAuthStore();
+const userInfo = computed(() => authStore.userInfo);
 
 const cerrarSesion = () => {
-  authService.logout();
+  authStore.logout();
   router.push('/login');
 };
 

@@ -6,7 +6,9 @@
 		"deploy-front": "cd ./mypr-fr/ && npm run build && cd.. && wrangler pages deploy ./mypr-fr/dist/  ",
 		"update-db": "wrangler d1 export mypr --remote --output=./database.sql && wrangler d1 execute  mypr --local --file=./drop.sql && wrangler d1 execute  mypr --local --file=./database.sql",
 		"cf-typegen": "wrangler types --env-interface CloudflareBindings",
-		"sql:edit": "powershell -ExecutionPolicy Bypass -File ./run-edit-sql.ps1"
+		"sql:edit": "powershell -ExecutionPolicy Bypass -File ./run-edit-sql.ps1",
+		"test": "vitest run",
+		"test:watch": "vitest"
 	},
 	"dependencies": {
 		"@google/generative-ai": "^0.24.1",
@@ -21,7 +23,12 @@
 		"@cloudflare/workers-types": "^4.20250214.0",
 		"@types/vue-select": "^2.5.0",
 		"@vue/tsconfig": "^0.7.0",
+		"rollup": "^4.40.1",
 		"terser": "^5.39.0",
+		"vitest": "^2.1.0",
 		"wrangler": "^4.1.0"
+	},
+	"optionalDependencies": {
+		"@rollup/rollup-win32-x64-msvc": "^4.61.1"
 	}
 }

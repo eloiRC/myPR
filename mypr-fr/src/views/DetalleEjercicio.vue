@@ -3,9 +3,8 @@ import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
-import {useAuthStore} from '../stores/auth';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787'; // Usa la variable de entorno o el valor por defecto
+import { useAuthStore } from '../stores/auth';
+import { apiFetch } from '../services/api';
 
 const authStore = useAuthStore();
 
@@ -29,11 +28,10 @@ interface Ejercicio {
     UserId: number ;
     Data: number ;
     CargaTotal: number;
-    CargaTotalN:string
     Nom: string;
     Descripcio: string;
     Puntuacio: number ;
-  }
+  } | null
 }
 
 // Definir la interfaz para los grupos musculares
@@ -62,6 +60,49 @@ const historialPesos = ref<PesoHistorial[]>([]);
 const historialCarga = ref<CargaHistorial[]>([]);
 const isLoading = ref(true);
 const error = ref('');
+const editando = ref(false);
+const cargadoCompleto = computed(() => ejercicio.value !== null && gruposMusculares.value.length > 0);
+const errorEdicion = ref('');
+const ejercicioEditado = ref({ Nom: '' });
+const gruposSeleccionados = ref<(number | null)[]>([]);
+
+const iniciarEdicion = () => {
+  if (!ejercicio.value) return;
+  ejercicioEditado.value = { Nom: ejercicio.value.Nom };
+  gruposSeleccionados.value = [
+    ejercicio.value.GrupMuscular1,
+    ejercicio.value.GrupMuscular2,
+    ejercicio.value.GrupMuscular3,
+    ejercicio.value.GrupMuscular4,
+    ejercicio.value.GrupMuscular5
+  ];
+  editando.value = true;
+  errorEdicion.value = '';
+};
+
+const cancelarEdicion = () => { editando.value = false; };
+
+const guardarEdicionEjercicio = async () => {
+  if (!ejercicio.value) return;
+  if (!ejercicioEditado.value.Nom.trim()) {
+    errorEdicion.value = 'El nombre no puede estar vacío'; return;
+  }
+  const groups = gruposSeleccionados.value.filter((g): g is number => g !== null);
+  if (groups.length === 0) {
+    errorEdicion.value = 'Selecciona al menos un grupo muscular'; return;
+  }
+  try {
+    await apiFetch('/api/editExercici', {
+      exerciciId: ejercicio.value.ExerciciId,
+      nom: ejercicioEditado.value.Nom.trim(),
+      grupsMusculars: groups
+    });
+    await loadEjercicio();
+    editando.value = false;
+  } catch (e: any) {
+    errorEdicion.value = e.message || 'Error al guardar';
+  }
+};
 
 // Datos para la gráfica de PR
 const chartData = computed(() => {
@@ -206,58 +247,20 @@ const loadEjercicio = async () => {
 
   try {
     isLoading.value = true;
-    const token = authStore.token;
     const exerciciId = Number(route.params.id);
 
-    // Cargar datos del ejercicio
-    const response = await fetch(API_URL+'/api/getExercici', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token, exerciciId })
-    });
+    const [ejercicioData, historialPesosData, historialCargaData] = await Promise.all([
+      apiFetch<any>('/api/getExercici', { exerciciId }),
+      apiFetch<any[]>('/api/getPesosHistorial', { exerciciId }),
+      apiFetch<any[]>('/api/getCargaHistorial', { exerciciId })
+    ]);
 
-    if (!response.ok) {
-      throw new Error('Error al cargar el ejercicio');
-    }
+    ejercicio.value = ejercicioData;
+    historialPesos.value = historialPesosData;
+    historialCarga.value = historialCargaData;
 
-    const data = await response.json();
-    ejercicio.value = data;
-    
-    // Cargar historial de pesos
-    const responseHistorial = await fetch(API_URL+'/api/getPesosHistorial', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token, exerciciId })
-    });
-
-    if (!responseHistorial.ok) {
-      throw new Error('Error al cargar el historial de pesos');
-    }
-
-    historialPesos.value = await responseHistorial.json();
-
-    // Cargar historial de carga
-    const responseCarga = await fetch(API_URL+'/api/getCargaHistorial', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token, exerciciId })
-    });
-
-    if (!responseCarga.ok) {
-      throw new Error('Error al cargar el historial de carga');
-    }
-
-    historialCarga.value = await responseCarga.json();
-
-    // Cargar grupos musculares
     await loadGruposMusculares();
-    
+
   } catch (err: any) {
     error.value = err.message || 'Error al cargar los datos';
     console.error('Error:', err);
@@ -274,22 +277,8 @@ const verDetalleEntreno = (entrenoId: number) => {
 // Cargar los grupos musculares
 const loadGruposMusculares = async () => {
   try {
-    const token = authStore.token;
-    
-    const response = await fetch(API_URL+'/api/getGrupsMusculars', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token })
-    });
-    
-    if (!response.ok) {
-      throw new Error('Error al cargar los grupos musculares');
-    }
-    
-    const data = await response.json();
-    gruposMusculares.value = Array.isArray(data) ? data : data.results || [];
+    const data = await apiFetch<any[]>('/api/getGrupsMusculars', {});
+    gruposMusculares.value = Array.isArray(data) ? data : [];
   } catch (err: any) {
     console.error('Error al cargar grupos musculares:', err);
   }
@@ -304,6 +293,7 @@ const getNombreGrupoMuscular = (id: number | null): string => {
 
 // Volver a la lista de ejercicios
 const volverAEjercicios = () => {
+  if (editando.value && !confirm('Hay cambios sin guardar. ¿Salir de todas formas?')) return;
   router.push('/ejercicios');
 };
 // Formatear la fecha para mostrarla en formato legible
@@ -327,14 +317,18 @@ onMounted(loadEjercicio);
 <template>
   <div class="page">
     <header class="page-header">
-      <h1 class="page-title">{{ ejercicio?.Nom }}</h1>
+      <h1 class="page-title">
+        <span v-if="!editando">{{ ejercicio?.Nom }}</span>
+        <input v-else v-model="ejercicioEditado.Nom" class="form-control edit-name-input" />
+      </h1>
       <div class="page-header-actions">
-        <button @click="volverAEjercicios" class="btn btn-secondary">
-        &larr; Volver
-      </button>
+        <button v-if="!editando" :disabled="!cargadoCompleto" @click="iniciarEdicion" class="btn btn-secondary">Editar</button>
+        <template v-else>
+          <button @click="cancelarEdicion" class="btn btn-secondary">Cancelar</button>
+          <button @click="guardarEdicionEjercicio" class="btn btn-primary">Guardar</button>
+        </template>
+        <button @click="volverAEjercicios" class="btn btn-secondary">&larr; Volver</button>
       </div>
-      
-      
     </header>
     
     <div v-if="isLoading" class="state-box">
@@ -348,48 +342,61 @@ onMounted(loadEjercicio);
     
     <div v-else-if="ejercicio" class="ejercicio-content">
       <!-- Información del ejercicio -->
-      <div class="card card-elevated">
+      <div v-if="!editando" class="card card-elevated">
         <div class="pr-display">
           <h2>PR Actual</h2>
           <p class="pr-valor">{{ ejercicio.PR }} kg</p>
         </div>
-        
         <div class="grupos-musculares">
           <h3>Grupos Musculares</h3>
           <div class="grupos-tags">
-            <span v-if="ejercicio.GrupMuscular1" class="chip">
-              {{ getNombreGrupoMuscular(ejercicio.GrupMuscular1) }}
-            </span>
-            <span v-if="ejercicio.GrupMuscular2" class="chip">
-              {{ getNombreGrupoMuscular(ejercicio.GrupMuscular2) }}
-            </span>
-            <span v-if="ejercicio.GrupMuscular3" class="chip">
-              {{ getNombreGrupoMuscular(ejercicio.GrupMuscular3) }}
-            </span>
-            <span v-if="ejercicio.GrupMuscular4" class="chip">
-              {{ getNombreGrupoMuscular(ejercicio.GrupMuscular4) }}
-            </span>
-            <span v-if="ejercicio.GrupMuscular5" class="chip">
-              {{ getNombreGrupoMuscular(ejercicio.GrupMuscular5) }}
-            </span>
+            <span v-if="ejercicio.GrupMuscular1" class="chip">{{ getNombreGrupoMuscular(ejercicio.GrupMuscular1) }}</span>
+            <span v-if="ejercicio.GrupMuscular2" class="chip">{{ getNombreGrupoMuscular(ejercicio.GrupMuscular2) }}</span>
+            <span v-if="ejercicio.GrupMuscular3" class="chip">{{ getNombreGrupoMuscular(ejercicio.GrupMuscular3) }}</span>
+            <span v-if="ejercicio.GrupMuscular4" class="chip">{{ getNombreGrupoMuscular(ejercicio.GrupMuscular4) }}</span>
+            <span v-if="ejercicio.GrupMuscular5" class="chip">{{ getNombreGrupoMuscular(ejercicio.GrupMuscular5) }}</span>
           </div>
         </div>
       </div>
-      <div class="entrenos-list">
+      <form v-else @submit.prevent="guardarEdicionEjercicio" class="card card-elevated">
+        <h2>Editar {{ ejercicioEditado.Nom || 'ejercicio' }}</h2>
+        <div class="form-group">
+          <label>Grupos musculares (1-5):</label>
+          <div class="grupos-seleccion">
+            <div v-for="grupo in gruposMusculares" :key="grupo.GrupMuscularId" class="grupo-checkbox">
+              <input
+                type="checkbox"
+                :id="'edit-grp-' + grupo.GrupMuscularId"
+                :value="grupo.GrupMuscularId"
+                v-model="gruposSeleccionados"
+                :disabled="gruposSeleccionados.filter(g => g !== null).length >= 5 && !gruposSeleccionados.includes(grupo.GrupMuscularId)"
+              />
+              <label :for="'edit-grp-' + grupo.GrupMuscularId">{{ grupo.Nom }}</label>
+            </div>
+          </div>
+        </div>
+        <div v-if="errorEdicion" class="error-message">{{ errorEdicion }}</div>
+        <div class="form-actions" style="margin-top:1rem;">
+          <button type="button" @click="cancelarEdicion" class="btn btn-secondary">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+      <div v-if="ejercicio.entrenoPr" class="entrenos-list">
         <h2 class="section-title">Entreno del PR</h2>
         <br>
-        <div 
+        <div
         class="list-card"
         @click="verDetalleEntreno(ejercicio.entrenoPr.EntrenoId)">
-          
+
           <div class="list-card-body">
             <h3>{{ ejercicio.entrenoPr.Nom }}</h3>
             <p class="list-card-meta">{{ formatDate(ejercicio.entrenoPr.Data) }}</p>
-            <p class="carga">Peso total: <strong class="list-card-highlight">{{ejercicio.entrenoPr.CargaTotal}} Kg</strong></p>
+            <p class="carga">Peso total: <strong class="list-card-highlight">{{ ejercicio.entrenoPr.CargaTotal }} Kg</strong></p>
           </div>
-          
+
         </div>
       </div>
+      <p v-else class="state-box" style="margin-top:1rem;">Este ejercicio aún no tiene un PR registrado.</p>
       
       <!-- Gráfica de evolución -->
       <div class="chart-panel">
@@ -443,6 +450,19 @@ onMounted(loadEjercicio);
   padding: 2rem;
   color: var(--text-muted);
   font-size: 0.9rem;
+}
+
+.edit-name-input {
+  font-size: 1.4rem;
+  font-weight: 700;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--accent-primary);
+  border-radius: var(--radius-sm);
+  padding: 0.25rem 0.5rem;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .carga {

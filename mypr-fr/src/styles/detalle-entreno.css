@@ -1026,3 +1026,78 @@ h2 {
     color: var(--text-muted);
     margin-left: 0.5rem;
 }
+
+/* Slide animation */
+.serie-card-slide-wrapper {
+    flex: 1;
+    display: flex;
+}
+
+.slide-next-enter-active,
+.slide-next-leave-active,
+.slide-prev-enter-active,
+.slide-prev-leave-active {
+    transition: transform 0.28s ease, opacity 0.28s ease;
+}
+
+.slide-next-enter-from {
+    transform: translateX(60%);
+    opacity: 0;
+}
+.slide-next-leave-to {
+    transform: translateX(-60%);
+    opacity: 0;
+}
+.slide-prev-enter-from {
+    transform: translateX(-60%);
+    opacity: 0;
+}
+.slide-prev-leave-to {
+    transform: translateX(60%);
+    opacity: 0;
+}
+
+/* Card navigation row */
+.card-nav-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.card-nav-row .card-dots {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.card-nav-btn {
+    min-width: 38px;
+    padding: 0.25rem 0.5rem;
+}
+
+/* Multiple muscle group chips in big card */
+.big-grupos {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+}
+
+.big-grupo-chip {
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: rgba(45, 212, 191, 0.12);
+    color: var(--accent-primary);
+    border: 1px solid rgba(45, 212, 191, 0.25);
+}
+
+.grupo-muscular-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    justify-content: flex-end;
+}

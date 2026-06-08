@@ -1,14 +1,14 @@
-import { Context, Hono } from 'hono'
+import { Hono } from 'hono'
 import { logger } from 'hono/logger'
 import { zValidator } from '@hono/zod-validator'
 import { HTTPException } from 'hono/http-exception'
 import { cors } from 'hono/cors'
-import { jwt } from 'hono/jwt'
-import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars, getExercici, getPesosHistorial, nouEntreno, editEntreno, getCargaHistorial, chatGPT, updateUser, getUser, deleteEntreno, reorderSerie, garminCredentialsSave, garminCredentialsDelete, garminRecovery, garminActivity } from './schema'
+import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars, getExercici, getPesosHistorial, nouEntreno, editEntreno, getCargaHistorial, chatGPT, updateUser, getUser, deleteEntreno, reorderSerie, garminCredentialsSave, garminCredentialsDelete, garminRecovery, garminActivity, toggleSerieCompletada, chatStatus } from './schema'
 import { hashPassword, verifyPassword, generateJWT, verifyJWT } from './jwt'
 import { encrypt, decrypt } from './crypto'
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai'
-import { startsWith } from 'zod/v4'
+import { createJob, getJob, appendChunk, finishJob, failJob } from './chatJobs'
+
 
 
 type Bindings = {
@@ -36,15 +36,27 @@ app.use('*', cors({
 
 
 app.use('/api/*', async (c, next) => {
-  const { token } = await c.req.json();
-  // console.log(token)
+  // Skip JWT auth if Garmin API key is present
+  if (c.req.header('X-Garmin-API-Key')) return next();
+
+  let token: string | null = null;
+
+  const auth = c.req.header('Authorization');
+  if (auth?.startsWith('Bearer ')) {
+    token = auth.slice(7);
+  } else {
+    try {
+      const body = await c.req.json();
+      if (body?.token) token = body.token;
+    } catch { }
+  }
+
+  if (!token) return c.text('invalid token', 401);
+
   try {
     const decodedPayload = await verifyJWT(token, c.env.jwt_secret);
-
     c.set('jwtPayload', decodedPayload)
-    // console.log(c.get('jwtPayload'))
     await next()
-
   } catch (error) {
     return c.text('invalid token', 401)
   }
@@ -54,32 +66,34 @@ app.use('/api/*', async (c, next) => {
 async function addSerieToDb(c: any, userId: number, entrenoId: number, exerciciId: number, kg: number, reps: number) {
   const data = Math.floor(Date.now() / 1000)
   const carga = kg * reps
-  let prUpdated = false
 
-  // Comprobar si es PR
-  const updatePr = await c.env.DB.prepare('UPDATE Exercici SET PR=? WHERE UserID=? AND ExerciciId=? AND ? > PR ').bind(kg, userId, exerciciId, kg).run()
+  // Reset all PR flags for this exercise (harmless if no PR changed)
+  const updatePrStmt = c.env.DB.prepare('UPDATE Exercici SET PR=? WHERE UserId=? AND ExerciciId=? AND ? > PR')
+    .bind(kg, userId, exerciciId, kg);
+  const resetPrStmt = c.env.DB.prepare('UPDATE Series SET PR=0 WHERE UserId=? AND ExerciciId=?')
+    .bind(userId, exerciciId);
+  const maxOrdenStmt = c.env.DB.prepare('SELECT COALESCE(MAX(Orden), 0) + 1 AS newOrden FROM Series WHERE UserId=? AND EntrenoId=?')
+    .bind(userId, entrenoId);
 
-  if (updatePr.meta.rows_written > 0) {
-    prUpdated = true;
-    // Resetear flags de PR anteriores en series de este ejercicio
-    await c.env.DB.prepare('UPDATE Series SET PR=FALSE WHERE UserID=? AND ExerciciId=? AND PR=TRUE ').bind(userId, exerciciId).run()
-  }
+  const [prResult, , ordenResult] = await c.env.DB.batch([updatePrStmt, resetPrStmt, maxOrdenStmt]);
 
-  // Calcular el nuevo orden al final del entreno
-  const maxOrder = await c.env.DB.prepare('SELECT COALESCE(MAX(Orden), 0) as maxOrden FROM Series WHERE UserId=? AND EntrenoId=?')
-    .bind(userId, entrenoId).all();
-  const newOrden = Number(maxOrder.results?.[0]?.maxOrden || 0) + 1;
+  const prUpdated = (prResult.meta?.rows_written ?? 0) > 0;
+  const newOrden = Number((ordenResult.results?.[0] as any)?.newOrden || 1);
 
-  // Insertar la nueva serie
-  const result = await c.env.DB.prepare('INSERT INTO Series (UserId,EntrenoId,ExerciciId,Kg,Reps,Carga,PR,Data,Orden) VALUES (?,?,?,?,?,?,?,?,?) RETURNING *').bind(userId, entrenoId, exerciciId, kg, reps, carga, prUpdated, data, newOrden).run()
+  const insertStmt = c.env.DB.prepare(
+    'INSERT INTO Series (UserId,EntrenoId,ExerciciId,Kg,Reps,Carga,PR,Completada,Data,Orden) VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING SerieId'
+  ).bind(userId, entrenoId, exerciciId, kg, reps, carga, prUpdated ? 1 : 0, 0, data, newOrden);
 
-  // Actualizar carga total del entreno
-  const updateCarga = await c.env.DB.prepare('UPDATE Entreno SET CargaTotal=CargaTotal+? WHERE UserID=? AND EntrenoId=?  RETURNING *').bind(carga, userId, entrenoId).run()
+  const updateCargaStmt = c.env.DB.prepare(
+    'UPDATE Entreno SET CargaTotal=CargaTotal+? WHERE UserId=? AND EntrenoId=? RETURNING CargaTotal'
+  ).bind(carga, userId, entrenoId);
+
+  const [insertResult, cargaResult] = await c.env.DB.batch([insertStmt, updateCargaStmt]);
 
   return {
-    serieId: result.results[0].SerieId,
+    serieId: (insertResult.results?.[0] as any)?.SerieId ?? 0,
     newPr: prUpdated,
-    cargaTotal: updateCarga.results[0].CargaTotal
+    cargaTotal: (cargaResult.results?.[0] as any)?.CargaTotal ?? 0
   }
 }
 
@@ -118,16 +132,17 @@ app.post('/api/nouEntreno', async (c) => {
   const userId = await c.get('jwtPayload').UserId
 
   try {
-    // Obtener el número total de entrenos del usuario
-    const { results } = await c.env.DB.prepare('SELECT COUNT(*) as total FROM Entreno WHERE UserId = ?').bind(userId).all();
-    const numeroEntreno = Number(results[0].total || 0) + 1;
-
-    const result = await c.env.DB.prepare('INSERT INTO Entreno (UserId, Data, CargaTotal, Nom, Descripcio, Puntuacio) VALUES (?, ?, ?, ?, ?, ?);')
-      .bind(userId, data, 0, `Entreno #${numeroEntreno}`, '', 3)
-      .run();
+    const result = await c.env.DB.prepare(
+      `INSERT INTO Entreno (UserId, Data, CargaTotal, Nom, Descripcio, Puntuacio)
+       SELECT ?, ?, 0,
+         'Entreno #' || (COALESCE(MAX(CAST(SUBSTR(Nom, 9) AS INTEGER)), 0) + 1),
+         '', 3
+       FROM Entreno WHERE UserId = ?`
+    ).bind(userId, data, userId).run();
 
     return c.json({ message: 'Nou Entreno Creat', entrenoId: result.meta.last_row_id, dataInici: data })
   } catch (error) {
+    console.error('nouEntreno error:', error)
     throw new HTTPException(500, { message: 'error sql query' })
   }
 })
@@ -178,6 +193,25 @@ app.post('/api/editSerie', zValidator('json', editSerie), async (c) => {
   }
 })
 
+//toggle serie completada
+app.post('/api/toggleSerieCompletada', zValidator('json', toggleSerieCompletada), async (c) => {
+  const { serieId, completada } = await c.req.json();
+  const userId = await c.get('jwtPayload').UserId;
+  try {
+    const result = await c.env.DB.prepare(
+      'UPDATE Series SET Completada=? WHERE SerieId=? AND UserId=? RETURNING Completada'
+    ).bind(completada ? 1 : 0, serieId, userId).run();
+    if (!result.results || result.results.length === 0) {
+      throw new HTTPException(404, { message: 'Serie no encontrada' });
+    }
+    return c.json({ message: 'Serie actualizada', completada: (result.results[0] as any).Completada === 1 });
+  } catch (error) {
+    if (error instanceof HTTPException) throw error;
+    console.error('toggleSerieCompletada error:', error);
+    throw new HTTPException(500, { message: 'error sql query' });
+  }
+})
+
 //delete serie
 app.post('/api/deleteSerie', zValidator('json', deleteSerie), async (c) => {
   const { serieId } = await c.req.json();
@@ -192,14 +226,14 @@ app.post('/api/deleteSerie', zValidator('json', deleteSerie), async (c) => {
       const updatePr = await checkPr(c, userId, result.results[0].ExerciciId, 0)
       //reclacular carga
       const updateCT = await updateCargaTotal(c, userId, result.results[0].EntrenoId)
-      return c.json({ mesage: 'Serie Borrada', cargaTotal: updateCT.results[0].CargaTotal })
+      return c.json({ message: 'Serie Borrada', cargaTotal: updateCT.results[0].CargaTotal })
     }
     else {
-      return c.json({ mesage: 'Serie NO Borrada' })
+      return c.json({ message: 'Serie NO Borrada' })
     }
 
   } catch (error) {
-    console.log(error)
+    console.error(error)
     throw new HTTPException(500, { message: 'error sql query' })
   }
 
@@ -223,7 +257,7 @@ app.post('/api/deleteEntreno', zValidator('json', deleteEntreno), async (c) => {
       return c.json({ message: 'Entreno NO Borrado' }, 404)
     }
   } catch (error) {
-    console.log(error)
+    console.error(error)
     throw new HTTPException(500, { message: 'error sql query' })
   }
 })
@@ -287,7 +321,7 @@ app.post('/api/getEntreno', zValidator('json', getEntreno), async (c) => {
 
     return c.json({ entreno: resultsE.results, series: resultsS.results })
   } catch (error) {
-    console.log(error)
+    console.error(error)
     throw new HTTPException(500, { message: 'error sql query' })
   }
 })
@@ -326,7 +360,7 @@ app.post('/api/reorderSerie', zValidator('json', reorderSerie), async (c) => {
 
     return c.json({ message: 'reordered', orden: reordered.map((id, i) => ({ serieId: id, orden: i + 1 })) });
   } catch (error) {
-    console.log(error)
+    console.error(error)
     throw new HTTPException(500, { message: 'error sql query' })
   }
 })
@@ -347,10 +381,10 @@ app.post('/api/getExercicis', zValidator('json', petition), async (c) => {//reto
 //retorna la llista de grupos musculares
 app.post('/api/getGrupsMusculars', zValidator('json', getGrupsMusculars), async (c) => {
   try {
-    const { results } = await c.env.DB.prepare('SELECT * FROM GrupMuscular').all();
+    const { results } = await c.env.DB.prepare('SELECT * FROM GrupMuscular ORDER BY Nom').all();
     return c.json(results)
   } catch (error) {
-    console.log(error)
+    console.error(error)
     throw new HTTPException(500, { message: 'Error al obtener grupos musculares' })
   }
 })
@@ -361,18 +395,20 @@ app.post('/api/getExercici', zValidator('json', getExercici), async (c) => {
   const userId = await c.get('jwtPayload').UserId;
 
   try {
-    const exercici = await c.env.DB.prepare('SELECT * FROM Exercici WHERE ExerciciId = ? AND UserId = ?').bind(exerciciId, userId).all();
-    //retorna l'entreno la serie amb l'exercici te le pr 
-    const entrenoPr = await c.env.DB.prepare('SELECT * FROM Entreno WHERE (EntrenoId) IN (SELECT EntrenoId FROM Series WHERE ExerciciId=? AND PR=true ) AND UserId=?').bind(exerciciId, userId).all();
-    let response = exercici.results[0]
-    response.entrenoPr = entrenoPr.results[0]
+    const exercici = await c.env.DB.prepare('SELECT * FROM Exercici WHERE ExerciciId = ? AND UserId = ?').bind(exerciciId, userId).first();
+    if (!exercici) throw new HTTPException(404, { message: 'Ejercicio no encontrado' });
 
-    console.log(entrenoPr.results[0])
-    if (exercici.results.length === 0 || entrenoPr.results.length === 0) {
-      throw new HTTPException(404, { message: 'Ejercicio no encontrado' });
-    }
-    return c.json(response);
+    const entrenoPr = await c.env.DB.prepare(
+      `SELECT E.* FROM Entreno E
+       INNER JOIN Series S ON S.EntrenoId = E.EntrenoId
+       WHERE S.ExerciciId = ? AND S.PR = 1 AND S.UserId = ? AND E.UserId = ?
+       ORDER BY E.Data DESC LIMIT 1`
+    ).bind(exerciciId, userId, userId).first();
+
+    return c.json({ ...exercici, entrenoPr: entrenoPr ?? null });
   } catch (error) {
+    if (error instanceof HTTPException) throw error;
+    console.error('Error al obtener el ejercicio:', error);
     throw new HTTPException(500, { message: 'Error al obtener el ejercicio' });
   }
 });
@@ -441,11 +477,11 @@ app.post('/api/editEntreno', zValidator('json', editEntreno), async (c) => {
     // Actualizar el entrenamiento
     const result = await c.env.DB.prepare(`
       UPDATE Entreno 
-      SET Nom = ?, 
+      SET Nom = COALESCE(?, Nom),
           Descripcio = ?,
           Puntuacio = ?
       WHERE EntrenoId = ? AND UserId = ?
-    `).bind(nom, descripcio || '', puntuacio || null, entrenoId, userId).run();
+    `).bind(nom ?? null, descripcio || '', puntuacio ?? null, entrenoId, userId).run();
 
     if (result.meta.rows_written === 0) {
       throw new HTTPException(500, { message: 'Error al actualizar el entrenamiento' });
@@ -559,16 +595,21 @@ app.post('/api/updateUser', zValidator('json', updateUser), async (c) => {
 });
 
 
-// Endpoint para Gemini (Streaming SSE)
+// Endpoint para Gemini (Long-polling)
 app.post('/api/gemini', zValidator('json', chatGPT), async (c) => {
   const { message, currentTraining, history } = await c.req.json();
   const userId = await c.get('jwtPayload').UserId;
+  const jobId = createJob(userId);
 
+  c.executionCtx.waitUntil(procesarChatJob(jobId, userId, message, currentTraining, history, c));
+  return c.json({ jobId });
+});
+
+async function procesarChatJob(jobId: string, userId: number, message: string, currentTraining: any, history: any[], c: any) {
   try {
-    // Ejecutar todas las queries DB en paralelo para reducir latencia
     const [userStats, seriesCurrentTraining, user] = await Promise.all([
       getUserStats(userId, c),
-      getFullSeriesListFromTraining(currentTraining.entreno.EntrenoId, c),
+      getFullSeriesListFromTraining(currentTraining.entreno.EntrenoId, userId, c),
       c.env.DB.prepare('SELECT ChatbotPrompt FROM Users WHERE UserId = ?').bind(userId).first()
     ]);
 
@@ -662,15 +703,11 @@ SITUACIÓN ACTUAL:
     const model = genAI.getGenerativeModel({
       model: 'gemini-3.5-flash',
       systemInstruction: finalSystemInstruction,
-      generationConfig: {
-        temperature: 0.2,
-      },
-      safetySettings: [
-        {
-          category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-          threshold: HarmBlockThreshold.BLOCK_NONE,
-        },
-      ]
+      generationConfig: { temperature: 0.2 },
+      safetySettings: [{
+        category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+        threshold: HarmBlockThreshold.BLOCK_NONE,
+      }]
     });
 
     let chatHistory: any[] = [];
@@ -686,107 +723,74 @@ SITUACIÓN ACTUAL:
 
     const promptUsuario = `[Fecha: ${new Date().toLocaleDateString('es-ES')}] ${message}`;
 
-    // Usar streaming para enviar tokens progresivamente
     const streamResult = await chat.sendMessageStream(promptUsuario);
 
-    // Configurar SSE response
-    const stream = new ReadableStream({
-      async start(controller) {
-        const encoder = new TextEncoder();
-        let fullText = '';
+    let fullText = '';
 
-        try {
-          for await (const chunk of streamResult.stream) {
-            const chunkText = chunk.text();
-            if (chunkText) {
-              fullText += chunkText;
-              // Enviar chunk de texto como evento SSE
-              const sseData = JSON.stringify({ type: 'chunk', text: chunkText });
-              controller.enqueue(encoder.encode(`data: ${sseData}\n\n`));
+    for await (const chunk of streamResult.stream) {
+      const chunkText = chunk.text();
+      if (chunkText) {
+        fullText += chunkText;
+        appendChunk(jobId, chunkText);
+      }
+    }
+
+    let workoutUpdated = false;
+    let cleanedText = fullText;
+
+    const tituloMatch = fullText.match(/\[TITULO_AUTO:\s*(.*?)\]/);
+    if (tituloMatch && tituloMatch[1]) {
+      const titleAuto = tituloMatch[1].trim();
+      const currentNom = currentTraining.entreno.Nom || '';
+      if (/^Entreno #\d+$/.test(currentNom) || !currentNom) {
+        await c.env.DB.prepare('UPDATE Entreno SET Nom=? WHERE UserId=? AND EntrenoId=?')
+          .bind(titleAuto, userId, currentTraining.entreno.EntrenoId).run();
+        workoutUpdated = true;
+      }
+      cleanedText = cleanedText.replace(tituloMatch[0], '').trim();
+    }
+
+    const jsonBlockRegex = /```json_plan\s*([\s\S]*?)\s*```/;
+    const match = fullText.match(jsonBlockRegex);
+
+    if (match && match[1]) {
+      try {
+        const plan = JSON.parse(match[1]);
+        if (Array.isArray(plan)) {
+          for (const serie of plan) {
+            if (serie.ExerciciId && serie.Reps) {
+              await addSerieToDb(c, userId, currentTraining.entreno.EntrenoId, serie.ExerciciId, serie.Kg || 0, serie.Reps);
             }
           }
-
-          // Stream completo — procesar JSON plan si existe
-          let workoutUpdated = false;
-          let titleAuto = '';
-          let cleanedText = fullText;
-
-          // Detectar título automático sugerido por la IA
-          const tituloMatch = fullText.match(/\[TITULO_AUTO:\s*(.*?)\]/);
-          if (tituloMatch && tituloMatch[1]) {
-            titleAuto = tituloMatch[1].trim();
-            // Aplicar el título al entreno si el nombre actual es automático
-            const currentNom = currentTraining.entreno.Nom || '';
-            if (/^Entreno #\d+$/.test(currentNom) || !currentNom) {
-              await c.env.DB.prepare('UPDATE Entreno SET Nom=? WHERE UserId=? AND EntrenoId=?')
-                .bind(titleAuto, userId, currentTraining.entreno.EntrenoId).run();
-              workoutUpdated = true;
-            }
-            cleanedText = cleanedText.replace(tituloMatch[0], '').trim();
-          }
-
-          const jsonBlockRegex = /```json_plan\s*([\s\S]*?)\s*```/;
-          const match = fullText.match(jsonBlockRegex);
-
-          if (match && match[1]) {
-            try {
-              const plan = JSON.parse(match[1]);
-              if (Array.isArray(plan)) {
-                console.log("Detectado plan de entrenamiento automático:", plan);
-                for (const serie of plan) {
-                  if (serie.ExerciciId && serie.Reps) {
-                    await addSerieToDb(
-                      c,
-                      userId,
-                      currentTraining.entreno.EntrenoId,
-                      serie.ExerciciId,
-                      serie.Kg || 0,
-                      serie.Reps
-                    );
-                  }
-                }
-                workoutUpdated = true;
-                cleanedText = cleanedText.replace(match[0], "").trim();
-              }
-            } catch (e) {
-              console.error("Error al procesar el plan JSON de Gemini:", e);
-            }
-          }
-
-          // Enviar evento final con metadata
-          const doneData = JSON.stringify({
-            type: 'done',
-            fullText: cleanedText,
-            workoutUpdated: workoutUpdated
-          });
-          controller.enqueue(encoder.encode(`data: ${doneData}\n\n`));
-          controller.close();
-        } catch (streamError) {
-          console.error('❌ Error en stream:', streamError);
-          const errorData = JSON.stringify({ type: 'error', message: 'Error durante la generación de respuesta' });
-          controller.enqueue(encoder.encode(`data: ${errorData}\n\n`));
-          controller.close();
+          workoutUpdated = true;
+          cleanedText = cleanedText.replace(match[0], "").trim();
         }
+      } catch (e) {
+        console.error("Error al procesar el plan JSON de Gemini:", e);
       }
-    });
+    }
 
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*',
-      }
-    });
+    finishJob(jobId, workoutUpdated);
 
   } catch (error: any) {
     console.error('❌ Error Gemini:', error);
-    const errorMessage = error.message || 'Hubo un problema conectando con tu entrenador virtual.';
-    return c.json({
-      error: true,
-      message: errorMessage
-    }, 500);
+    failJob(jobId, error.message || 'Error desconocido');
   }
+}
+
+// Chat job status (polling)
+app.post('/api/chatStatus', zValidator('json', chatStatus), async (c) => {
+  const { jobId } = await c.req.json();
+  const userId = await c.get('jwtPayload').UserId;
+  const job = getJob(jobId, userId);
+  if (!job) throw new HTTPException(404, { message: 'Job no encontrado' });
+  return c.json({
+    status: job.status,
+    chunks: job.chunks,
+    fullText: job.fullText,
+    workoutUpdated: job.workoutUpdated,
+    error: job.error
+  });
 });
 
 // ---- Garmin Connect Integration ----
@@ -913,7 +917,7 @@ app.post('/api/garmin/activity', garminApiKeyAuth, zValidator('json', garminActi
 // Get users to sync (for GitHub Actions)
 app.get('/api/garmin/users-sync', garminApiKeyAuth, async (c) => {
   try {
-    const users = await c.env.DB.prepare('SELECT UserId, GarminEmail, GarminPasswordEncrypted FROM GarminCredentials WHERE Activo=1').all();
+    const users = await c.env.DB.prepare('SELECT UserId, GarminEmail, GarminPasswordEncrypted FROM GarminCredentials WHERE Activo=1 ORDER BY UserId').all();
     const decrypted = await Promise.all((users.results || []).map(async (u: any) => ({
       userId: u.UserId,
       garminEmail: u.GarminEmail,
@@ -966,25 +970,29 @@ app.onError((err, c) => {
 export default app
 
 async function checkPr(c: any, userId: any, exerciciId: any, kg: any) {
-
   try {
-    const updatePr = await c.env.DB.prepare('UPDATE Exercici SET PR=(SELECT MAX(Kg) FROM Series WHERE ExerciciId=? ) WHERE UserID=? AND ExerciciId=? AND PR!=? RETURNING *').bind(exerciciId, userId, exerciciId, kg).run()
-    if (updatePr.meta.rows_written > 0) {
-      await c.env.DB.prepare('UPDATE Series SET PR=FALSE WHERE UserID=? AND ExerciciId=? AND PR=TRUE RETURNING *').bind(userId, exerciciId).run()
-      const { results } = await c.env.DB.prepare('UPDATE Series SET PR=? WHERE UserID=? AND ExerciciId=? AND Kg=(SELECT MAX(Kg) FROM Series WHERE ExerciciId=?) RETURNING *').bind(true, userId, exerciciId, exerciciId).run()
+    const updatePr = c.env.DB.prepare('UPDATE Exercici SET PR=(SELECT MAX(Kg) FROM Series WHERE ExerciciId=?) WHERE UserId=? AND ExerciciId=? AND PR!=? RETURNING PR')
+      .bind(exerciciId, userId, exerciciId, kg);
+    const resetPr = c.env.DB.prepare('UPDATE Series SET PR=0 WHERE UserId=? AND ExerciciId=?')
+      .bind(userId, exerciciId);
+    const setNewPr = c.env.DB.prepare('UPDATE Series SET PR=1 WHERE UserId=? AND ExerciciId=? AND Kg=(SELECT MAX(Kg) FROM Series WHERE ExerciciId=?) RETURNING SerieId')
+      .bind(userId, exerciciId, exerciciId);
 
-      return { prUpdated: true, newPR: updatePr.results[0].PR, serieId: results[0].SerieId }
+    const [prResult, , setResult] = await c.env.DB.batch([updatePr, resetPr, setNewPr]);
+
+    if ((prResult.meta?.rows_written ?? 0) > 0) {
+      return {
+        prUpdated: true,
+        newPR: (prResult.results?.[0] as any)?.PR ?? false,
+        serieId: (setResult.results?.[0] as any)?.SerieId ?? 0
+      };
     }
-    else {
-      return { prUpdated: false, newPR: false }
-    }
+    return { prUpdated: false, newPR: false };
 
   } catch (error) {
-    console.log(error)
+    console.error(error)
     throw new HTTPException(500, { message: 'error sql query' })
   }
-
-
 }
 
 function updateCargaTotal(c: any, userId: any, entrenoId: any) {
@@ -1049,7 +1057,7 @@ async function getUserStats(userId: any, c: any) {
 }
 
 
-async function getFullSeriesListFromTraining(EntrenoId: any, c: any) {
+async function getFullSeriesListFromTraining(EntrenoId: any, userId: any, c: any) {
   try {
     const { results } = await c.env.DB.prepare(`
 SELECT
@@ -1061,14 +1069,15 @@ Series.SerieId,
     Series.Reps,
     Series.Data,
     Series.Carga,
-    Series.PR
+    Series.PR,
+    Series.Completada
 FROM
 Series
 JOIN 
     Exercici ON Series.ExerciciId = Exercici.ExerciciId
 WHERE
-Series.EntrenoId = ?;
-`).bind(EntrenoId).all();
+Series.EntrenoId = ? AND Series.UserId = ?;
+`).bind(EntrenoId, userId).all();
 
 
 

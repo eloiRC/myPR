@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'; 
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import chatGPTService from '../services/chatgpt';
+import { apiFetch } from '../services/api';
 
 // Props
 interface Props {
@@ -27,6 +28,7 @@ const newMessage = ref('');
 const isLoading = ref(false);
 const isFirstMessage = ref(true);
 const messagesContainer = ref<HTMLElement | null>(null);
+const mounted = ref(true);
 
 
 // Mensaje de bienvenida
@@ -53,34 +55,21 @@ const toggleChat = () => {
   }
 };
 
-// Función para enviar mensaje
+const POLL_INTERVAL_MS = 1500;
+
 const sendMessage = async () => {
   if (!newMessage.value.trim() || isLoading.value) return;
   
   const userMessage = newMessage.value.trim();
   
-  // Añadir mensaje del usuario
-  messages.value.push({
-    id: Date.now(),
-    text: userMessage,
-    isUser: true,
-    timestamp: new Date()
-  });
-  
+  messages.value.push({ id: Date.now(), text: userMessage, isUser: true, timestamp: new Date() });
   newMessage.value = '';
   isLoading.value = true;
   
-  // Crear mensaje del bot vacío para ir llenándolo con el stream
   const botMessageId = Date.now() + 1;
-  messages.value.push({
-    id: botMessageId,
-    text: '',
-    isUser: false,
-    timestamp: new Date()
-  });
+  messages.value.push({ id: botMessageId, text: '', isUser: false, timestamp: new Date() });
   
   try {
-    // Validar que tenemos los datos necesarios
     if (!props.entrenoData) {
       throw new Error('Los datos del entrenamiento no están disponibles. Por favor, espera un momento.');
     }
@@ -91,9 +80,7 @@ const sendMessage = async () => {
       ejercicios: props.ejercicios || []
     };
     
-    // Preparar el historial (excluyendo el mensaje actual y el bot vacío)
     const rawHistory = messages.value.slice(0, -2);
-    
     const firstUserIndex = rawHistory.findIndex(msg => msg.isUser);
     const validHistory = firstUserIndex !== -1 ? rawHistory.slice(firstUserIndex) : [];
 
@@ -102,85 +89,54 @@ const sendMessage = async () => {
       parts: [{ text: msg.text }]
     }));
 
-    const token = localStorage.getItem('token');
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787';
-    
-    const response = await fetch(`${API_URL}/api/gemini`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            token,
-            message: userMessage,
-            currentTraining,
-            chatId: null,
-            history: history
-        })
+    // 1) Lanzar trabajo
+    const launch = await apiFetch<{ jobId: string }>('/api/gemini', {
+      message: userMessage, currentTraining, chatId: null, history
     });
 
-    if (!response.ok) {
-        throw new Error('Error al comunicar con el asistente');
-    }
+    // 2) Polling hasta que termine
+    let accumulatedText = '';
+    let lastChunksLength = 0;
 
-    // Consumir el stream SSE
-    const reader = response.body?.getReader();
-    if (!reader) throw new Error('No se pudo leer la respuesta');
+    while (mounted.value) {
+      await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS));
+      if (!mounted.value) break;
+      try {
+        const status = await apiFetch<{
+          status: string; chunks: string[]; fullText: string;
+          workoutUpdated: boolean; error?: string;
+        }>('/api/chatStatus', { jobId: launch.jobId });
 
-    const decoder = new TextDecoder();
-    let buffer = '';
-    let streamedText = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      
-      // Procesar líneas SSE completas
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || ''; // Guardar línea incompleta
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          try {
-            const eventData = JSON.parse(line.slice(6));
-            
-            if (eventData.type === 'chunk') {
-              streamedText += eventData.text;
-              // Actualizar el mensaje del bot en tiempo real (limpiar json_plan si aparece parcialmente)
-              const botMsg = messages.value.find(m => m.id === botMessageId);
-              if (botMsg) {
-                botMsg.text = streamedText.replace(/```json_plan[\s\S]*$/,'').trim();
-              }
-            } else if (eventData.type === 'done') {
-              // Usar el texto limpio final del backend
-              const botMsg = messages.value.find(m => m.id === botMessageId);
-              if (botMsg) {
-                botMsg.text = eventData.fullText;
-              }
-              if (eventData.workoutUpdated) {
-                emit('refresh');
-              }
-            } else if (eventData.type === 'error') {
-              const botMsg = messages.value.find(m => m.id === botMessageId);
-              if (botMsg) {
-                botMsg.text = eventData.message || 'Error al generar la respuesta.';
-              }
-            }
-          } catch (parseError) {
-            // Ignorar líneas que no se pueden parsear
-          }
+        if (status.chunks.length > lastChunksLength) {
+          const newChunks = status.chunks.slice(lastChunksLength);
+          accumulatedText += newChunks.join('');
+          lastChunksLength = status.chunks.length;
+          const botMsg = messages.value.find(m => m.id === botMessageId);
+          if (botMsg) botMsg.text = accumulatedText;
+          nextTick(() => scrollToBottom());
         }
+
+        if (status.status === 'done') {
+          const botMsg = messages.value.find(m => m.id === botMessageId);
+          if (botMsg) botMsg.text = status.fullText;
+          if (status.workoutUpdated) emit('refresh');
+          break;
+        }
+        if (status.status === 'error') {
+          throw new Error(status.error || 'Error desconocido');
+        }
+      } catch (pollError: any) {
+        if (pollError.message?.includes('Job no encontrado') || pollError.message?.includes('404')) {
+          throw pollError;
+        }
+        console.warn('Poll retry:', pollError);
       }
     }
-    
-    // Marcar que ya no es el primer mensaje
+
     if (isFirstMessage.value) {
       isFirstMessage.value = false;
     }
   } catch (error: any) {
-    // En caso de error, actualizar el mensaje del bot vacío con el error
     const botMsg = messages.value.find(m => m.id === botMessageId);
     if (botMsg) {
       botMsg.text = error.message || 'Lo siento, hubo un error al procesar tu mensaje. Por favor, intenta de nuevo.';
@@ -214,6 +170,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  mounted.value = false;
   document.removeEventListener('mousedown', handleClickOutside);
 });
 

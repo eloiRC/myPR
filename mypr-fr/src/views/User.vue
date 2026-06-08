@@ -2,8 +2,8 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
+import { apiFetch } from '../services/api';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787';
 const router = useRouter();
 const authStore = useAuthStore();
 
@@ -25,16 +25,8 @@ const isDeletingGarmin = ref(false);
 // Cargar prompt del usuario
 const loadUserPrompt = async () => {
   try {
-    const token = authStore.token;
-    const response = await fetch(API_URL + '/api/getUser', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token })
-    });
-    if (response.ok) {
-      const data = await response.json();
-      chatbotPrompt.value = data.ChatbotPrompt || '';
-    }
+    const data = await apiFetch<{ ChatbotPrompt?: string }>('/api/getUser', {});
+    chatbotPrompt.value = data.ChatbotPrompt || '';
   } catch (err) {
     console.error('Error loading user prompt', err);
   }
@@ -43,20 +35,12 @@ const loadUserPrompt = async () => {
 // Cargar estado de Garmin
 const loadGarminStatus = async () => {
   try {
-    const token = authStore.token;
-    const response = await fetch(API_URL + '/api/garmin/status', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token })
-    });
-    if (response.ok) {
-      const data = await response.json();
-      garminConfigured.value = data.configured;
-      garminSavedEmail.value = data.garminEmail || '';
-      garminLastSync.value = data.lastSync
-        ? new Date(data.lastSync * 1000).toLocaleString('es-ES')
-        : 'Nunca';
-    }
+    const data = await apiFetch<any>('/api/garmin/status', {});
+    garminConfigured.value = data.configured;
+    garminSavedEmail.value = data.garminEmail || '';
+    garminLastSync.value = data.lastSync
+      ? new Date(data.lastSync * 1000).toLocaleString('es-ES')
+      : 'Nunca';
   } catch (err) {
     console.error('Error loading Garmin status', err);
   }
@@ -70,17 +54,10 @@ const saveGarmin = async () => {
   }
   try {
     isSavingGarmin.value = true;
-    const token = authStore.token;
-    const response = await fetch(API_URL + '/api/garmin/credentials', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        token,
-        garminEmail: garminEmail.value,
-        garminPassword: garminPassword.value
-      })
+    await apiFetch('/api/garmin/credentials', {
+      garminEmail: garminEmail.value,
+      garminPassword: garminPassword.value
     });
-    if (!response.ok) throw new Error('Error al guardar');
     garminConfigured.value = true;
     garminSavedEmail.value = garminEmail.value;
     garminPassword.value = '';
@@ -99,13 +76,7 @@ const deleteGarmin = async () => {
   if (!confirm('¿Eliminar credenciales Garmin? Dejarás de recibir datos automáticos.')) return;
   try {
     isDeletingGarmin.value = true;
-    const token = authStore.token;
-    const response = await fetch(API_URL + '/api/garmin/credentials/delete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token })
-    });
-    if (!response.ok) throw new Error('Error al eliminar');
+    await apiFetch('/api/garmin/credentials/delete', {});
     garminConfigured.value = false;
     garminSavedEmail.value = '';
     garminLastSync.value = '';
@@ -123,15 +94,7 @@ const deleteGarmin = async () => {
 const saveChatbotPrompt = async () => {
   try {
     isSavingPrompt.value = true;
-    const token = authStore.token;
-    const response = await fetch(API_URL + '/api/updateUser', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, chatbotPrompt: chatbotPrompt.value })
-    });
-    
-    if (!response.ok) throw new Error('Error saving prompt');
-    
+    await apiFetch('/api/updateUser', { chatbotPrompt: chatbotPrompt.value });
     alert('Preferencias del chatbot guardadas correctamente');
   } catch (err) {
     console.error('Error saving prompt', err);
@@ -151,22 +114,8 @@ const descargarHistorial = async () => {
   try {
     isLoading.value = true;
     error.value = '';
-    
-    const token = authStore.token;
-    
-    const response = await fetch(API_URL+'/api/downloadHistorial', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token })
-    });
-    
-    if (!response.ok) {
-      throw new Error('Error al descargar el historial');
-    }
-    
-    const data = await response.json();
+
+    const data = await apiFetch<any[]>('/api/downloadHistorial', {});
     const jsonContent = JSON.stringify(data, null, 2);
     const blob = new Blob([jsonContent], { type: 'application/json' });
     const url = window.URL.createObjectURL(blob);

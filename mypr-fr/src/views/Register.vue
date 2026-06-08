@@ -28,8 +28,13 @@ const validateForm = () => {
     return false;
   }
 
-  if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(password.value)) {
-    errorMessage.value = 'La contraseña debe contener al menos una letra y un número';
+  if (!/[A-Za-z]/.test(password.value)) {
+    errorMessage.value = 'La contraseña debe contener al menos una letra';
+    return false;
+  }
+
+  if (!/\d/.test(password.value)) {
+    errorMessage.value = 'La contraseña debe contener al menos un número';
     return false;
   }
 

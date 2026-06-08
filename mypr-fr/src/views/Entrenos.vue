@@ -4,8 +4,7 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787'; // Usa la variable de entorno o el valor por defecto
+import { apiFetch } from '../services/api';
 
 const authStore = useAuthStore();
 
@@ -27,8 +26,8 @@ const isLoading = ref(true);
 const error = ref('');
 
 // Estado para el rango de fechas
-let fechaInicio = 0;
-let fechaFin = 0;
+const fechaInicio = ref(0);
+const fechaFin = ref(0);
 const rangoSeleccionado = ref<'7d' | '30d' | '90d'>('30d');
 const diasDesplazamiento = ref<number>(0);
 
@@ -39,62 +38,41 @@ const entrenosOrdenados = computed(() => {
 
 // Datos para la gráfica de carga de entrenamiento
 const chartData = computed(() => {
-  // Crear un mapa para agrupar entrenos por día
   const entrenosPorDia = new Map<string, number>();
-  
-  let entenosAMostrar = entrenos.value.length
-  
-  // Calcular las fechas para mostrar
-  const fechas = Array.from({ length: entenosAMostrar }, (_, i) => {
-    const fecha = new Date(entrenos.value[i].Data*1000);
-    return fecha;
-  });
-  
-  
-  // Inicializar el mapa con las fechas y carga 0
-  fechas.forEach(fecha => {
-    const fechaStr = fecha.toLocaleDateString('es-ES', { 
-      weekday: 'short', 
-      day: 'numeric',
-      month: 'short'
+
+  const startMs = fechaInicio.value * 1000;
+  const endMs = fechaFin.value * 1000;
+  const oneDay = 24 * 60 * 60 * 1000;
+
+  for (let t = startMs; t <= endMs; t += oneDay) {
+    const fechaStr = new Date(t).toLocaleDateString('es-ES', {
+      weekday: 'short', day: 'numeric', month: 'short'
     });
     entrenosPorDia.set(fechaStr, 0);
-  });
-  
-  // Sumar la carga de cada entreno al día correspondiente
+  }
+
   entrenos.value.forEach(entreno => {
     const fecha = new Date(entreno.Data * 1000);
-    const fechaStr = fecha.toLocaleDateString('es-ES', { 
-      weekday: 'short', 
-      day: 'numeric',
-      month: 'short'
+    const fechaStr = fecha.toLocaleDateString('es-ES', {
+      weekday: 'short', day: 'numeric', month: 'short'
     });
-    
-    // Si la fecha está dentro del rango, actualizar la carga
     if (entrenosPorDia.has(fechaStr)) {
       entrenosPorDia.set(fechaStr, (entrenosPorDia.get(fechaStr) || 0) + entreno.CargaTotal);
     }
   });
-  
-  // Convertir el mapa a arrays para la gráfica
-  const labels = Array.from(entrenosPorDia.keys());
-  const data = Array.from(entrenosPorDia.values());
-  
+
   return {
-    labels,
-    datasets: [
-      {
-        label: 'Peso total: (Tn)',
-        backgroundColor: '#f97316',
-        borderColor: '#f97316',
-        borderWidth: 2,
-        pointBackgroundColor: '#f97316',
-        tension: 0.35,
-        fill: true,
-        data
-        
-      }
-    ]
+    labels: Array.from(entrenosPorDia.keys()),
+    datasets: [{
+      label: 'Peso total: (Tn)',
+      backgroundColor: '#f97316',
+      borderColor: '#f97316',
+      borderWidth: 2,
+      pointBackgroundColor: '#f97316',
+      tension: 0.35,
+      fill: true,
+      data: Array.from(entrenosPorDia.values())
+    }]
   };
 });
 
@@ -158,25 +136,21 @@ const actualizarRangoFechas = (preset: '7d' | '30d' | '90d', desplazamiento: num
       break;
   }
   
-  // Calcular el desplazamiento en segundos
   const desplazamientoSegundos = desplazamiento * dias * 24 * 60 * 60;
-  
-  // Actualizar las fechas con el desplazamiento
-  fechaFin = now + desplazamientoSegundos;
-  fechaInicio = fechaFin - (dias * 24 * 60 * 60);
-  
+
+  fechaFin.value = now + desplazamientoSegundos;
+  fechaInicio.value = fechaFin.value - (dias * 24 * 60 * 60);
+
   rangoSeleccionado.value = preset;
   diasDesplazamiento.value = desplazamiento;
   loadEntrenos();
 };
 
-// Función para navegar en el tiempo
 const navegarTiempo = (direccion: 'anterior' | 'siguiente') => {
   const desplazamiento = direccion === 'anterior' ? -1 : 1;
   actualizarRangoFechas(rangoSeleccionado.value, diasDesplazamiento.value + desplazamiento);
 };
 
-// Modificar la función loadEntrenos para usar el rango de fechas
 const loadEntrenos = async () => {
   if (!authStore.isAuthenticated) {
     router.push('/login');
@@ -185,32 +159,11 @@ const loadEntrenos = async () => {
 
   try {
     isLoading.value = true;
-    
-    // Obtener el token de autenticación
-    const token = authStore.token;
-    
-    // Preparar los datos para la solicitud
-    const requestData = {
-      token,
-      dataInici: fechaInicio,
-      dataFi: fechaFin
-    };
-    
-    // Hacer la solicitud a la API
-    const response = await fetch(API_URL+'/api/getEntrenos', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestData)
+
+    const data = await apiFetch<any[]>('/api/getEntrenos', {
+      dataInici: fechaInicio.value,
+      dataFi: fechaFin.value
     });
-    
-    if (!response.ok) {
-      
-      throw new Error(`Error al cargar los entrenos: ${response.status} ${response.statusText}`);
-    }
-    
-    const data = await response.json();
     
     // Asegurarnos de que los datos recibidos sean un array
     if (Array.isArray(data)) {
@@ -248,26 +201,7 @@ const irAEjercicios = () => {
 const crearNuevoEntreno = async () => {
   try {
     isLoading.value = true;
-    
-    // Obtener el token de autenticación
-    const token = authStore.token;
-    
-    // Hacer la solicitud a la API
-    const response = await fetch(API_URL+'/api/nouEntreno', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token })
-    });
-    
-    if (!response.ok) {
-      throw new Error('Error al crear nuevo entreno');
-    }
-    
-    const data = await response.json();
-    
-    // Redirigir al detalle del nuevo entreno
+    const data = await apiFetch<{ entrenoId: number }>('/api/nouEntreno', {});
     router.push(`/entreno/${data.entrenoId}`);
   } catch (err: any) {
     error.value = err.message || 'Error al crear nuevo entreno';
@@ -282,15 +216,7 @@ const eliminarEntreno = async (entrenoId: number) => {
   if (!confirm('¿Estás seguro de eliminar este entreno? Se borrarán todas sus series.')) return;
   try {
     isLoading.value = true;
-    const token = authStore.token;
-    const response = await fetch(API_URL + '/api/deleteEntreno', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, entrenoId })
-    });
-    if (!response.ok) {
-      throw new Error('Error al eliminar entreno');
-    }
+    await apiFetch('/api/deleteEntreno', { entrenoId });
     // Eliminar de la lista local sin recargar
     entrenos.value = entrenos.value.filter(e => e.EntrenoId !== entrenoId);
   } catch (err: any) {
