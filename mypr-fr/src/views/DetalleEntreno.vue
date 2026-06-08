@@ -156,15 +156,15 @@ const musculoStats = computed(() => {
     });
   });
 
-  const totalSeries = Array.from(stats.values()).reduce((a, b) => a + b.series, 0);
-  const totalReps = Array.from(stats.values()).reduce((a, b) => a + b.reps, 0);
+  const maxSeries = Math.max(...Array.from(stats.values()).map(v => v.series), 1);
+  const maxReps = Math.max(...Array.from(stats.values()).map(v => v.reps), 1);
 
   return Array.from(stats.entries()).map(([nom, v]) => ({
     nom,
     series: v.series,
     reps: v.reps,
-    pctSeries: totalSeries ? Math.round((v.series / totalSeries) * 100) : 0,
-    pctReps: totalReps ? Math.round((v.reps / totalReps) * 100) : 0,
+    pctSeries: Math.round((v.series / maxSeries) * 100),
+    pctReps: Math.round((v.reps / maxReps) * 100),
   })).sort((a, b) => b[modoGrafico.value === 'series' ? 'pctSeries' : 'pctReps'] - a[modoGrafico.value === 'series' ? 'pctSeries' : 'pctReps']);
 });
 
