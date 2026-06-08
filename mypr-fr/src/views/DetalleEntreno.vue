@@ -767,7 +767,7 @@ const onDrop = async (targetId: number) => {
         <Transition :name="direction === 'next' ? 'slide-next' : 'slide-prev'" mode="out-in">
           <div :key="serieActual.SerieId" class="serie-card-slide-wrapper">
             <div v-if="!editandoCard" class="serie-card-big" :class="{ 'serie-done': isCompletada(serieActual.SerieId) }" @click="onCardTap(serieActual.SerieId)">
-              <div class="big-ejercicio">{{ nombreEjercicio(serieActual) }}</div>
+              <div class="big-ejercicio" @click.stop="router.push(`/ejercicio/${serieActual.ExerciciId}`)" style="cursor: pointer;">{{ nombreEjercicio(serieActual) }}</div>
               <div class="big-stats">
                 <span class="big-kg">{{ serieActual.Kg }} kg</span>
                 <span class="big-x">×</span>
