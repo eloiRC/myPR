@@ -165,14 +165,8 @@ const loadEntrenos = async () => {
       dataFi: fechaFin.value
     });
     
-    // Asegurarnos de que los datos recibidos sean un array
     if (Array.isArray(data)) {
       entrenos.value = data;
-      for (let i = 0; i < entrenos.value.length; i++) {
-        entrenos.value[i].CargaTotal = parseFloat((entrenos.value[i].CargaTotal / 1000).toFixed(2));
-      }
-    } else if (data && typeof data === 'object') {
-      entrenos.value = data.results || [];
       for (let i = 0; i < entrenos.value.length; i++) {
         entrenos.value[i].CargaTotal = parseFloat((entrenos.value[i].CargaTotal / 1000).toFixed(2));
       }

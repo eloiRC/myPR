@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, watch, nextTick, type Ref } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { guardarNuevoEjercicio } from '../utils/ejercicioUtils';
@@ -343,23 +343,23 @@ const formatDateTitle = (timestamp: number) => new Date(timestamp * 1000).toLoca
 const alertWindow = (msg: string) => { alertMessage.value = msg; showAlert.value = true; setTimeout(() => showAlert.value = false, 5000); };
 const capitalize = (s: string) => s.replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
 
-const onKgInput = (target: Ref<number>, e: Event) => {
+const onKgInput = (setValue: (v: number) => void, e: Event) => {
   const raw = (e.target as HTMLInputElement).value;
   if (raw.startsWith('=')) return;
   const num = parseFloat(raw);
-  if (!isNaN(num)) target.value = num;
+  if (!isNaN(num)) setValue(num);
 };
 
-const onKgBlur = (target: Ref<number>, e: Event) => {
+const onKgBlur = (getCurrent: () => number, setValue: (v: number) => void, e: Event) => {
   const raw = (e.target as HTMLInputElement).value.trim();
   if (raw.startsWith('=')) {
     const result = evaluarFormulaPeso(raw);
     if (result !== null) {
-      target.value = result;
+      setValue(result);
       (e.target as HTMLInputElement).value = String(result);
     } else {
       alertWindow('Fórmula inválida. Ejemplo: =10x2+25');
-      (e.target as HTMLInputElement).value = formatKgInput(target.value);
+      (e.target as HTMLInputElement).value = formatKgInput(getCurrent());
     }
   }
 };
@@ -730,7 +730,7 @@ const onDrop = async (targetId: number) => {
               </div>
             </div>
             <div class="form-row">
-              <div class="form-group"><label>Peso (kg):</label><input type="text" inputmode="decimal" :value="formatKgInput(nuevaSerie.kg)" @input="onKgInput(nuevaSerie.kg, $event)" @blur="onKgBlur(nuevaSerie.kg, $event)" class="form-control"></div>
+              <div class="form-group"><label>Peso (kg):</label><input type="text" inputmode="decimal" :value="formatKgInput(nuevaSerie.kg)" @input="onKgInput((v) => nuevaSerie.kg = v, $event)" @blur="onKgBlur(() => nuevaSerie.kg, (v) => nuevaSerie.kg = v, $event)" class="form-control"></div>
               <div class="form-group"><label>Reps:</label><input type="number" v-model.number="nuevaSerie.reps" class="form-control" min="1" step="1"></div>
             </div>
             <div class="form-group" v-if="nuevaSerie.kg > 0"><div class="carga-calculada"><span class="label">Total:</span><span class="value">{{ cargaCalculada }} kg</span></div></div>
@@ -794,7 +794,7 @@ const onDrop = async (targetId: number) => {
                   </div>
                 </div>
                 <div class="form-row">
-                   <div class="form-group"><label>Peso:</label><input type="text" inputmode="decimal" :value="formatKgInput(cardEditData.kg)" @input="onKgInput(cardEditData.kg, $event)" @blur="onKgBlur(cardEditData.kg, $event)" class="form-control"></div>
+                   <div class="form-group"><label>Peso:</label><input type="text" inputmode="decimal" :value="formatKgInput(cardEditData.kg)" @input="onKgInput((v) => cardEditData.kg = v, $event)" @blur="onKgBlur(() => cardEditData.kg, (v) => cardEditData.kg = v, $event)" class="form-control"></div>
                   <div class="form-group"><label>Reps:</label><input type="number" v-model.number="cardEditData.reps" class="form-control"></div>
                 </div>
                 <div class="form-actions">
