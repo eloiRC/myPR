@@ -1021,6 +1021,13 @@ h2 {
     background: var(--accent-primary-dark);
 }
 
+.dot-break {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    line-height: 10px;
+    user-select: none;
+}
+
 .dot-count {
     font-size: 0.75rem;
     color: var(--text-muted);
@@ -1069,6 +1076,9 @@ h2 {
 .card-nav-row .card-dots {
     flex: 1;
     margin-bottom: 0;
+    min-width: 0;
+    overflow: hidden;
+    flex-wrap: nowrap;
 }
 
 .card-nav-btn {

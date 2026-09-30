@@ -126,7 +126,8 @@ const ejerciciosUnicos = computed(() => new Set(series.value.map(serie => serie.
 
 // Mostrar las series con la más reciente arriba (invertido respecto al orden base)
 const seriesDisplay = computed(() => series.value.slice().reverse());
-const seriesCardOrder = computed(() => seriesDisplay.value);
+// En modo carrusel usamos el orden cronológico (más antiguo primero) — orden inverso a la lista
+const seriesCardOrder = computed(() => series.value.slice());
 
 const ejercicioGrupoMap = computed(() => {
   const map = new Map<number, string[]>();
@@ -181,6 +182,30 @@ const musculoStats = computed(() => {
 
 // Card view helpers
 const serieActual = computed(() => seriesCardOrder.value[serieActualIdx.value] || null);
+
+// Vista condensada de los dots de paginación: si hay más de 10 tarjetas no mostramos
+// un dot por elemento (evita scroll lateral). Mostramos primera, última y un entorno
+// alrededor de la tarjeta actual, con elipsis donde hay saltos.
+const dotsView = computed(() => {
+  const total = seriesCardOrder.value.length;
+  if (total <= 10) {
+    return seriesCardOrder.value.map((s, i) => ({
+      kind: 'dot' as const, idx: i, key: 'd' + s.SerieId
+    }));
+  }
+  const cur = serieActualIdx.value;
+  const idxs = Array.from(new Set([0, cur - 1, cur, cur + 1, total - 1]))
+    .filter(i => i >= 0 && i < total)
+    .sort((a, b) => a - b);
+  const items: Array<{ kind: 'dot' | 'break'; idx?: number; key: string }> = [];
+  let prev = -2;
+  for (const i of idxs) {
+    if (i - prev > 1) items.push({ kind: 'break', key: 'b' + i });
+    items.push({ kind: 'dot', idx: i, key: 'd' + seriesCardOrder.value[i].SerieId });
+    prev = i;
+  }
+  return items;
+});
 
 const nombreEjercicio = (serie: any) => {
   return ejercicios.value.find(e => e.ExerciciId === serie.ExerciciId)?.Nom || 'Ejercicio desconocido';
@@ -818,10 +843,13 @@ const onDrop = async (targetId: number) => {
           title="Primera tarjeta"
         >⏮</button>
         <div class="card-dots">
-          <span v-for="(s, i) in seriesCardOrder" :key="s.SerieId"
-            class="dot"
-            :class="{ active: i === serieActualIdx, done: isCompletada(s.SerieId) }"
-            @click="serieActualIdx = i"></span>
+          <template v-for="item in dotsView" :key="item.key">
+            <span v-if="item.kind === 'dot'"
+              class="dot"
+              :class="{ active: item.idx === serieActualIdx, done: isCompletada(seriesCardOrder[item.idx!].SerieId) }"
+              @click="serieActualIdx = item.idx!"></span>
+            <span v-else class="dot-break">…</span>
+          </template>
           <span class="dot-count">{{ serieActualIdx + 1 }} / {{ seriesCardOrder.length }}</span>
         </div>
         <button
