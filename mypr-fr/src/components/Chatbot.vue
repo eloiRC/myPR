@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import chatGPTService from '../services/chatgpt';
 import { apiFetch } from '../services/api';
+import { renderChatMarkdown } from '../utils/chatMarkdown';
 
 // Props
 interface Props {
@@ -28,13 +29,37 @@ const newMessage = ref('');
 const isLoading = ref(false);
 const isFirstMessage = ref(true);
 const messagesContainer = ref<HTMLElement | null>(null);
+const inputRef = ref<HTMLTextAreaElement | null>(null);
 const mounted = ref(true);
 
 
 // Mensaje de bienvenida
 const welcomeMessage = computed(() => {
-  return '¡Hola! Soy tu entrenador virtual. ¿En qué puedo ayudarte? Tengo acceso a tus entrenos, así que puedo ayudarte con recomendaciones personalizadas para que mejores tus resultados. ¿Listo para empezar?';
+  return '¡Hola! Soy tu entrenador. Conozco tu historial, tus récords y qué músculos llevan más tiempo sin trabajar. Pídeme el entreno de hoy o elige una sugerencia.';
 });
+
+const QUICK_PROMPTS = [
+  'Propón el entreno de hoy',
+  'Dame 2 opciones distintas',
+  '¿Qué músculo me toca?',
+  '¿En qué ejercicio estoy estancado?',
+  'Hoy estoy cansado, algo ligero',
+];
+
+// Las sugerencias solo se muestran mientras no haya conversación
+const showQuickPrompts = computed(() => !isLoading.value && !messages.value.some(m => m.isUser));
+
+const sendQuickPrompt = (text: string) => {
+  newMessage.value = text;
+  sendMessage();
+};
+
+const autoResize = () => {
+  const el = inputRef.value;
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+};
 
 // Función para abrir/cerrar el chat
 const toggleChat = () => {
@@ -51,6 +76,7 @@ const toggleChat = () => {
     }
     nextTick(() => {
       scrollToBottom();
+      inputRef.value?.focus();
     });
   }
 };
@@ -64,6 +90,7 @@ const sendMessage = async () => {
   
   messages.value.push({ id: Date.now(), text: userMessage, isUser: true, timestamp: new Date() });
   newMessage.value = '';
+  nextTick(autoResize);
   isLoading.value = true;
   
   const botMessageId = Date.now() + 1;
@@ -98,38 +125,48 @@ const sendMessage = async () => {
     let accumulatedText = '';
     let lastChunksLength = 0;
 
+    type ChatStatus = {
+      status: string; chunks: string[]; fullText: string;
+      workoutUpdated: boolean; error?: string;
+    };
+    const MAX_POLL_FAILURES = 5;
+    let pollFailures = 0;
+
     while (mounted.value) {
       await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS));
       if (!mounted.value) break;
+
+      let status: ChatStatus;
       try {
-        const status = await apiFetch<{
-          status: string; chunks: string[]; fullText: string;
-          workoutUpdated: boolean; error?: string;
-        }>('/api/chatStatus', { jobId: launch.jobId });
-
-        if (status.chunks.length > lastChunksLength) {
-          const newChunks = status.chunks.slice(lastChunksLength);
-          accumulatedText += newChunks.join('');
-          lastChunksLength = status.chunks.length;
-          const botMsg = messages.value.find(m => m.id === botMessageId);
-          if (botMsg) botMsg.text = accumulatedText;
-          nextTick(() => scrollToBottom());
-        }
-
-        if (status.status === 'done') {
-          const botMsg = messages.value.find(m => m.id === botMessageId);
-          if (botMsg) botMsg.text = status.fullText;
-          if (status.workoutUpdated) emit('refresh');
-          break;
-        }
-        if (status.status === 'error') {
-          throw new Error(status.error || 'Error desconocido');
-        }
+        status = await apiFetch<ChatStatus>('/api/chatStatus', { jobId: launch.jobId });
+        pollFailures = 0;
       } catch (pollError: any) {
-        if (pollError.message?.includes('Job no encontrado') || pollError.message?.includes('404')) {
-          throw pollError;
+        // Errores de red puntuales se reintentan; un job perdido o fallos repetidos no
+        if (pollError.message?.includes('Job no encontrado') || ++pollFailures >= MAX_POLL_FAILURES) {
+          throw new Error('Se perdió la conexión con el entrenador. Inténtalo de nuevo.');
         }
         console.warn('Poll retry:', pollError);
+        continue;
+      }
+
+      if (status.chunks.length > lastChunksLength) {
+        const newChunks = status.chunks.slice(lastChunksLength);
+        accumulatedText += newChunks.join('');
+        lastChunksLength = status.chunks.length;
+        const botMsg = messages.value.find(m => m.id === botMessageId);
+        if (botMsg) botMsg.text = accumulatedText;
+        nextTick(() => scrollToBottom());
+      }
+
+      if (status.status === 'done') {
+        const botMsg = messages.value.find(m => m.id === botMessageId);
+        if (botMsg) botMsg.text = status.fullText;
+        if (status.workoutUpdated) emit('refresh');
+        break;
+      }
+      if (status.status === 'error') {
+        console.error('Error del entrenador:', status.error);
+        throw new Error('⚠️ El entrenador no ha podido responder. Inténtalo de nuevo en unos segundos.');
       }
     }
 
@@ -148,7 +185,7 @@ const sendMessage = async () => {
 
 // Función para manejar Enter
 const handleKeyPress = (event: KeyboardEvent) => {
-  if (event.key === 'Enter' && !event.shiftKey) {
+  if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
     event.preventDefault();
     sendMessage();
   }
@@ -162,21 +199,29 @@ const scrollToBottom = () => {
 
 // Cargar mensajes al montar el componente
 onMounted(() => {
-  const { messages: savedMessages, isFirstMessage: savedIsFirstMessage } = chatGPTService.loadMessages();
+  // Limpia la clave global antigua (antes el historial se compartía entre entrenos)
+  ['chatHistory', 'isFirstMessage', 'chatHistoryTimestamp', 'responseId'].forEach(k => localStorage.removeItem(k));
+  const { messages: savedMessages, isFirstMessage: savedIsFirstMessage } = chatGPTService.loadMessages(props.entrenoId);
   messages.value = savedMessages;
   isFirstMessage.value = savedIsFirstMessage;
   
   document.addEventListener('mousedown', handleClickOutside);
+  document.addEventListener('keydown', handleEscape);
 });
+
+const handleEscape = (event: KeyboardEvent) => {
+  if (event.key === 'Escape' && isOpen.value) isOpen.value = false;
+};
 
 onUnmounted(() => {
   mounted.value = false;
   document.removeEventListener('mousedown', handleClickOutside);
+  document.removeEventListener('keydown', handleEscape);
 });
 
 // Modificar el watch de messages
 watch([messages, isFirstMessage], () => {
-  chatGPTService.saveMessages(messages.value, isFirstMessage.value);
+  chatGPTService.saveMessages(messages.value, isFirstMessage.value, props.entrenoId);
 }, { deep: true });
 
 // Modificar toggleChat
@@ -189,10 +234,7 @@ watch(messages, () => {
 const resetConversation = () => {
   messages.value = [];
   isFirstMessage.value = true;
-  localStorage.removeItem('chatHistory');
-  localStorage.removeItem('isFirstMessage');
-  localStorage.removeItem('chatHistoryTimestamp');
-  localStorage.removeItem('responseId'); // Limpiar el historial de Gemini
+  chatGPTService.clearMessages(props.entrenoId);
   
   // Añadir mensaje de bienvenida
   messages.value.push({
@@ -221,50 +263,51 @@ const handleClickOutside = (event: MouseEvent) => {
 
 <template>
   <div class="chatbot-container">
-    <!-- Botón flotante del chatbot -->
-    <button 
-      @click="toggleChat" 
+    <button
+      @click="toggleChat"
       class="chatbot-toggle"
       :class="{ 'active': isOpen }"
-      title="Asistente de entrenamiento"
+      :aria-label="isOpen ? 'Cerrar entrenador IA' : 'Abrir entrenador IA'"
+      :aria-expanded="isOpen"
+      title="Entrenador IA"
     >
-      <span class="chatbot-icon">🤖</span>
+      <span class="chatbot-icon" aria-hidden="true">{{ isOpen ? '✕' : '🤖' }}</span>
     </button>
-    
-    <!-- Ventana del chat -->
-    <div v-if="isOpen" class="chatbot-window">
+
+    <div v-if="isOpen" class="chatbot-window" role="dialog" aria-label="Entrenador IA">
       <div class="chatbot-header">
-        <h3>Asistente de Entrenamiento</h3>
+        <div class="chatbot-title">
+          <h3>Entrenador IA</h3>
+          <span v-if="entrenoData?.Nom" class="chatbot-subtitle">{{ entrenoData.Nom }}</span>
+        </div>
         <div class="header-buttons">
-          <button @click="resetConversation" class="reset-btn" title="Reiniciar conversación">
-            ↺
-          </button>
-          <button @click="toggleChat" class="close-btn">&times;</button>
+          <button @click="resetConversation" class="icon-btn" title="Nueva conversación" aria-label="Nueva conversación">↺</button>
+          <button @click="toggleChat" class="icon-btn" aria-label="Cerrar">&times;</button>
         </div>
       </div>
-      
 
-    
-      <div class="chatbot-messages" ref="messagesContainer">
+      <div class="chatbot-messages" ref="messagesContainer" aria-live="polite">
         <div class="messages-wrapper">
-          <div 
-            v-for="message in messages" 
+          <div
+            v-for="message in messages"
             :key="message.id"
             v-show="message.text || message.isUser"
             class="message"
             :class="{ 'user-message': message.isUser, 'bot-message': !message.isUser }">
             <div class="message-content">
-              <div class="message-text">{{ message.text }}</div>
+              <div v-if="message.isUser" class="message-text">{{ message.text }}</div>
+              <!-- renderChatMarkdown escapa el HTML antes de aplicar formato -->
+              <div v-else class="message-text md" v-html="renderChatMarkdown(message.text)"></div>
               <div class="message-time">
                 {{ message.timestamp.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) }}
               </div>
             </div>
           </div>
-          
+
           <!-- Indicador de carga (visible hasta que llega el primer token) -->
           <div v-if="isLoading && (!messages.length || messages[messages.length - 1]?.text === '')" class="message bot-message">
             <div class="message-content">
-              <div class="typing-indicator">
+              <div class="typing-indicator" aria-label="Escribiendo">
                 <span></span>
                 <span></span>
                 <span></span>
@@ -273,19 +316,34 @@ const handleClickOutside = (event: MouseEvent) => {
           </div>
         </div>
       </div>
-      
+
+      <div v-if="showQuickPrompts" class="quick-prompts">
+        <button
+          v-for="prompt in QUICK_PROMPTS"
+          :key="prompt"
+          type="button"
+          class="quick-prompt"
+          :disabled="isLoading"
+          @click="sendQuickPrompt(prompt)"
+        >{{ prompt }}</button>
+      </div>
+
       <div class="chatbot-input">
         <textarea
+          ref="inputRef"
           v-model="newMessage"
-          @keypress="handleKeyPress"
-          placeholder="Escribe tu mensaje..."
+          @keydown="handleKeyPress"
+          @input="autoResize"
+          placeholder="Pregunta a tu entrenador..."
           class="message-input"
           rows="1"
+          aria-label="Mensaje"
         ></textarea>
-        <button 
-          @click="sendMessage" 
+        <button
+          @click="sendMessage"
           class="send-btn"
           :disabled="!newMessage.trim() || isLoading"
+          aria-label="Enviar"
         >
           ➤
         </button>

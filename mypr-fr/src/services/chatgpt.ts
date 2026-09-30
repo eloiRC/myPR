@@ -5,29 +5,46 @@ interface ChatMessage {
     timestamp: Date;
 }
 
+// El historial se guarda por entreno: si fuera global, en un entreno nuevo
+// Gemini vería su propuesta anterior y tendería a repetirla.
+function keys(scope: string | number = 'global') {
+    return {
+        history: `chatHistory:${scope}`,
+        first: `isFirstMessage:${scope}`,
+        timestamp: `chatHistoryTimestamp:${scope}`,
+    };
+}
+
 class ChatGPTService {
-    saveMessages(messages: ChatMessage[], isFirstMessage: boolean): void {
-        localStorage.setItem('chatHistory', JSON.stringify(messages));
-        localStorage.setItem('isFirstMessage', JSON.stringify(isFirstMessage));
-        localStorage.setItem('chatHistoryTimestamp', Date.now().toString());
+    saveMessages(messages: ChatMessage[], isFirstMessage: boolean, scope?: string | number): void {
+        const k = keys(scope);
+        localStorage.setItem(k.history, JSON.stringify(messages));
+        localStorage.setItem(k.first, JSON.stringify(isFirstMessage));
+        localStorage.setItem(k.timestamp, Date.now().toString());
     }
 
-    loadMessages(): { messages: ChatMessage[], isFirstMessage: boolean } {
+    clearMessages(scope?: string | number): void {
+        const k = keys(scope);
+        localStorage.removeItem(k.history);
+        localStorage.removeItem(k.first);
+        localStorage.removeItem(k.timestamp);
+    }
+
+    loadMessages(scope?: string | number): { messages: ChatMessage[], isFirstMessage: boolean } {
+        const k = keys(scope);
         try {
-            const savedTimestamp = localStorage.getItem('chatHistoryTimestamp');
+            const savedTimestamp = localStorage.getItem(k.timestamp);
             const now = Date.now();
             const twelveHours = 12 * 60 * 60 * 1000;
 
             if (savedTimestamp && (now - parseInt(savedTimestamp) > twelveHours)) {
                 console.log('Chat history expired, clearing...');
-                localStorage.removeItem('chatHistory');
-                localStorage.removeItem('isFirstMessage');
-                localStorage.removeItem('chatHistoryTimestamp');
+                this.clearMessages(scope);
                 return { messages: [], isFirstMessage: true };
             }
 
-            const savedMessages = localStorage.getItem('chatHistory');
-            const savedIsFirstMessage = localStorage.getItem('isFirstMessage');
+            const savedMessages = localStorage.getItem(k.history);
+            const savedIsFirstMessage = localStorage.getItem(k.first);
 
             let messages: ChatMessage[] = [];
 
@@ -49,9 +66,7 @@ class ChatGPTService {
             return { messages, isFirstMessage };
         } catch (error) {
             console.error('Error loading messages from localStorage:', error);
-            localStorage.removeItem('chatHistory');
-            localStorage.removeItem('isFirstMessage');
-            localStorage.removeItem('chatHistoryTimestamp');
+            this.clearMessages(scope);
             return { messages: [], isFirstMessage: true };
         }
     }

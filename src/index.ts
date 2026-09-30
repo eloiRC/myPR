@@ -8,6 +8,7 @@ import { hashPassword, verifyPassword, generateJWT, verifyJWT } from './jwt'
 import { encrypt, decrypt } from './crypto'
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai'
 import { createJob, getJob, appendChunk, finishJob, failJob } from './chatJobs'
+import { analyzeTraining, type HistoryRow, type ExerciseRow } from './coachAnalysis'
 
 
 
@@ -20,7 +21,7 @@ type Bindings = {
   GARMIN_ENCRYPTION_KEY: string;
 }
 
-const app = new Hono<{ Bindings: Bindings }>()
+const app = new Hono<{ Bindings: Bindings; Variables: { jwtPayload: any } }>()
 
 app.use(logger())
 
@@ -135,9 +136,9 @@ app.post('/api/nouEntreno', async (c) => {
     const result = await c.env.DB.prepare(
       `INSERT INTO Entreno (UserId, Data, CargaTotal, Nom, Descripcio, Puntuacio)
        SELECT ?, ?, 0,
-         'Entreno #' || (COALESCE(MAX(CAST(SUBSTR(Nom, 9) AS INTEGER)), 0) + 1),
+         'Entreno #' || (COALESCE(MAX(CAST(SUBSTR(Nom, 10) AS INTEGER)), 0) + 1),
          '', 3
-       FROM Entreno WHERE UserId = ?`
+       FROM Entreno WHERE UserId = ? AND Nom LIKE 'Entreno #%'`
     ).bind(userId, data, userId).run();
 
     return c.json({ message: 'Nou Entreno Creat', entrenoId: result.meta.last_row_id, dataInici: data })
@@ -516,10 +517,10 @@ app.post('/signup', zValidator('json', signup), async (c) => {
     const hashedPassword = await hashPassword(password);
 
     const { results } = await c.env.DB.prepare('INSERT INTO Users (Email,Password) VALUES (?,?) RETURNING *').bind(email, hashedPassword).run()
-    //const token = await generateJWT({ email: email, UserId: results[0].UserId, exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60 }, c.env.jwt_secret)
+    //const token = await generateJWT({ email: email, UserId: Number(results[0].UserId), exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60 }, c.env.jwt_secret)
 
 
-    const token = await generateJWT({ email: email, UserId: results[0].UserId, exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60 }, c.env.jwt_secret)
+    const token = await generateJWT({ email: email, UserId: Number(results[0].UserId), exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60 }, c.env.jwt_secret)
 
     return c.json({ message: 'signup succesfull', token: token })
   } catch (error: any) {
@@ -550,7 +551,7 @@ app.post('/login', zValidator('json', login), async (c) => {
     if (isPasswordValid) {
       console.log("log in succesfull")
 
-      const token = await generateJWT({ email: email, UserId: results[0].UserId, exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60 }, c.env.jwt_secret)
+      const token = await generateJWT({ email: email, UserId: Number(results[0].UserId), exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60 }, c.env.jwt_secret)
       // Create a token
 
 
@@ -607,49 +608,39 @@ app.post('/api/gemini', zValidator('json', chatGPT), async (c) => {
 
 async function procesarChatJob(jobId: string, userId: number, message: string, currentTraining: any, history: any[], c: any) {
   try {
-    const [userStats, seriesCurrentTraining, user] = await Promise.all([
-      getUserStats(userId, c),
+    const [coachData, seriesCurrentTraining, user] = await Promise.all([
+      getCoachData(userId, currentTraining.entreno.EntrenoId, c),
       getFullSeriesListFromTraining(currentTraining.entreno.EntrenoId, userId, c),
       c.env.DB.prepare('SELECT ChatbotPrompt FROM Users WHERE UserId = ?').bind(userId).first()
     ]);
 
-    const availableExercises = currentTraining.ejercicios || [];
-    const exercisesListString = availableExercises.map((e: any) => `ID: ${e.ExerciciId} - Nombre: ${e.Nom}`).join('\n');
+    const analysis = analyzeTraining(coachData);
     const userCustomPrompt = user?.ChatbotPrompt ? `\n\nINSTRUCCIONES PERSONALIZADAS DEL USUARIO:\n${user.ChatbotPrompt}` : '';
-    const trainingHistory = JSON.stringify(userStats.lastWorkouts);
 
     const basePersona = `
 SYSTEM INSTRUCTIONS: EXPERT STRENGTH COACH
 
-Eres un Coach de Élite especializado en Fuerza y Hipertrofia. Tu objetivo es actuar como un motor de análisis de rendimiento para el usuario. Eres directo, técnico y te enfocas exclusivamente en resultados y datos.
+Eres un Coach de Élite especializado en Fuerza y Hipertrofia. Actúas como un motor de análisis de rendimiento: directo, técnico, basado en datos, pero también creativo al programar. Un buen coach NO repite la misma sesión una y otra vez.
 
 CONTEXTO DE ENTRADA
 
-Recibirás:
+Al final recibirás un ANÁLISIS PRECALCULADO del historial del usuario (ya filtrado de series de aproximación): enfoque sugerido, frescura por grupo muscular, últimas sesiones, estancamientos, candidatos de rotación y el catálogo de ejercicios con sus grupos musculares. Confía en esos números; no los recalcules.
 
-Historial: Últimos 50 entrenamientos ${trainingHistory}.
+PROTOCOLO PARA PROPONER UN ENTRENO
 
-PRs Actuales: ${JSON.stringify(userStats.prs)}.
+1. Elegir músculos: prioriza los grupos más descansados (arriba en "FRESCURA"). Evita grupos entrenados hace ≤1 día salvo que el usuario lo pida.
+2. Elegir enfoque: usa el "ENFOQUE SUGERIDO PARA HOY" como esquema de reps/descansos. Si el usuario indica cansancio, mal descanso o molestias, baja volumen ~30% y evita el enfoque FUERZA.
+3. Estructura: 1-2 básicos multiarticulares + 2-4 accesorios.
+   - Básicos que están PROGRESANDO: mantenlos y aplica microcarga (+1.25 a +2.5 kg) o +1 rep.
+   - Básicos ESTANCADOS: cambia la variante (ángulo, agarre, unilateral, máquina) o el esquema (rest-pause, top set + back-offs, drop set).
+4. VARIEDAD OBLIGATORIA:
+   - Al menos 2 ejercicios de la propuesta deben NO aparecer en "USADOS EN LAS 2 ÚLTIMAS SESIONES". Prioriza los "CANDIDATOS DE ROTACIÓN".
+   - Nunca copies literalmente una sesión anterior (mismos ejercicios + mismos pesos/reps).
+   - Si propones un ejercicio que el usuario no ha hecho recientemente, estima el peso de forma conservadora a partir de su PR o de ejercicios similares.
+5. Volumen: máximo ~10 series efectivas por grupo muscular en la sesión.
+6. Justifica en 1 línea por ejercicio el porqué (frescura, estancamiento, rotación, progresión).
 
-Catálogo de Ejercicios: ${exercisesListString}.
-
-PROTOCOLO DE ANÁLISIS (Interno)
-
-Antes de generar la propuesta, evalúa bajo criterios de realismo técnico y los hallazgos del historial:
-
-Filtro de Calidad de Datos (Anti-Ruido): Identifica y descarta series de aproximación (<40% del PR o <50% del peso máximo de la sesión anterior). Solo analiza "series de trabajo" para evitar falsos cálculos de volumen.
-
-Criterio de Sobrecarga Progresiva:
-- Si el usuario completó todas las reps en la última sesión: Propón un incremento de +1.25kg a +2.5kg (microcarga).
-- Si detectas estancamiento (+3 sesiones con mismo peso/reps): Varía el rango de reps (ej. de 3x10 a 4x8) o propón un Drop Set o Rest-Pause para romper la adaptación.
-
-Jerarquía y Volumen Basura:
-- Prioriza ejercicios multiarticulares (Sentadilla, Banca, Peso Muerto).
-- Si detectas más de 10 series efectivas por grupo muscular en una sesión, elimina accesorios redundantes para priorizar la intensidad en los básicos.
-
-Análisis de Variedad Estratégica:
-- ¿Lleva +3 semanas con el mismo ejercicio? Si hay estancamiento, cambia el ángulo (ej. Press Plano por Inclinado).
-- ¿Músculos descuidados? Si un grupo no aparece en 2 semanas, incorpóralo.
+Si el usuario pide ideas o alternativas, ofrece 2 opciones distintas (A/B) y deja que elija.
 
 TÍTULO AUTOMÁTICO DEL ENTRENO:
 - Si el nombre actual del entreno es automático (formato "Entreno #X") y el usuario te pide crear o modificar la rutina, genera un nombre descriptivo breve (ej. "Pecho y Tríceps", "Full Body Fuerza", "Push Pull Legs").
@@ -681,7 +672,7 @@ Nunca muestres IDs de ejercicio al usuario.
 
 RESTRICCIONES
 
-Continuidad: No cambies un básico si el usuario ha progresado en él las últimas 4 semanas.
+Continuidad: No cambies un básico que aparezca en "PROGRESANDO"; la variedad se aplica sobre accesorios y básicos estancados.
 Resolución de dudas: Si el usuario pregunta algo técnico o sobre una molestia, suspende la propuesta y responde a la consulta con prioridad máxima.
 `;
 
@@ -690,6 +681,9 @@ SITUACIÓN ACTUAL:
 - Entrenando: ${currentTraining.entreno.Nom} (ID: ${currentTraining.entreno.EntrenoId})
 - Nombre automático: ${/^Entreno #\d+$/.test(currentTraining.entreno.Nom) ? 'Sí (el usuario no lo ha personalizado)' : 'No (el usuario ya lo personalizó)'}
 - Series ya realizadas hoy: ${seriesCurrentTraining}
+
+ANÁLISIS PRECALCULADO
+${analysis.text}
     `;
 
     const finalSystemInstruction = `${basePersona}\n${userCustomPrompt}\n\n${contextData}`;
@@ -703,7 +697,8 @@ SITUACIÓN ACTUAL:
     const model = genAI.getGenerativeModel({
       model: 'gemini-3.5-flash',
       systemInstruction: finalSystemInstruction,
-      generationConfig: { temperature: 0.2 },
+      // 0.2 hacía la salida casi determinista: mismo contexto -> misma rutina
+      generationConfig: { temperature: 0.8, topP: 0.95 },
       safetySettings: [{
         category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
         threshold: HarmBlockThreshold.BLOCK_NONE,
@@ -758,8 +753,12 @@ SITUACIÓN ACTUAL:
         const plan = JSON.parse(match[1]);
         if (Array.isArray(plan)) {
           for (const serie of plan) {
-            if (serie.ExerciciId && serie.Reps) {
-              await addSerieToDb(c, userId, currentTraining.entreno.EntrenoId, serie.ExerciciId, serie.Kg || 0, serie.Reps);
+            const exerciciId = Number(serie.ExerciciId);
+            const reps = Math.round(Number(serie.Reps));
+            const kg = Math.round((Number(serie.Kg) || 0) * 10) / 10;
+            // Solo IDs del catálogo del usuario: evita IDs inventados o de otros usuarios
+            if (analysis.validExerciseIds.has(exerciciId) && reps > 0 && kg >= 0) {
+              await addSerieToDb(c, userId, currentTraining.entreno.EntrenoId, exerciciId, kg, reps);
             }
           }
           workoutUpdated = true;
@@ -770,7 +769,7 @@ SITUACIÓN ACTUAL:
       }
     }
 
-    finishJob(jobId, workoutUpdated);
+    finishJob(jobId, workoutUpdated, cleanedText);
 
   } catch (error: any) {
     console.error('❌ Error Gemini:', error);
@@ -1009,51 +1008,31 @@ function updateCargaTotal(c: any, userId: any, entrenoId: any) {
 
 }
 
-// Función optimizada para obtener estadísticas clave sin gastar muchos tokens
-async function getUserStats(userId: any, c: any) {
-  try {
-    // 1. Obtener los PRs (Récords) de cada ejercicio activo
-    const prs = await c.env.DB.prepare(`
-          SELECT Nom, PR FROM Exercici WHERE UserId = ? AND PR > 0
-  `).bind(userId).all();
+// Datos crudos para el análisis del coach (ver coachAnalysis.ts)
+async function getCoachData(userId: number, currentEntrenoId: number, c: any) {
+  // Últimos 40 entrenos (excluyendo el actual, que va aparte); limitamos por entreno, no por filas
+  const historyStmt = c.env.DB.prepare(`
+    SELECT E.EntrenoId, E.Nom, E.Data, S.ExerciciId, Ex.Nom AS NomExercici, S.Kg, S.Reps
+    FROM Entreno E
+    JOIN Series S ON E.EntrenoId = S.EntrenoId AND S.UserId = E.UserId
+    LEFT JOIN Exercici Ex ON S.ExerciciId = Ex.ExerciciId
+    WHERE E.EntrenoId IN (
+      SELECT EntrenoId FROM Entreno WHERE UserId = ? AND EntrenoId != ? ORDER BY Data DESC LIMIT 40
+    )
+    ORDER BY E.Data DESC, S.Orden ASC, S.SerieId ASC
+  `).bind(userId, currentEntrenoId);
+  const exercisesStmt = c.env.DB.prepare(
+    'SELECT ExerciciId, Nom, PR, GrupMuscular1, GrupMuscular2, GrupMuscular3, GrupMuscular4, GrupMuscular5 FROM Exercici WHERE UserId = ? ORDER BY Nom ASC'
+  ).bind(userId);
+  const groupsStmt = c.env.DB.prepare('SELECT GrupMuscularId, Nom FROM GrupMuscular');
 
-    // 2. Obtener los últimos 50 entrenamientos con sus series detalladas
-    const lastWorkouts = await c.env.DB.prepare(`
-      SELECT 
-        E.EntrenoId, E.Nom, E.Data, E.CargaTotal,
-        S.ExerciciId, Ex.Nom AS NomExercici, S.Kg, S.Reps
-      FROM Entreno E
-      LEFT JOIN Series S ON E.EntrenoId = S.EntrenoId AND S.UserId = ?
-      LEFT JOIN Exercici Ex ON S.ExerciciId = Ex.ExerciciId
-      WHERE E.UserId = ?
-      ORDER BY E.Data DESC, S.Orden ASC, S.SerieId ASC
-      LIMIT 500
-    `).bind(userId, userId).all();
+  const [history, exercises, groups] = await c.env.DB.batch([historyStmt, exercisesStmt, groupsStmt]);
 
-    // Agrupar series por entreno para reducir tokens
-    const workoutsMap = new Map<number, any>();
-    for (const row of lastWorkouts.results as any[]) {
-      if (!workoutsMap.has(row.EntrenoId)) {
-        workoutsMap.set(row.EntrenoId, {
-          nom: row.Nom, data: row.Data, carga: row.CargaTotal, series: []
-        });
-      }
-      if (row.ExerciciId) {
-        workoutsMap.get(row.EntrenoId).series.push({
-          ex: row.NomExercici, kg: row.Kg, reps: row.Reps
-        });
-      }
-    }
-    const workoutsSummary = Array.from(workoutsMap.values()).slice(0, 50);
-
-    return {
-      prs: prs.results,
-      lastWorkouts: workoutsSummary
-    };
-  } catch (e) {
-    console.error("Error getting stats", e);
-    return { prs: [], lastWorkouts: [] };
-  }
+  return {
+    rows: (history.results || []) as HistoryRow[],
+    exercises: (exercises.results || []) as ExerciseRow[],
+    muscleGroups: (groups.results || []) as { GrupMuscularId: number; Nom: string }[],
+  };
 }
 
 

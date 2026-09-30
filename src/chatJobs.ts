@@ -41,9 +41,14 @@ export function appendChunk(id: string, chunk: string) {
   if (job) { job.chunks.push(chunk); job.fullText += chunk; job.status = 'streaming'; }
 }
 
-export function finishJob(id: string, workoutUpdated: boolean) {
+export function finishJob(id: string, workoutUpdated: boolean, finalText?: string) {
   const job = jobs.get(id);
-  if (job) { job.status = 'done'; job.workoutUpdated = workoutUpdated; }
+  if (job) {
+    job.status = 'done';
+    job.workoutUpdated = workoutUpdated;
+    // Texto final sin bloques internos (json_plan, TITULO_AUTO)
+    if (finalText !== undefined) job.fullText = finalText;
+  }
 }
 
 export function failJob(id: string, error: string) {
