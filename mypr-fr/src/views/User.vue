@@ -150,18 +150,15 @@ onMounted(() => {
   <div class="page">
     <header class="page-header">
       <h1>Mi perfil</h1>
+      <button @click="router.push('/entrenos')" class="btn btn-secondary">&larr; Volver</button>
     </header>
 
     <div class="profile-grid">
       <div class="card card-elevated">
-        <h2>Información del Usuario</h2>
+        <h2>Cuenta</h2>
         <div class="info-row">
           <span class="label">Email:</span>
           <span class="value">{{ userInfo?.email || 'No disponible' }}</span>
-        </div>
-        <div class="info-row">
-          <span class="label">ID de Usuario:</span>
-          <span class="value">{{ userInfo?.UserId || 'No disponible' }}</span>
         </div>
       </div>
 
@@ -173,7 +170,7 @@ onMounted(() => {
           :disabled="isLoading"
         >
           <span v-if="isLoading">Descargando...</span>
-          <span v-else>📥 Descargar Historial Completo de Entrenos</span>
+          <span v-else>📥 Descargar historial de entrenos</span>
         </button>
         
         <p class="description">
@@ -224,7 +221,7 @@ onMounted(() => {
       </div>
 
       <div class="card">
-        <h2>Personalización del Chatbot</h2>
+        <h2>Personalizar el entrenador IA</h2>
         <p class="description" style="margin-bottom: 1rem;">
           Define instrucciones específicas para tu entrenador AI (ej: "Tengo una lesión en la espalda", "Quiero priorizar fuerza", "Soy principiante").
         </p>
@@ -240,7 +237,7 @@ onMounted(() => {
           :disabled="isSavingPrompt"
         >
           <span v-if="isSavingPrompt">Guardando...</span>
-          <span v-else>💾 Guardar Preferencias</span>
+          <span v-else>💾 Guardar preferencias</span>
         </button>
       </div>
 

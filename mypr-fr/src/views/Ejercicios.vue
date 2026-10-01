@@ -298,7 +298,7 @@ function alertWindow(message:string){
         &larr; Volver
       </button>
       <button @click="toggleForm" class="btn btn-primary">
-        {{ showForm ? 'Cancelar' : 'Nuevo Ejercicio' }}
+        {{ showForm ? 'Cancelar' : '+ Nuevo ejercicio' }}
       </button>
       </div>
     </header>
@@ -315,11 +315,12 @@ function alertWindow(message:string){
     
     <!-- Filtro por grupo muscular -->
     <div class="panel">
-      <h3>Filtrar por grupo muscular</h3>
-      <div class="filtro-grupos">
+      <h3 id="filtro-grupos-titulo">Filtrar por grupo muscular</h3>
+      <div class="filtro-grupos" role="group" aria-labelledby="filtro-grupos-titulo">
         <button 
           class="chip-filter" 
           :class="{ 'active': filtroGrupoMuscular === null }"
+          :aria-pressed="filtroGrupoMuscular === null"
           @click="limpiarFiltro"
         >
           Todos
@@ -329,6 +330,7 @@ function alertWindow(message:string){
           :key="grupo.GrupMuscularId"
           class="chip-filter"
           :class="{ 'active': filtroGrupoMuscular === grupo.GrupMuscularId }"
+          :aria-pressed="filtroGrupoMuscular === grupo.GrupMuscularId"
           @click="filtroGrupoMuscular = grupo.GrupMuscularId"
         >
           {{ grupo.Nom }}
@@ -338,7 +340,7 @@ function alertWindow(message:string){
     
     <!-- Formulario para añadir nuevo ejercicio -->
     <div v-if="showForm" class="card card-elevated">
-      <h2>Nuevo Ejercicio</h2>
+      <h2>Nuevo ejercicio</h2>
       <form @submit.prevent="newExercici" class="ejercicio-form">
         <div class="form-group">
           <label for="nombre">Nombre del ejercicio:</label>
@@ -569,6 +571,26 @@ function alertWindow(message:string){
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+/* En móvil, una sola fila desplazable: la lista de ejercicios queda en la primera pantalla */
+@media (max-width: 640px) {
+  .filtro-grupos {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 0 calc(-1 * var(--space-page-x));
+    padding: 0 var(--space-page-x) 0.25rem;
+    mask-image: linear-gradient(90deg, #000 85%, transparent);
+  }
+
+  .filtro-grupos::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filtro-grupos .chip-filter {
+    flex-shrink: 0;
+  }
 }
 
 .search-row {

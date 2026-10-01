@@ -5,11 +5,13 @@ import { useAuthStore } from '../stores/auth';
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 import { apiFetch } from '../services/api';
+import { applyChartTheme, CHART_ACCENT, CHART_ACCENT_FILL } from '../utils/chartTheme';
 
 const authStore = useAuthStore();
 
 // Registrar los componentes necesarios de Chart.js
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+applyChartTheme();
 
 // Definir la interfaz para un entreno
 interface Entreno {
@@ -64,11 +66,12 @@ const chartData = computed(() => {
   return {
     labels: Array.from(entrenosPorDia.keys()),
     datasets: [{
-      label: 'Peso total: (Tn)',
-      backgroundColor: '#f97316',
-      borderColor: '#f97316',
+      label: 'Peso total (t)',
+      backgroundColor: CHART_ACCENT_FILL,
+      borderColor: CHART_ACCENT,
       borderWidth: 2,
-      pointBackgroundColor: '#f97316',
+      pointBackgroundColor: CHART_ACCENT,
+      pointRadius: (ctx: any) => (ctx.raw > 0 ? 4 : 0),
       tension: 0.35,
       fill: true,
       data: Array.from(entrenosPorDia.values())
@@ -85,24 +88,22 @@ const chartOptions = {
       beginAtZero: true,
       title: {
         display: true,
-        text: 'Peso (Tn)'
+        text: 'Peso (t)'
       }
     },
     x: {
-      title: {
-        display: true,
-        text: 'Día'
-      }
+      grid: { display: false },
+      ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 6 }
     }
   },
   plugins: {
     legend: {
-      display: true
+      display: false
     },
     tooltip: {
       callbacks: {
         label: function(context: any) {
-          return `Carga: ${context.raw} kg`;
+          return `Carga: ${context.raw} t`;
         }
       }
     }
@@ -233,10 +234,10 @@ onMounted(() => {
       <h1>Mis entrenos</h1>
       <div class="page-header-actions">
         <button @click="irAEjercicios" class="btn btn-secondary" :disabled="isLoading">
-          Mis Ejercicios
+          Mis ejercicios
         </button>
         <button @click="crearNuevoEntreno" class="btn btn-primary" :disabled="isLoading">
-          {{ isLoading ? 'Cargando...' : 'Nuevo Entreno' }}
+          + Nuevo entreno
         </button>
       </div>
     </header>
@@ -290,10 +291,10 @@ onMounted(() => {
           <div class="list-card-body">
             <h3>{{ entreno.Nom }}</h3>
             <p class="list-card-meta">{{ formatDate(entreno.Data) }}</p>
-            <p class="carga">Peso total: <strong class="list-card-highlight">{{ entreno.CargaTotal }} Tn</strong></p>
+            <p class="carga">Peso total: <strong class="list-card-highlight">{{ entreno.CargaTotal }} t</strong></p>
           </div>
           <div class="entreno-actions">
-            <button class="btn btn-danger" @click.stop="eliminarEntreno(entreno.EntrenoId)" :disabled="isLoading">Eliminar</button>
+            <button class="btn btn-quiet-danger btn-sm" @click.stop="eliminarEntreno(entreno.EntrenoId)" :disabled="isLoading" :aria-label="`Eliminar ${entreno.Nom}`">Eliminar</button>
           </div>
           
         </div>

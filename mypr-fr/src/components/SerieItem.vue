@@ -139,7 +139,7 @@ const deleteSerie = async () => {
           <span class="reps">{{ serie.Reps }} reps</span> = 
           <span class="carga">{{ serie.Carga }} kg</span>
         </p>
-        <p v-if="serie.PR" class="pr-badge">PR 🏆</p>
+        <p v-if="serie.PR" class="pr-badge">🏆 PR</p>
         
 
       </div>
@@ -150,7 +150,7 @@ const deleteSerie = async () => {
 </div>
         <div class="serie-actions">
           <button class="btn btn-secondary btn-sm" @click.stop="startEdit" :disabled="isLoading">Editar</button>
-          <button class="btn btn-danger btn-sm" @click.stop="deleteSerie" :disabled="isLoading">Eliminar</button>
+          <button class="btn btn-quiet-danger btn-sm" @click.stop="deleteSerie" :disabled="isLoading">Eliminar</button>
         </div>
       </div>
     </template>
@@ -167,8 +167,8 @@ const deleteSerie = async () => {
             </div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Peso:</label><input type="number" v-model.number="serieEditada.kg" class="form-control" step="0.5"></div>
-            <div class="form-group"><label>Reps:</label><input type="number" v-model.number="serieEditada.reps" class="form-control"></div>
+            <div class="form-group"><label :for="`serie-${serie.SerieId}-kg`">Peso (kg)</label><input :id="`serie-${serie.SerieId}-kg`" type="number" inputmode="decimal" v-model.number="serieEditada.kg" class="form-control" step="0.5"></div>
+            <div class="form-group"><label :for="`serie-${serie.SerieId}-reps`">Reps</label><input :id="`serie-${serie.SerieId}-reps`" type="number" inputmode="numeric" v-model.number="serieEditada.reps" class="form-control"></div>
           </div>
           <div class="edit-actions">
             <button class="btn btn-primary" @click="saveEdit">Guardar</button>
@@ -192,10 +192,26 @@ const deleteSerie = async () => {
 }
 
 .serie-done {
-  background: linear-gradient(0deg, rgba(15,139,141,0.10) 0%, rgba(15,139,141,0.06) 100%);
-  border-color: rgba(15, 139, 141, 0.5);
-  border-left: 6px solid #0f8b8d;
-  box-shadow: inset 0 0 0 999px rgba(15, 139, 141, 0.05);
+  background: rgba(20, 184, 166, 0.08);
+  border-color: rgba(20, 184, 166, 0.45);
+}
+
+/* Marca de serie completada, en lugar de un borde lateral grueso */
+.serie-done::after {
+  content: '✓';
+  position: absolute;
+  top: -0.5rem;
+  left: -0.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  color: var(--on-accent);
+  font-size: 0.75rem;
+  font-weight: 800;
 }
 
 .serie-pending {
@@ -225,7 +241,6 @@ const deleteSerie = async () => {
   }
   .serie-actions button {
     width: 100%;
-    padding: 0.4rem 0.5rem;
   }
   .serie-right-column {
     display: flex;

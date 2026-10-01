@@ -122,6 +122,45 @@ const onCardTap = (serieId: number) => {
 
 // Computed
 const cargaCalculada = computed(() => nuevaSerie.value.kg * nuevaSerie.value.reps);
+
+// Última serie del ejercicio seleccionado en este entreno: sirve de referencia y para prerrellenar
+const ultimaSerieEjercicio = computed(() => {
+  for (let i = series.value.length - 1; i >= 0; i--) {
+    if (series.value[i].ExerciciId === nuevaSerie.value.ejercicioId) return series.value[i];
+  }
+  return null;
+});
+
+const prefillDesdeUltimaSerie = () => {
+  const ultima = ultimaSerieEjercicio.value;
+  if (ultima) {
+    nuevaSerie.value.kg = ultima.Kg;
+    nuevaSerie.value.reps = ultima.Reps;
+  }
+};
+
+const abrirFormularioSerie = () => {
+  // Si no hay valores, empezamos desde la última serie de ese ejercicio
+  if (nuevaSerie.value.kg <= 0 || nuevaSerie.value.reps <= 0) prefillDesdeUltimaSerie();
+  showForm.value = true;
+};
+
+const ajustarKg = (delta: number) => {
+  nuevaSerie.value.kg = Math.max(0, Math.round((nuevaSerie.value.kg + delta) * 100) / 100);
+};
+
+const ajustarReps = (delta: number) => {
+  nuevaSerie.value.reps = Math.max(0, Math.round(nuevaSerie.value.reps + delta));
+};
+
+const PR_TOAST_MS = 6000;
+const celebrarPr = (exerciciId: number, kg: number, reps: number) => {
+  const ej = ejercicios.value.find(e => e.ExerciciId === exerciciId);
+  prMessage.value = `${ej?.Nom ?? 'Ejercicio'} · ${kg} kg × ${reps}`;
+  showPrAlert.value = true;
+  if (navigator.vibrate) navigator.vibrate([80, 60, 160]);
+  setTimeout(() => showPrAlert.value = false, PR_TOAST_MS);
+};
 const ejerciciosUnicos = computed(() => new Set(series.value.map(serie => serie.ExerciciId)).size);
 
 // Mostrar las series con la más reciente arriba (invertido respecto al orden base)
@@ -433,6 +472,8 @@ watch(() => nuevaSerie.value.ejercicioId, (newId) => {
   if (newId) {
     localStorage.setItem('lastSelectedExerciseId', newId.toString());
     lastExercise.value = newId;
+    // Al cambiar de ejercicio con el formulario abierto, tomamos su última serie como base
+    if (showForm.value) prefillDesdeUltimaSerie();
   }
 });
 
@@ -448,12 +489,7 @@ const guardarSerie = async () => {
       entrenoId, exerciciId: nuevaSerie.value.ejercicioId, kg: nuevaSerie.value.kg, reps: nuevaSerie.value.reps
     });
     
-    if (data.newPr) {
-      const ej = ejercicios.value.find(e => e.ExerciciId === nuevaSerie.value.ejercicioId);
-      prMessage.value = `¡Felicidades! Nuevo PR en ${ej?.Nom} con ${nuevaSerie.value.kg}kg`;
-      showPrAlert.value = true;
-      setTimeout(() => showPrAlert.value = false, 5000);
-    }
+    if (data.newPr) celebrarPr(nuevaSerie.value.ejercicioId, nuevaSerie.value.kg, nuevaSerie.value.reps);
 
     // Actualización local optimista
     if (entreno.value) {
@@ -466,9 +502,7 @@ const guardarSerie = async () => {
       series.value.push(nuevaSerieLocal);
     }
 
-    // Resetear formulario (manteniendo ejercicio)
-    const currentId = nuevaSerie.value.ejercicioId;
-    nuevaSerie.value = { ejercicioId: currentId, kg: 0, reps: 0 };
+    // Mantenemos ejercicio, peso y reps: la siguiente serie suele ser igual (un toque para repetirla)
     showForm.value = false;
   } catch (e: any) {
     error.value = e.message;
@@ -503,12 +537,7 @@ const onSerieUpdated = (payload: any) => {
   }
 
   // Alerta PR si corresponde
-  if (data?.newPr) {
-    const ej = ejercicios.value.find(e => e.ExerciciId === exerciciId);
-    prMessage.value = `¡Felicidades! Nuevo PR en ${ej?.Nom} con ${kg}kg`;
-    showPrAlert.value = true;
-    setTimeout(() => showPrAlert.value = false, 5000);
-  }
+  if (data?.newPr) celebrarPr(exerciciId, kg, reps);
 };
 
 const onSerieDeleted = (payload: any) => {
@@ -659,7 +688,7 @@ const onDrop = async (targetId: number) => {
       <button @click="router.push('/entrenos')" class="btn btn-secondary">&larr; Volver</button>
     </header>
     
-    <div v-if="showPrAlert" class="toast toast-success">{{ prMessage }}</div>
+    <div v-if="showPrAlert" class="toast toast-pr" role="status"><strong>🏆 Nuevo récord personal</strong>{{ prMessage }}</div>
     <div v-if="showEjercicioAlert" class="toast toast-success">{{ ejercicioAlertMessage }}</div>
     <div v-if="showAlert" class="toast toast-warning">{{ alertMessage }}</div>
     
@@ -669,14 +698,16 @@ const onDrop = async (targetId: number) => {
     <div v-else-if="entreno" class="entreno-details">
       <!-- PANEL RESUMEN (colapsable, cerrado por defecto) -->
       <div class="collapsible-panel">
-        <div class="collapsible-header" @click="showResumen = !showResumen">
+        <button type="button" class="collapsible-header" :aria-expanded="showResumen" aria-controls="panel-resumen" @click="showResumen = !showResumen">
           <span>Resumen del entreno</span>
-          <span class="chevron" :class="{ open: showResumen }">▶</span>
-        </div>
-        <div class="collapsible-body" :class="{ open: showResumen }">
-          <div class="info-row"><span class="label">Peso total:</span><span class="value">{{ entreno.CargaTotal }} Tn</span></div>
-          <div class="info-row"><span class="label">Series:</span><span class="value">{{ series.length }}</span></div>
-          <div class="info-row"><span class="label">Ejercicios:</span><span class="value">{{ ejerciciosUnicos }}</span></div>
+          <span class="chevron" :class="{ open: showResumen }" aria-hidden="true">▶</span>
+        </button>
+        <div id="panel-resumen" class="collapsible-body" :class="{ open: showResumen }">
+          <div class="resumen-stats">
+            <div class="resumen-stat"><span class="value">{{ entreno.CargaTotal }} t</span><span class="label">Peso total</span></div>
+            <div class="resumen-stat"><span class="value">{{ series.length }}</span><span class="label">Series</span></div>
+            <div class="resumen-stat"><span class="value">{{ ejerciciosUnicos }}</span><span class="label">Ejercicios</span></div>
+          </div>
           <div v-if="musculoStats.length" class="musculo-graph">
             <div class="graph-toggle">
               <button class="toggle-btn" :class="{ active: modoGrafico === 'series' }" @click="modoGrafico = 'series'">Series</button>
@@ -702,11 +733,11 @@ const onDrop = async (targetId: number) => {
 
       <!-- PANEL DATOS DEL ENTRENO (colapsable, cerrado por defecto) -->
       <div class="collapsible-panel">
-        <div class="collapsible-header" @click="showDatos = !showDatos">
+        <button type="button" class="collapsible-header" :aria-expanded="showDatos" aria-controls="panel-datos" @click="showDatos = !showDatos">
           <span>Datos del entreno</span>
-          <span class="chevron" :class="{ open: showDatos }">▶</span>
-        </div>
-        <div class="collapsible-body" :class="{ open: showDatos }">
+          <span class="chevron" :class="{ open: showDatos }" aria-hidden="true">▶</span>
+        </button>
+        <div id="panel-datos" class="collapsible-body" :class="{ open: showDatos }">
           <div v-if="!editandoEntreno">
             <div class="info-row"><span class="label">Fecha:</span><span class="value">{{ formatDateTitle(entreno.Data) }}</span></div>
             <div class="info-row"><span class="label">Descripción:</span><span class="value">{{ entreno.Descripcio || '-' }}</span></div>
@@ -733,7 +764,7 @@ const onDrop = async (targetId: number) => {
       <h2 class="section-title">Series</h2>
       
       <div v-if="!showForm" class="add-serie">
-        <button @click="showForm = !showForm" class="btn btn-primary btn-lg">Agregar nueva serie</button>
+        <button @click="abrirFormularioSerie" class="btn btn-primary btn-lg">+ Añadir serie</button>
       </div>
 
       <!-- Toggle vista Lista / Tarjetas -->
@@ -745,29 +776,49 @@ const onDrop = async (targetId: number) => {
       <!-- Formulario Nueva Serie -->
       <div v-if="showForm" class="serie-card new-serie-card">
         <div class="serie-info">
-          <h3>Añadir nueva serie</h3>
+          <h3>Nueva serie</h3>
           <form @submit.prevent="guardarSerie" class="serie-form">
             <div class="form-group">
-              <label>Ejercicio:</label>
+              <span class="form-label">Ejercicio</span>
               <div class="input-with-button">
                 <BuscadorSelect v-model="nuevaSerie.ejercicioId" :options="ejercicios" label="Nom" :reduce="(e: any) => e.ExerciciId" placeholder="Busca un ejercicio..." />
-                <button type="button" class="btn btn-primary btn-sm ejercicio-btn" @click="abrirModalEjercicio">+</button>
+                <button type="button" class="btn btn-secondary ejercicio-btn" @click="abrirModalEjercicio" aria-label="Crear ejercicio nuevo" title="Crear ejercicio nuevo">+</button>
               </div>
             </div>
-            <div class="form-row">
-              <div class="form-group"><label>Peso (kg):</label><input type="text" inputmode="decimal" :value="formatKgInput(nuevaSerie.kg)" @input="onKgInput((v) => nuevaSerie.kg = v, $event)" @blur="onKgBlur(() => nuevaSerie.kg, (v) => nuevaSerie.kg = v, $event)" class="form-control"></div>
-              <div class="form-group"><label>Reps:</label><input type="number" v-model.number="nuevaSerie.reps" class="form-control" min="1" step="1"></div>
+            <p v-if="ultimaSerieEjercicio" class="last-set-hint">
+              Última serie: <strong>{{ ultimaSerieEjercicio.Kg }} kg × {{ ultimaSerieEjercicio.Reps }}</strong>
+            </p>
+            <div class="form-row steppers">
+              <div class="form-group">
+                <label for="nueva-serie-kg">Peso (kg)</label>
+                <div class="stepper">
+                  <button type="button" @click="ajustarKg(-2.5)" aria-label="Restar 2,5 kg">−</button>
+                  <input id="nueva-serie-kg" type="text" inputmode="decimal" :value="formatKgInput(nuevaSerie.kg)" @input="onKgInput((v) => nuevaSerie.kg = v, $event)" @blur="onKgBlur(() => nuevaSerie.kg, (v) => nuevaSerie.kg = v, $event)" class="form-control" title="Admite fórmulas, p. ej. =20x2+20">
+                  <button type="button" @click="ajustarKg(2.5)" aria-label="Sumar 2,5 kg">+</button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="nueva-serie-reps">Reps</label>
+                <div class="stepper">
+                  <button type="button" @click="ajustarReps(-1)" aria-label="Restar una repetición">−</button>
+                  <input id="nueva-serie-reps" type="number" inputmode="numeric" v-model.number="nuevaSerie.reps" class="form-control" min="1" step="1">
+                  <button type="button" @click="ajustarReps(1)" aria-label="Sumar una repetición">+</button>
+                </div>
+              </div>
             </div>
-            <div class="form-group" v-if="nuevaSerie.kg > 0"><div class="carga-calculada"><span class="label">Total:</span><span class="value">{{ cargaCalculada }} kg</span></div></div>
-            <div class="form-actions nueva-serie-actions">
+            <div class="form-group" v-if="nuevaSerie.kg > 0 && nuevaSerie.reps > 0"><div class="carga-calculada"><span class="label">Total:</span><span class="value">{{ cargaCalculada }} kg</span></div></div>
+            <div class="nueva-serie-actions">
+              <button type="submit" class="btn btn-primary" :disabled="isSaving">{{ isSaving ? 'Guardando…' : 'Guardar serie' }}</button>
               <button type="button" @click="showForm = false" class="btn btn-secondary">Cancelar</button>
-              <button type="button" @click="guardarSerie" class="btn btn-primary" :disabled="isSaving">{{ isSaving ? '...' : 'Guardar' }}</button>
             </div>
           </form>
         </div>
       </div>
       
-      <div v-if="series.length === 0 && !showForm" class="state-box"><p>No hay series registradas.</p></div>
+      <div v-if="series.length === 0 && !showForm" class="state-box empty-series">
+        <p>Aún no hay series en este entreno.</p>
+        <p class="caption">Pulsa «Añadir serie» o pide al entrenador IA que te proponga uno.</p>
+      </div>
       
       <!-- MODO LISTA -->
       <div v-else-if="modoVisualizacion === 'lista'" class="series-list">
@@ -799,13 +850,13 @@ const onDrop = async (targetId: number) => {
                 <span class="big-reps">{{ serieActual.Reps }}</span>
               </div>
               <div class="big-carga">{{ serieActual.Carga }} kg total</div>
-              <div v-if="serieActual.PR" class="pr-badge">PR 🏆</div>
+              <div v-if="serieActual.PR" class="pr-badge">🏆 PR</div>
               <div v-if="gruposMuscularesDeSerie(serieActual).length" class="big-grupos">
                 <span v-for="(nom, i) in gruposMuscularesDeSerie(serieActual)" :key="i" class="big-grupo-chip">{{ nom }}</span>
               </div>
               <div class="big-actions">
                 <button class="btn btn-secondary btn-sm" @click.stop="iniciarEdicionCard">Editar</button>
-                <button class="btn btn-danger btn-sm" @click.stop="eliminarCard">Eliminar</button>
+                <button class="btn btn-quiet-danger btn-sm" @click.stop="eliminarCard">Eliminar</button>
               </div>
             </div>
             <div v-else class="serie-card-big editing-card">
@@ -889,7 +940,9 @@ const onDrop = async (targetId: number) => {
   </div>
   
   <!-- Chatbot conectado con @refresh para actualizar datos si la AI hace cambios -->
-  <Chatbot 
+  <!-- Se oculta mientras se registra una serie para no tapar «Guardar serie» -->
+  <Chatbot
+    v-show="!showForm"
     :entreno-id="entrenoId" 
     :entreno-data="entreno" 
     :series="series" 

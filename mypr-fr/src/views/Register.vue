@@ -73,7 +73,7 @@ const handleRegister = async () => {
 
       <form @submit.prevent="handleRegister" class="auth-form">
         <div class="form-group">
-          <label for="email">Correo Electrónico</label>
+          <label for="email">Correo electrónico</label>
           <input 
             id="email" 
             type="email" 

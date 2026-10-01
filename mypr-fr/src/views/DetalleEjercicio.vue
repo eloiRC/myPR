@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import { applyChartTheme } from '../utils/chartTheme';
 import { useAuthStore } from '../stores/auth';
 import { apiFetch } from '../services/api';
 
@@ -11,6 +12,7 @@ const authStore = useAuthStore();
 
 // Registrar los componentes necesarios de Chart.js
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+applyChartTheme();
 
 // Definir la interfaz para un ejercicio
 interface Ejercicio {
@@ -344,7 +346,7 @@ onMounted(loadEjercicio);
       <!-- Información del ejercicio -->
       <div v-if="!editando" class="card card-elevated">
         <div class="pr-display">
-          <h2>PR Actual</h2>
+          <h2>PR actual</h2>
           <p class="pr-valor">{{ ejercicio.PR }} kg</p>
         </div>
         <div class="grupos-musculares">
@@ -391,7 +393,7 @@ onMounted(loadEjercicio);
           <div class="list-card-body">
             <h3>{{ ejercicio.entrenoPr.Nom }}</h3>
             <p class="list-card-meta">{{ formatDate(ejercicio.entrenoPr.Data) }}</p>
-            <p class="carga">Peso total: <strong class="list-card-highlight">{{ ejercicio.entrenoPr.CargaTotal }} Kg</strong></p>
+            <p class="carga">Peso total: <strong class="list-card-highlight">{{ ejercicio.entrenoPr.CargaTotal }} kg</strong></p>
           </div>
 
         </div>
@@ -400,7 +402,7 @@ onMounted(loadEjercicio);
       
       <!-- Gráfica de evolución -->
       <div class="chart-panel">
-        <h2>Evolución del Peso Máximo</h2>
+        <h2>Evolución del peso máximo</h2>
         <div v-if="chartData" class="chart-wrap">
           <Line :data="chartData" :options="chartOptions" />
         </div>
@@ -411,7 +413,7 @@ onMounted(loadEjercicio);
 
       <!-- Gráfica de carga -->
       <div class="chart-panel">
-        <h2>Evolución de la Carga Total</h2>
+        <h2>Evolución de la carga total</h2>
         <div v-if="chartDataCarga" class="chart-wrap">
           <Line :data="chartDataCarga" :options="chartOptionsCarga" />
         </div>
