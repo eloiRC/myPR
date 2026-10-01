@@ -2,15 +2,15 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
-import { Line } from 'vue-chartjs';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import { Bar } from 'vue-chartjs';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { apiFetch } from '../services/api';
-import { applyChartTheme, CHART_ACCENT, CHART_ACCENT_FILL } from '../utils/chartTheme';
+import { applyChartTheme, roundedBarDataset, roundedChartOptions } from '../utils/chartTheme';
 
 const authStore = useAuthStore();
 
 // Registrar los componentes necesarios de Chart.js
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 applyChartTheme();
 
 // Definir la interfaz para un entreno
@@ -66,49 +66,16 @@ const chartData = computed(() => {
   return {
     labels: Array.from(entrenosPorDia.keys()),
     datasets: [{
-      label: 'Peso total (t)',
-      backgroundColor: CHART_ACCENT_FILL,
-      borderColor: CHART_ACCENT,
-      borderWidth: 2,
-      pointBackgroundColor: CHART_ACCENT,
-      pointRadius: (ctx: any) => (ctx.raw > 0 ? 4 : 0),
-      tension: 0.35,
-      fill: true,
-      data: Array.from(entrenosPorDia.values())
+      ...roundedBarDataset('Peso total (t)', Array.from(entrenosPorDia.values())),
     }]
   };
 });
 
 // Opciones para la gráfica
-const chartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  scales: {
-    y: {
-      beginAtZero: true,
-      title: {
-        display: true,
-        text: 'Peso (t)'
-      }
-    },
-    x: {
-      grid: { display: false },
-      ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 6 }
-    }
-  },
-  plugins: {
-    legend: {
-      display: false
-    },
-    tooltip: {
-      callbacks: {
-        label: function(context: any) {
-          return `Carga: ${context.raw} t`;
-        }
-      }
-    }
-  }
-};
+const chartOptions = roundedChartOptions({
+  yTitle: 'Peso (t)',
+  tooltipLabel: (v) => `Carga: ${v} t`,
+});
 // Formatear la fecha para mostrarla en formato legible
 const formatDate = (timestamp: number): string => {
   if (!timestamp) return '-';
@@ -277,7 +244,7 @@ onMounted(() => {
       <div class="chart-panel">
         <h2>Carga de entrenamiento</h2>
         <div class="chart-wrap">
-          <Line :data="chartData" :options="chartOptions" />
+          <Bar :data="chartData" :options="chartOptions" />
         </div>
       </div>
       

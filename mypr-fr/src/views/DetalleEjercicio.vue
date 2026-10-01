@@ -3,7 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
-import { applyChartTheme } from '../utils/chartTheme';
+import { applyChartTheme, roundedLineDataset, roundedChartOptions, CHART_COLORS } from '../utils/chartTheme';
 import { useAuthStore } from '../stores/auth';
 import { apiFetch } from '../services/api';
 
@@ -126,16 +126,7 @@ const chartData = computed(() => {
   return {
     labels,
     datasets: [
-      {
-        label: 'Peso Máximo (kg)',
-        backgroundColor: '#f97316',
-        borderColor: '#f97316',
-        borderWidth: 2,
-        pointBackgroundColor: '#f97316',
-        tension: 0.35,
-        fill: true,
-        data
-      }
+      roundedLineDataset('Peso máximo (kg)', data, CHART_COLORS.pr)
     ]
   };
 });
@@ -160,85 +151,22 @@ const chartDataCarga = computed(() => {
   return {
     labels,
     datasets: [
-      {
-        label: 'Carga Total (kg)',
-        backgroundColor: '#14b8a6',
-        borderColor: '#14b8a6',
-        borderWidth: 2,
-        pointBackgroundColor: '#14b8a6',
-        tension: 0.35,
-        fill: true,
-        data
-      }
+      roundedLineDataset('Carga total (kg)', data, CHART_COLORS.accent)
     ]
   };
 });
 
 // Opciones para la gráfica de PR
-const chartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  scales: {
-    y: {
-      beginAtZero: true,
-      title: {
-        display: true,
-        text: 'Peso Máximo (kg)'
-      }
-    },
-    x: {
-      title: {
-        display: true,
-        text: 'Fecha'
-      }
-    }
-  },
-  plugins: {
-    legend: {
-      display: true
-    },
-    tooltip: {
-      callbacks: {
-        label: function(context: any) {
-          return `Peso: ${context.raw} kg`;
-        }
-      }
-    }
-  }
-};
+const chartOptions = roundedChartOptions({
+  yTitle: 'Peso máximo (kg)',
+  tooltipLabel: (v) => `Peso: ${v} kg`,
+});
 
 // Opciones para la gráfica de carga
-const chartOptionsCarga = {
-  responsive: true,
-  maintainAspectRatio: false,
-  scales: {
-    y: {
-      beginAtZero: true,
-      title: {
-        display: true,
-        text: 'Carga Total (kg)'
-      }
-    },
-    x: {
-      title: {
-        display: true,
-        text: 'Fecha'
-      }
-    }
-  },
-  plugins: {
-    legend: {
-      display: true
-    },
-    tooltip: {
-      callbacks: {
-        label: function(context: any) {
-          return `Carga: ${context.raw} kg`;
-        }
-      }
-    }
-  }
-};
+const chartOptionsCarga = roundedChartOptions({
+  yTitle: 'Carga total (kg)',
+  tooltipLabel: (v) => `Carga: ${v} kg`,
+});
 
 // Cargar los datos del ejercicio
 const loadEjercicio = async () => {
