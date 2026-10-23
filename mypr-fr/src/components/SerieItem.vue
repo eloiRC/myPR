@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import BuscadorSelect from './BuscadorSelect.vue';
+import { ref, computed, watch, onBeforeUnmount } from 'vue';
+import SerieForm from './SerieForm.vue';
 import { apiFetch } from '../services/api';
 
 // Props
@@ -14,7 +14,7 @@ interface Props {
 const props = defineProps<Props>();
 
 // Emits
-const emit = defineEmits(['serieUpdated', 'serieDeleted', 'serieCompletadaToggled', 'openModalEjercicio', 'goToEjercicio', 'dragStart', 'drop']);
+const emit = defineEmits(['serieUpdated', 'serieDeleted', 'serieCompletadaToggled', 'openModalEjercicio', 'goToEjercicio', 'dragStart', 'drop', 'editingChange']);
 
 // Estado local
 const isEditing = ref(false);
@@ -24,6 +24,11 @@ const serieEditada = ref({
   kg: 0,
   reps: 0
 });
+const errorEdicion = ref('');
+
+// Avisamos al padre de que hay un formulario abierto (p. ej. para ocultar el chatbot)
+watch(isEditing, (v) => emit('editingChange', props.serie.SerieId, v));
+onBeforeUnmount(() => { if (isEditing.value) emit('editingChange', props.serie.SerieId, false); });
 
 // Estado completado desde prop (fuente de verdad compartida con la vista de tarjetas)
 const isCompleted = computed(() => props.completada ?? false);
@@ -54,6 +59,7 @@ const startEdit = () => {
     kg: props.serie.Kg,
     reps: props.serie.Reps
   };
+  errorEdicion.value = '';
   isEditing.value = true;
 };
 
@@ -65,7 +71,9 @@ const nombreEjercicio = computed(() => {
   return props.ejercicios.find(e => e.ExerciciId === props.serie.ExerciciId)?.Nom || 'Ejercicio desconocido';
 });
 
-const saveEdit = async () => {
+const saveEdit = async (valores: { ejercicioId: number; kg: number; reps: number }) => {
+  serieEditada.value = valores;
+  errorEdicion.value = '';
   try {
     isLoading.value = true;
     const data = await apiFetch<any>('/api/editSerie', {
@@ -86,7 +94,7 @@ const saveEdit = async () => {
     isEditing.value = false;
   } catch (error) {
     console.error(error);
-    alert('Error al guardar los cambios');
+    errorEdicion.value = 'No se pudieron guardar los cambios. Inténtalo de nuevo.';
   } finally {
     isLoading.value = false;
   }
@@ -158,24 +166,19 @@ const deleteSerie = async () => {
 
     <!-- MODO EDICIÓN -->
     <template v-else>
-      <div class="serie-info edit-mode-full" @mousedown.stop @touchstart.stop>
-        <div class="edit-form">
-          <div class="form-group">
-            <label>Ejercicio:</label>
-            <div class="input-with-button">
-              <BuscadorSelect v-model="serieEditada.ejercicioId" :options="ejercicios" label="Nom" :reduce="(e: any) => e.ExerciciId" />
-              <button type="button" class="btn btn-secondary btn-sm" @click="$emit('openModalEjercicio')">+</button>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label :for="`serie-${serie.SerieId}-kg`">Peso (kg)</label><input :id="`serie-${serie.SerieId}-kg`" type="number" inputmode="decimal" v-model.number="serieEditada.kg" class="form-control" step="0.5"></div>
-            <div class="form-group"><label :for="`serie-${serie.SerieId}-reps`">Reps</label><input :id="`serie-${serie.SerieId}-reps`" type="number" inputmode="numeric" v-model.number="serieEditada.reps" class="form-control"></div>
-          </div>
-          <div class="edit-actions">
-            <button class="btn btn-primary" @click="saveEdit">Guardar</button>
-            <button class="btn btn-secondary" @click="cancelEdit">Cancelar</button>
-          </div>
-        </div>
+      <div class="serie-info edit-mode-full" @mousedown.stop @touchstart.stop @click.stop>
+        <SerieForm
+          mode="editar"
+          :ejercicio-id="serieEditada.ejercicioId"
+          :kg="serieEditada.kg"
+          :reps="serieEditada.reps"
+          :ejercicios="ejercicios"
+          :saving="isLoading"
+          :error="errorEdicion"
+          @submit="saveEdit"
+          @cancel="cancelEdit"
+          @open-modal-ejercicio="$emit('openModalEjercicio')"
+        />
       </div>
     </template>
   </div>
