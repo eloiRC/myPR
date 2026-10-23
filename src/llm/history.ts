@@ -1,6 +1,7 @@
 import type { LlmMessage } from './types';
 
-const MAX_HISTORY_MESSAGES = 30;
+// El cliente ya envía como mucho 10; esto es la guarda para clientes antiguos
+export const MAX_HISTORY_MESSAGES = 10;
 
 type HistoryRole = 'user' | 'assistant';
 

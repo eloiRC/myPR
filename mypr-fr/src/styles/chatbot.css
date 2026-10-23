@@ -249,6 +249,13 @@
   40% { transform: scale(1); opacity: 1; }
 }
 
+/* Fase del coach (Pensando…, Añadiendo series…) */
+.phase-status {
+  margin-top: 0.25rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
 /* Sugerencias rápidas */
 .quick-prompts {
   display: flex;
@@ -279,6 +286,18 @@
 .quick-prompt:hover:not(:disabled) {
   color: var(--accent-primary-hover);
   border-color: var(--accent-primary);
+}
+
+.quick-prompt:focus-visible {
+  outline: 2px solid var(--accent-primary-hover);
+  outline-offset: 2px;
+}
+
+/* Respuestas rápidas dentro del hilo: en varias líneas, sin scroll horizontal */
+.quick-replies {
+  flex-wrap: wrap;
+  padding: 0.25rem 0 0;
+  overflow-x: visible;
 }
 
 .quick-prompt:disabled {

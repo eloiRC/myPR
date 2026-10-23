@@ -21,7 +21,25 @@
       "database_name": "mypr",
       "database_id": "63087dd2-d370-47cc-9702-5bde7da4a4c1"
     }
-  ]
+  ],
+  // Cola de generación del coach IA: /api/coach encola el job y el consumidor (este mismo Worker) lo ejecuta,
+  // sin el límite de 30 s de waitUntil. Crear las colas antes de desplegar:
+  //   npx wrangler queues create mypr-coach-jobs
+  //   npx wrangler queues create mypr-coach-jobs-dlq
+  "queues": {
+    "producers": [
+      { "binding": "COACH_QUEUE", "queue": "mypr-coach-jobs" }
+    ],
+    "consumers": [
+      {
+        "queue": "mypr-coach-jobs",
+        "max_batch_size": 1,
+        "max_batch_timeout": 1,
+        "max_retries": 2,
+        "dead_letter_queue": "mypr-coach-jobs-dlq"
+      }
+    ]
+  }
 
   /**
    * Smart Placement

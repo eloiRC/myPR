@@ -48,6 +48,10 @@ export const updateMemoryInput = z.object({
   status: z.enum(MEMORY_STATUSES).optional(),
 }).refine(v => v.text !== undefined || v.status !== undefined, { message: 'Indica texto o estado' });
 export const deleteMemoryInput = z.object({ id: idSchema });
+export const MAX_QUICK_REPLY_LENGTH = 40;
+export const suggestRepliesInput = z.object({
+  options: z.array(z.string().trim().min(1).max(MAX_QUICK_REPLY_LENGTH)).min(2).max(4),
+});
 
 // ---------- Definiciones JSON Schema para el modelo ----------
 // Sin minimum/maximum/maxItems: algunos proveedores no los admiten en modo estricto; los rangos se validan con zod.
@@ -104,6 +108,11 @@ export const TOOL_DEFS: LlmToolDef[] = [
     description: 'Elimina una memoria. Úsalo solo si el usuario lo pide o la memoria es claramente errónea.',
     parameters: obj({ id: { type: 'integer' } }, ['id']),
   },
+  {
+    name: 'suggest_replies',
+    description: `Muestra al usuario botones de respuesta rápida bajo tu mensaje. Llámala AL FINAL del turno (tras tu texto) cuando propongas algo que necesita su confirmación o una elección. options: de 2 a 4 respuestas cortas en español (máximo ${MAX_QUICK_REPLY_LENGTH} caracteres cada una), tal como las escribiría el usuario; la primera, una confirmación positiva. No cambia ningún dato.`,
+    parameters: obj({ options: { type: 'array', items: { type: 'string' } } }, ['options']),
+  },
 ];
 
 // ---------- Contexto y ejecución ----------
@@ -121,7 +130,7 @@ export interface ToolContext {
   validExerciseIds: Set<number>;
   validMuscleGroupIds: Set<number>;
   deps: ToolDeps;
-  state: { workoutUpdated: boolean };
+  state: { workoutUpdated: boolean; /** respuestas rápidas sugeridas (la última llamada gana) */ quickReplies?: string[] };
 }
 
 export interface ToolResult { content: string; isError: boolean }
@@ -278,6 +287,16 @@ export async function executeTool(ctx: ToolContext, name: string, rawArgs: unkno
         if (!p.success) return fail(zodMessage(p.error));
         const done = await deleteMemory(ctx.db, ctx.userId, p.data.id);
         return done ? ok({ id: p.data.id, deleted: true }) : fail('Memoria no encontrada.');
+      }
+
+      case 'suggest_replies': {
+        const p = suggestRepliesInput.safeParse(rawArgs);
+        if (!p.success) return fail(zodMessage(p.error));
+        // Sin duplicados (ignorando mayúsculas); no toca datos ni workoutUpdated
+        const seen = new Set<string>();
+        const options = p.data.options.filter(o => { const k = o.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+        ctx.state.quickReplies = options;
+        return ok({ shown: options.length });
       }
 
       default:

@@ -1,8 +1,11 @@
+import { sanitizeQuickReplies } from '../utils/chatHelpers';
+
 interface ChatMessage {
     id: number;
     text: string;
     isUser: boolean;
     timestamp: Date;
+    quickReplies?: string[];
 }
 
 // El historial se guarda por entreno: si fuera global, en un entreno nuevo
@@ -55,7 +58,8 @@ class ChatGPTService {
                         id: msg.id,
                         text: msg.text,
                         isUser: msg.isUser,
-                        timestamp: new Date(msg.timestamp)
+                        timestamp: new Date(msg.timestamp),
+                        quickReplies: sanitizeQuickReplies(msg.quickReplies)
                     }));
                 }
             }

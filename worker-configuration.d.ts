@@ -12,6 +12,7 @@ declare namespace Cloudflare {
 		OPENAI_API_KEY: string;
 		GEMINI_API_KEY: string;
 		DB: D1Database;
+		COACH_QUEUE: Queue<any>;
 	}
 }
 interface Env extends Cloudflare.Env {}

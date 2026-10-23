@@ -40,11 +40,17 @@ describe('convertHistory', () => {
     expect(out).toHaveLength(2);
   });
 
-  it('recorta a los últimos 30 mensajes', () => {
+  it('recorta a los últimos 10 mensajes y empieza por usuario', () => {
     const raw = Array.from({ length: 80 }, (_, i) => ({ role: i % 2 === 0 ? 'user' : 'assistant', content: `m${i}` }));
     const out = convertHistory(raw);
-    expect(out.length).toBeLessThanOrEqual(30);
+    expect(out.length).toBeLessThanOrEqual(10);
     expect(out[0].role).toBe('user');
+    // últimos 10 = m70..m79 (m70 es de usuario)
+    expect(out[out.length - 1]).toMatchObject({ role: 'assistant', text: 'm79' });
+    // si el recorte cae en un asistente, se descarta hasta el primer usuario
+    const odd = convertHistory(raw.slice(0, 79));
+    expect(odd[0].role).toBe('user');
+    expect(odd.length).toBeLessThanOrEqual(10);
   });
 });
 
