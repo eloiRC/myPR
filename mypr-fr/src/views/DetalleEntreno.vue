@@ -4,9 +4,9 @@ import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { guardarNuevoEjercicio } from '../utils/ejercicioUtils';
 import { apiFetch } from '../services/api';
-import { evaluarFormulaPeso, formatKgInput } from '../utils/pesoFormula';
+import { leerVista, guardarVista, resolverIndiceTarjeta } from '../utils/vistaEntreno';
 import Chatbot from '../components/Chatbot.vue';
-import BuscadorSelect from '../components/BuscadorSelect.vue';
+import SerieForm from '../components/SerieForm.vue';
 import SerieItem from '../components/SerieItem.vue';
 import RestTimer from '../components/RestTimer.vue';
 import { useRestTimer } from '../composables/useRestTimer';
@@ -101,6 +101,19 @@ const touchMoved = ref(false);
 const touchStartTime = ref(0);
 const editandoCard = ref(false);
 const cardEditData = ref({ ejercicioId: 0, kg: 0, reps: 0 });
+const cardGuardando = ref(false);
+const cardError = ref('');
+const nuevaSerieError = ref('');
+// Series de la lista con el formulario de edición abierto (para ocultar el chatbot)
+const editandoEnLista = ref<number[]>([]);
+const hayFormularioAbierto = computed(() => showForm.value || editandoCard.value || editandoEnLista.value.length > 0);
+const onEditingChange = (serieId: number, editando: boolean) => {
+  const sin = editandoEnLista.value.filter(id => id !== serieId);
+  editandoEnLista.value = editando ? [...sin, serieId] : sin;
+};
+// Posición recordada: SerieId de la última tarjeta vista (solo se actualiza en modo tarjetas)
+const serieIdVista = ref<number | null>(null);
+const vistaRestaurada = ref(false);
 const completadasMap = ref<Record<number, boolean>>({});
 
 // Triple tap en tarjetas
@@ -123,8 +136,6 @@ const onCardTap = (serieId: number) => {
 };
 
 // Computed
-const cargaCalculada = computed(() => nuevaSerie.value.kg * nuevaSerie.value.reps);
-
 // Última serie del ejercicio seleccionado en este entreno: sirve de referencia y para prerrellenar
 const ultimaSerieEjercicio = computed(() => {
   for (let i = series.value.length - 1; i >= 0; i--) {
@@ -144,15 +155,8 @@ const prefillDesdeUltimaSerie = () => {
 const abrirFormularioSerie = () => {
   // Si no hay valores, empezamos desde la última serie de ese ejercicio
   if (nuevaSerie.value.kg <= 0 || nuevaSerie.value.reps <= 0) prefillDesdeUltimaSerie();
+  nuevaSerieError.value = '';
   showForm.value = true;
-};
-
-const ajustarKg = (delta: number) => {
-  nuevaSerie.value.kg = Math.max(0, Math.round((nuevaSerie.value.kg + delta) * 100) / 100);
-};
-
-const ajustarReps = (delta: number) => {
-  nuevaSerie.value.reps = Math.max(0, Math.round(nuevaSerie.value.reps + delta));
 };
 
 const PR_TOAST_MS = 6000;
@@ -331,9 +335,31 @@ const primerIdxNoCompletado = () => {
 const cambiarModoTarjetas = () => {
   modoVisualizacion.value = 'tarjetas';
   direction.value = 'next';
-  serieActualIdx.value = primerIdxNoCompletado();
+  // Si hay una posición guardada de este entreno la respetamos; si no, la primera serie sin completar
+  const guardada = leerVista(entrenoId);
+  serieActualIdx.value = resolverIndiceTarjeta(guardada?.serieId, seriesCardOrder.value, primerIdxNoCompletado);
   editandoCard.value = false;
 };
+
+// Restaura modo y tarjeta al cargar (una sola vez, cuando ya hay series)
+const restaurarVista = () => {
+  if (vistaRestaurada.value) return;
+  vistaRestaurada.value = true;
+  const guardada = leerVista(entrenoId);
+  if (!guardada) return;
+  serieIdVista.value = guardada.serieId;
+  if (guardada.modo === 'tarjetas' && seriesCardOrder.value.length > 0) {
+    modoVisualizacion.value = 'tarjetas';
+    serieActualIdx.value = resolverIndiceTarjeta(guardada.serieId, seriesCardOrder.value, primerIdxNoCompletado);
+  }
+};
+
+// Persistimos cada cambio de modo o de tarjeta (solo tras restaurar, para no pisar lo guardado)
+watch([modoVisualizacion, () => serieActual.value?.SerieId], () => {
+  if (!vistaRestaurada.value) return;
+  if (modoVisualizacion.value === 'tarjetas' && serieActual.value) serieIdVista.value = serieActual.value.SerieId;
+  guardarVista(entrenoId, { modo: modoVisualizacion.value, serieId: serieIdVista.value });
+});
 
 const iniciarEdicionCard = () => {
   if (!serieActual.value) return;
@@ -342,6 +368,7 @@ const iniciarEdicionCard = () => {
     kg: serieActual.value.Kg,
     reps: serieActual.value.Reps
   };
+  cardError.value = '';
   editandoCard.value = true;
 };
 
@@ -349,20 +376,25 @@ const cancelarEdicionCard = () => {
   editandoCard.value = false;
 };
 
-const guardarEdicionCard = async () => {
+const guardarEdicionCard = async (valores: { ejercicioId: number; kg: number; reps: number }) => {
   if (!serieActual.value || !entreno.value) return;
+  const serieId = serieActual.value.SerieId;
+  cardGuardando.value = true;
+  cardError.value = '';
   try {
     const data = await apiFetch<any>('/api/editSerie', {
-      serieId: serieActual.value.SerieId,
+      serieId,
       entrenoId: entreno.value.EntrenoId,
-      exerciciId: cardEditData.value.ejercicioId,
-      kg: cardEditData.value.kg,
-      reps: cardEditData.value.reps
+      exerciciId: valores.ejercicioId,
+      kg: valores.kg,
+      reps: valores.reps
     });
-    onSerieUpdated({ data, serieId: serieActual.value.SerieId, entrenoId: entreno.value.EntrenoId, exerciciId: cardEditData.value.ejercicioId, kg: cardEditData.value.kg, reps: cardEditData.value.reps });
+    onSerieUpdated({ data, serieId, entrenoId: entreno.value.EntrenoId, exerciciId: valores.ejercicioId, kg: valores.kg, reps: valores.reps });
     editandoCard.value = false;
   } catch {
-    alertWindow('Error al guardar');
+    cardError.value = 'No se pudieron guardar los cambios. Inténtalo de nuevo.';
+  } finally {
+    cardGuardando.value = false;
   }
 };
 
@@ -417,27 +449,6 @@ const formatDateTitle = (timestamp: number) => new Date(timestamp * 1000).toLoca
 const alertWindow = (msg: string) => { alertMessage.value = msg; showAlert.value = true; setTimeout(() => showAlert.value = false, 5000); };
 const capitalize = (s: string) => s.replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
 
-const onKgInput = (setValue: (v: number) => void, e: Event) => {
-  const raw = (e.target as HTMLInputElement).value;
-  if (raw.startsWith('=')) return;
-  const num = parseFloat(raw);
-  if (!isNaN(num)) setValue(num);
-};
-
-const onKgBlur = (getCurrent: () => number, setValue: (v: number) => void, e: Event) => {
-  const raw = (e.target as HTMLInputElement).value.trim();
-  if (raw.startsWith('=')) {
-    const result = evaluarFormulaPeso(raw);
-    if (result !== null) {
-      setValue(result);
-      (e.target as HTMLInputElement).value = String(result);
-    } else {
-      alertWindow('Fórmula inválida. Ejemplo: =10x2+25');
-      (e.target as HTMLInputElement).value = formatKgInput(getCurrent());
-    }
-  }
-};
-
 // Cargas de datos
 const loadEntreno = async () => {
   if (!authStore.isAuthenticated) return router.push('/login');
@@ -448,6 +459,7 @@ const loadEntreno = async () => {
     if (entreno.value) entreno.value.CargaTotal = parseFloat((entreno.value.CargaTotal / 1000).toFixed(2));
     series.value = data.series;
     cargarCompletadas();
+    restaurarVista();
 
     await loadEjercicios();
     if (gruposMusculares.value.length === 0) await loadGruposMusculares();
@@ -481,19 +493,22 @@ const loadGruposMusculares = async () => {
 
 watch(() => nuevaSerie.value.ejercicioId, (newId) => {
   if (newId) {
-    localStorage.setItem('lastSelectedExerciseId', newId.toString());
+    try { localStorage.setItem('lastSelectedExerciseId', newId.toString()); } catch { /* sin almacenamiento */ }
     lastExercise.value = newId;
     // Al cambiar de ejercicio con el formulario abierto, tomamos su última serie como base
     if (showForm.value) prefillDesdeUltimaSerie();
   }
 });
 
+// El formulario avisa cuando el usuario elige otro ejercicio
+const onEjercicioNuevaSerie = (id: number) => { nuevaSerie.value.ejercicioId = id; };
+
 // Acciones Principales
-const guardarSerie = async () => {
-  if (nuevaSerie.value.ejercicioId === 0 || nuevaSerie.value.kg <= 0 || nuevaSerie.value.reps <= 0) {
-    return alertWindow('Completa todos los campos correctamente (mínimo 0.5kg)');
-  }
-  
+const guardarSerie = async (valores: { ejercicioId: number; kg: number; reps: number }) => {
+  // Mantenemos lo enviado como valores de partida de la siguiente serie
+  nuevaSerie.value = { ...valores };
+  nuevaSerieError.value = '';
+
   try {
     isSaving.value = true;
     const data = await apiFetch<any>('/api/novaSerie', {
@@ -516,7 +531,7 @@ const guardarSerie = async () => {
     // Mantenemos ejercicio, peso y reps: la siguiente serie suele ser igual (un toque para repetirla)
     showForm.value = false;
   } catch (e: any) {
-    error.value = e.message;
+    nuevaSerieError.value = e?.message || 'No se pudo guardar la serie. Inténtalo de nuevo.';
   } finally {
     isSaving.value = false;
   }
@@ -788,42 +803,20 @@ const onDrop = async (targetId: number) => {
       <!-- Formulario Nueva Serie -->
       <div v-if="showForm" class="serie-card new-serie-card">
         <div class="serie-info">
-          <h3>Nueva serie</h3>
-          <form @submit.prevent="guardarSerie" class="serie-form">
-            <div class="form-group">
-              <span class="form-label">Ejercicio</span>
-              <div class="input-with-button">
-                <BuscadorSelect v-model="nuevaSerie.ejercicioId" :options="ejercicios" label="Nom" :reduce="(e: any) => e.ExerciciId" placeholder="Busca un ejercicio..." />
-                <button type="button" class="btn btn-secondary ejercicio-btn" @click="abrirModalEjercicio" aria-label="Crear ejercicio nuevo" title="Crear ejercicio nuevo">+</button>
-              </div>
-            </div>
-            <p v-if="ultimaSerieEjercicio" class="last-set-hint">
-              Última serie: <strong>{{ ultimaSerieEjercicio.Kg }} kg × {{ ultimaSerieEjercicio.Reps }}</strong>
-            </p>
-            <div class="form-row steppers">
-              <div class="form-group">
-                <label for="nueva-serie-kg">Peso (kg)</label>
-                <div class="stepper">
-                  <button type="button" @click="ajustarKg(-2.5)" aria-label="Restar 2,5 kg">−</button>
-                  <input id="nueva-serie-kg" type="text" inputmode="decimal" :value="formatKgInput(nuevaSerie.kg)" @input="onKgInput((v) => nuevaSerie.kg = v, $event)" @blur="onKgBlur(() => nuevaSerie.kg, (v) => nuevaSerie.kg = v, $event)" class="form-control" title="Admite fórmulas, p. ej. =20x2+20">
-                  <button type="button" @click="ajustarKg(2.5)" aria-label="Sumar 2,5 kg">+</button>
-                </div>
-              </div>
-              <div class="form-group">
-                <label for="nueva-serie-reps">Reps</label>
-                <div class="stepper">
-                  <button type="button" @click="ajustarReps(-1)" aria-label="Restar una repetición">−</button>
-                  <input id="nueva-serie-reps" type="number" inputmode="numeric" v-model.number="nuevaSerie.reps" class="form-control" min="1" step="1">
-                  <button type="button" @click="ajustarReps(1)" aria-label="Sumar una repetición">+</button>
-                </div>
-              </div>
-            </div>
-            <div class="form-group" v-if="nuevaSerie.kg > 0 && nuevaSerie.reps > 0"><div class="carga-calculada"><span class="label">Total:</span><span class="value">{{ cargaCalculada }} kg</span></div></div>
-            <div class="nueva-serie-actions">
-              <button type="submit" class="btn btn-primary" :disabled="isSaving">{{ isSaving ? 'Guardando…' : 'Guardar serie' }}</button>
-              <button type="button" @click="showForm = false" class="btn btn-secondary">Cancelar</button>
-            </div>
-          </form>
+          <SerieForm
+            mode="crear"
+            :ejercicio-id="nuevaSerie.ejercicioId"
+            :kg="nuevaSerie.kg"
+            :reps="nuevaSerie.reps"
+            :ejercicios="ejercicios"
+            :ultima-serie="ultimaSerieEjercicio"
+            :saving="isSaving"
+            :error="nuevaSerieError"
+            @ejercicio-change="onEjercicioNuevaSerie"
+            @submit="guardarSerie"
+            @cancel="showForm = false"
+            @open-modal-ejercicio="abrirModalEjercicio"
+          />
         </div>
       </div>
       
@@ -845,6 +838,7 @@ const onDrop = async (targetId: number) => {
           @serieDeleted="onSerieDeleted"
           @serieCompletadaToggled="toggleCompletadoCard"
           @openModalEjercicio="abrirModalEjercicio"
+          @editingChange="onEditingChange"
           @goToEjercicio="(id) => router.push(`/ejercicio/${id}`)"
           @dragStart="onDragStart"
           @drop="onDrop"
@@ -873,24 +867,18 @@ const onDrop = async (targetId: number) => {
               </div>
             </div>
             <div v-else class="serie-card-big editing-card">
-              <div class="card-edit-form">
-                <h3>Editar serie</h3>
-                <div class="form-group">
-                  <label>Ejercicio:</label>
-                  <div class="input-with-button">
-                    <BuscadorSelect v-model="cardEditData.ejercicioId" :options="ejercicios" label="Nom" :reduce="(e: any) => e.ExerciciId" />
-                    <button type="button" class="btn btn-secondary btn-sm" @click.stop="abrirModalEjercicio">+</button>
-                  </div>
-                </div>
-                <div class="form-row">
-                   <div class="form-group"><label>Peso:</label><input type="text" inputmode="decimal" :value="formatKgInput(cardEditData.kg)" @input="onKgInput((v) => cardEditData.kg = v, $event)" @blur="onKgBlur(() => cardEditData.kg, (v) => cardEditData.kg = v, $event)" class="form-control"></div>
-                  <div class="form-group"><label>Reps:</label><input type="number" v-model.number="cardEditData.reps" class="form-control"></div>
-                </div>
-                <div class="form-actions">
-                  <button class="btn btn-secondary" @click="cancelarEdicionCard">Cancelar</button>
-                  <button class="btn btn-primary" @click="guardarEdicionCard">Guardar</button>
-                </div>
-              </div>
+              <SerieForm
+                mode="editar"
+                :ejercicio-id="cardEditData.ejercicioId"
+                :kg="cardEditData.kg"
+                :reps="cardEditData.reps"
+                :ejercicios="ejercicios"
+                :saving="cardGuardando"
+                :error="cardError"
+                @submit="guardarEdicionCard"
+                @cancel="cancelarEdicionCard"
+                @open-modal-ejercicio="abrirModalEjercicio"
+              />
             </div>
           </div>
         </Transition>
@@ -955,9 +943,9 @@ const onDrop = async (targetId: number) => {
   <RestTimer />
 
   <!-- Chatbot conectado con @refresh para actualizar datos si la AI hace cambios -->
-  <!-- Se oculta mientras se registra una serie para no tapar «Guardar serie» -->
+  <!-- Se oculta mientras hay un formulario de serie abierto (nueva o edición) para no tapar «Guardar» -->
   <Chatbot
-    v-show="!showForm"
+    v-show="!hayFormularioAbierto"
     :entreno-id="entrenoId" 
     :entreno-data="entreno" 
     :series="series" 

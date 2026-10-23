@@ -582,10 +582,12 @@ h2 {
     }
 }
 
-@media (max-width: 480px) {
+/* Móvil: la tarjeta ocupa casi toda la pantalla (cabecera + paneles + navegación ≈ 17rem) */
+@media (max-width: 640px) {
     .serie-card-big {
-        height: calc(100dvh - 200px);
+        height: max(60dvh, calc(100dvh - 17rem));
         border-radius: var(--radius-lg);
+        padding: 1.25rem 1rem;
     }
 
     .swipe-area {
@@ -801,7 +803,9 @@ h2 {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    margin-bottom: 1rem;
+    margin: 0 auto 1rem;
+    max-width: 640px;
+    width: 100%;
     user-select: none;
     touch-action: pan-y;
 }
@@ -818,7 +822,8 @@ h2 {
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
-    height: 360px;
+    height: clamp(420px, 62dvh, 560px);
+    min-width: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -840,42 +845,51 @@ h2 {
 }
 
 .big-ejercicio {
-    font-size: 1.3rem;
+    font-size: clamp(1.5rem, 6vw, 2rem);
+    line-height: 1.15;
     font-weight: 800;
     color: var(--text-primary);
     letter-spacing: -0.02em;
     margin-bottom: 0.5rem;
+    max-width: 100%;
+    overflow-wrap: anywhere;
 }
 
 .big-stats {
     display: flex;
-    align-items: center;
+    flex-wrap: wrap;
+    align-items: baseline;
     justify-content: center;
-    gap: 1rem;
+    gap: 0.25rem 0.75rem;
     margin: 0.75rem 0;
+    font-variant-numeric: tabular-nums;
+    max-width: 100%;
 }
 
 .big-kg {
-    font-size: 2.2rem;
+    font-size: clamp(3rem, 17vw, 5.5rem);
+    line-height: 1;
     font-weight: 800;
     color: var(--accent-primary);
     letter-spacing: -0.03em;
 }
 
 .big-x {
-    font-size: 1.5rem;
+    font-size: clamp(1.5rem, 7vw, 2.5rem);
     color: var(--text-muted);
 }
 
 .big-reps {
-    font-size: 2.2rem;
+    font-size: clamp(3rem, 17vw, 5.5rem);
+    line-height: 1;
     font-weight: 800;
     color: var(--color-coral);
     letter-spacing: -0.03em;
 }
 
 .big-carga {
-    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
+    font-size: 1.125rem;
     color: var(--text-secondary);
     font-weight: 600;
     margin: 0.25rem 0;
@@ -896,14 +910,16 @@ h2 {
 .big-actions {
     display: flex;
     gap: 0.75rem;
-    margin-top: 1rem;
+    margin-top: auto;
+    padding-top: 1rem;
     width: 100%;
-    max-width: 280px;
+    max-width: 360px;
 }
 
 .big-actions .btn {
     flex: 1;
-    font-size: 0.9rem;
+    min-height: var(--touch-min);
+    font-size: 1rem;
     padding: 0.65rem 0.5rem;
     border-radius: var(--radius-md);
 }
@@ -912,42 +928,16 @@ h2 {
     opacity: 0.5;
 }
 
-/* Card edit mode */
+/* Edición dentro de la tarjeta: formulario único (SerieForm), con scroll si no cabe */
 .serie-card-big.editing-card {
     cursor: default;
     padding: 1.25rem;
-}
-
-.card-edit-form {
-    width: 100%;
+    height: auto;
+    min-height: 0;
+    justify-content: flex-start;
+    align-items: stretch;
     text-align: left;
-}
-
-.card-edit-form h3 {
-    margin: 0 0 0.75rem;
-    font-size: 1rem;
-    font-weight: 700;
-    text-align: center;
-    color: var(--text-primary);
-}
-
-.card-edit-form .form-group {
-    margin-bottom: 0.75rem;
-}
-
-.card-edit-form .form-row {
-    display: flex;
-    gap: 0.75rem;
-}
-
-.card-edit-form .form-row .form-group {
-    flex: 1;
-    min-width: 0;
-}
-
-.card-edit-form .form-actions {
-    margin-top: 1rem;
-    justify-content: center;
+    overflow-y: auto;
 }
 
 /* Dots de progreso */
@@ -1038,7 +1028,8 @@ h2 {
 }
 
 .card-nav-btn {
-    min-width: 38px;
+    min-width: var(--touch-min);
+    min-height: var(--touch-min);
     padding: 0.25rem 0.5rem;
 }
 
@@ -1191,4 +1182,36 @@ h2 {
     font-size: 0.8125rem;
     font-weight: 600;
     color: var(--text-secondary);
+}
+
+/* Título y error del formulario único de serie */
+.serie-form-title {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.serie-form-error {
+    margin: 0;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--error);
+    background: rgba(248, 113, 113, 0.1);
+    color: var(--error);
+    font-size: 0.875rem;
+}
+
+/* Sin animación de deslizamiento si el usuario pide menos movimiento */
+@media (prefers-reduced-motion: reduce) {
+    .slide-next-enter-from,
+    .slide-next-leave-to,
+    .slide-prev-enter-from,
+    .slide-prev-leave-to {
+        transform: none;
+    }
+
+    .serie-card-big:active {
+        transform: none;
+    }
 }
