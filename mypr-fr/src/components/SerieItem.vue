@@ -1,301 +1,320 @@
 <script setup lang="ts">
-import { ref, computed, watch, onBeforeUnmount } from 'vue';
-import SerieForm from './SerieForm.vue';
-import { apiFetch } from '../services/api';
+// Fila compacta de una serie dentro de su grupo de ejercicio.
+// Toque = marcar hecha. Pulsación larga (~450 ms) = levantar la fila y arrastrarla sobre otra para reordenar.
+// En escritorio se mantiene el arrastre HTML5 con el ratón.
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { Pencil, Timer } from 'lucide-vue-next';
 import { textoDescanso } from '../composables/useRestTimer';
+import { kgTexto } from '../utils/entreno';
+import {
+  PULSACION_LARGA_MS, siguienteFase, autoScrollDelta, debeIgnorarClick, type FaseToque,
+} from '../utils/reordenarTactil';
 
-// Props
 interface Props {
   serie: any;
-  ejercicios: any[];
-  grupoMuscularNombre?: string[];
+  /** Número de serie dentro de su ejercicio */
+  n: number;
   completada?: boolean;
+  /** Es la siguiente serie pendiente (la del bloque «ahora») */
+  actual?: boolean;
 }
+const props = withDefaults(defineProps<Props>(), { completada: false, actual: false });
 
-const props = defineProps<Props>();
+const emit = defineEmits<{
+  (e: 'toggle', serieId: number): void;
+  (e: 'edit', serie: any): void;
+  (e: 'dragStart', serieId: number | null): void;
+  (e: 'drop', targetId: number): void;
+}>();
 
-// Emits
-const emit = defineEmits(['serieUpdated', 'serieDeleteRequested', 'serieCompletadaToggled', 'openModalEjercicio', 'goToEjercicio', 'dragStart', 'drop', 'editingChange']);
+const fila = ref<HTMLElement | null>(null);
+const levantada = ref(false);
+const desplazamientoY = ref(0);
 
-// Estado local
-const isEditing = ref(false);
-const isLoading = ref(false);
-const serieEditada = ref({
-  ejercicioId: 0,
-  kg: 0,
-  reps: 0,
-  descansoSeg: null as number | null
+// Arrastre HTML5 solo con ratón: en táctil lo gestiona la pulsación larga (si no, Android lo secuestra)
+const conRaton = ref(false);
+onMounted(() => {
+  conRaton.value = window.matchMedia?.('(hover: hover) and (pointer: fine)').matches ?? false;
+  fila.value?.addEventListener('touchstart', onTouchStart, { passive: true });
+  // No pasivo: solo se llama a preventDefault mientras hay una fila levantada
+  fila.value?.addEventListener('touchmove', onTouchMove, { passive: false });
+  fila.value?.addEventListener('touchend', onTouchEnd);
+  fila.value?.addEventListener('touchcancel', onTouchCancel);
 });
-const errorEdicion = ref('');
 
-// Avisamos al padre de que hay un formulario abierto (p. ej. para ocultar el chatbot)
-watch(isEditing, (v) => emit('editingChange', props.serie.SerieId, v));
-onBeforeUnmount(() => { if (isEditing.value) emit('editingChange', props.serie.SerieId, false); });
-
-// Estado completado desde prop (fuente de verdad compartida con la vista de tarjetas)
-const isCompleted = computed(() => props.completada ?? false);
-
-// --- Triple click / tap para marcar completado ---
-const onCardClick = () => {
-  if (isEditing.value || isLoading.value) return;
+// ---------- Click: marcar hecha (nunca justo después de un arrastre) ----------
+let finArrastre: number | null = null;
+const onClick = () => {
+  if (debeIgnorarClick(finArrastre, Date.now())) return;
   if (navigator.vibrate) navigator.vibrate(50);
-  emit('serieCompletadaToggled', props.serie.SerieId);
+  emit('toggle', props.serie.SerieId);
 };
 
-// --- Drag & Drop ---
+// ---------- Ratón: arrastre HTML5 ----------
 const onDragStart = (e: DragEvent) => {
-  if (isEditing.value || isLoading.value) return;
   e.dataTransfer?.setData('text/plain', String(props.serie.SerieId));
   emit('dragStart', props.serie.SerieId);
 };
-
 const onDrop = (e: DragEvent) => {
   e.preventDefault();
   emit('drop', props.serie.SerieId);
 };
 
-// Reordenar con el dedo: se arrastra desde el asa y se suelta sobre otra serie
-const arrastrandoTactil = ref(false);
-const onHandleDown = (e: PointerEvent) => {
-  if (e.pointerType === 'mouse' || isEditing.value || isLoading.value) return;
-  e.preventDefault();
-  (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-  arrastrandoTactil.value = true;
-  emit('dragStart', props.serie.SerieId);
-};
-const marcarDestino = (e: PointerEvent) => {
-  document.querySelectorAll('.serie-drop-target').forEach(el => el.classList.remove('serie-drop-target'));
-  const destino = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-serie-id]');
-  if (destino && destino !== (e.currentTarget as HTMLElement).closest('[data-serie-id]')) destino.classList.add('serie-drop-target');
-};
-const onHandleMove = (e: PointerEvent) => {
-  if (arrastrandoTactil.value) marcarDestino(e);
-};
-const onHandleUp = (e: PointerEvent) => {
-  if (!arrastrandoTactil.value) return;
-  arrastrandoTactil.value = false;
-  document.querySelectorAll('.serie-drop-target').forEach(el => el.classList.remove('serie-drop-target'));
-  const destino = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-serie-id]') as HTMLElement | null;
-  const id = destino ? Number(destino.dataset.serieId) : NaN;
-  if (!Number.isNaN(id) && id !== props.serie.SerieId) emit('drop', id);
-  else emit('dragStart', null);
+// ---------- Táctil: pulsación larga ----------
+let fase: FaseToque = 'esperando';
+let timer: ReturnType<typeof setTimeout> | null = null;
+let inicioX = 0, inicioY = 0, inicioT = 0, inicioScroll = 0;
+let ultimoX = 0, ultimoY = 0;
+let raf = 0;
+let destinoActual: HTMLElement | null = null;
+
+const limpiarDestino = () => {
+  destinoActual?.classList.remove('serie-drop-target');
+  destinoActual = null;
 };
 
-// Edición y lógica estándar...
-const startEdit = () => {
-  serieEditada.value = {
-    ejercicioId: props.serie.ExerciciId,
-    kg: props.serie.Kg,
-    reps: props.serie.Reps,
-    descansoSeg: props.serie.DescansoSeg ?? null
-  };
-  errorEdicion.value = '';
-  isEditing.value = true;
+const destinoBajo = (x: number, y: number): HTMLElement | null => {
+  // La fila levantada tiene pointer-events: none, así que elementFromPoint ve la de debajo
+  const el = document.elementFromPoint(x, y)?.closest('[data-serie-id]') as HTMLElement | null;
+  return el && el !== fila.value ? el : null;
 };
 
-const cancelEdit = () => {
-  isEditing.value = false;
-};
-
-const nombreEjercicio = computed(() => {
-  return props.ejercicios.find(e => e.ExerciciId === props.serie.ExerciciId)?.Nom || 'Ejercicio desconocido';
-});
-
-const saveEdit = async (valores: { ejercicioId: number; kg: number; reps: number; descansoSeg: number | null }) => {
-  serieEditada.value = valores;
-  errorEdicion.value = '';
-  try {
-    isLoading.value = true;
-    const data = await apiFetch<any>('/api/editSerie', {
-      serieId: props.serie.SerieId,
-      entrenoId: props.serie.EntrenoId,
-      exerciciId: serieEditada.value.ejercicioId,
-      kg: serieEditada.value.kg,
-      reps: serieEditada.value.reps,
-      descansoSeg: serieEditada.value.descansoSeg
-    });
-    emit('serieUpdated', {
-      data,
-      serieId: props.serie.SerieId,
-      entrenoId: props.serie.EntrenoId,
-      exerciciId: serieEditada.value.ejercicioId,
-      kg: serieEditada.value.kg,
-      reps: serieEditada.value.reps,
-      descansoSeg: serieEditada.value.descansoSeg
-    });
-    isEditing.value = false;
-  } catch (error) {
-    console.error(error);
-    errorEdicion.value = 'No se pudieron guardar los cambios. Inténtalo de nuevo.';
-  } finally {
-    isLoading.value = false;
+const actualizarArrastre = () => {
+  desplazamientoY.value = (ultimoY - inicioY) + (window.scrollY - inicioScroll);
+  const destino = destinoBajo(ultimoX, ultimoY);
+  if (destino !== destinoActual) {
+    limpiarDestino();
+    destinoActual = destino;
+    destino?.classList.add('serie-drop-target');
   }
 };
 
-const deleteSerie = () => emit('serieDeleteRequested', props.serie);
+const bucleAutoScroll = () => {
+  if (!levantada.value) return;
+  const delta = autoScrollDelta(ultimoY, window.innerHeight, 56, 130);
+  if (delta !== 0) {
+    window.scrollBy(0, delta);
+    actualizarArrastre();
+  }
+  raf = requestAnimationFrame(bucleAutoScroll);
+};
+
+const levantar = () => {
+  timer = null;
+  fase = siguienteFase(fase, { dx: ultimoX - inicioX, dy: ultimoY - inicioY, transcurridoMs: Date.now() - inicioT });
+  if (fase !== 'arrastrando') return;
+  levantada.value = true;
+  if (navigator.vibrate) navigator.vibrate(30);
+  emit('dragStart', props.serie.SerieId);
+  actualizarArrastre();
+  raf = requestAnimationFrame(bucleAutoScroll);
+};
+
+const onTouchStart = (e: TouchEvent) => {
+  if (e.touches.length !== 1) return;
+  const t = e.touches[0];
+  fase = 'esperando';
+  inicioX = ultimoX = t.clientX;
+  inicioY = ultimoY = t.clientY;
+  inicioT = Date.now();
+  inicioScroll = window.scrollY;
+  timer = setTimeout(levantar, PULSACION_LARGA_MS);
+};
+
+const onTouchMove = (e: TouchEvent) => {
+  const t = e.touches[0];
+  ultimoX = t.clientX;
+  ultimoY = t.clientY;
+  if (fase === 'arrastrando') {
+    if (e.cancelable) e.preventDefault();
+    actualizarArrastre();
+    return;
+  }
+  fase = siguienteFase(fase, { dx: ultimoX - inicioX, dy: ultimoY - inicioY, transcurridoMs: Date.now() - inicioT });
+  if (fase === 'scroll' && timer) { clearTimeout(timer); timer = null; }
+};
+
+const terminar = (soltar: boolean) => {
+  if (timer) { clearTimeout(timer); timer = null; }
+  cancelAnimationFrame(raf);
+  if (fase === 'arrastrando') {
+    finArrastre = Date.now();
+    const destino = destinoActual;
+    limpiarDestino();
+    levantada.value = false;
+    desplazamientoY.value = 0;
+    const id = destino ? Number(destino.dataset.serieId) : NaN;
+    if (soltar && !Number.isNaN(id)) emit('drop', id);
+    else emit('dragStart', null);
+  }
+  fase = 'esperando';
+};
+const onTouchEnd = (e: TouchEvent) => {
+  // El click sintético posterior lo filtra debeIgnorarClick; si hubo arrastre, evitamos además el click
+  if (fase === 'arrastrando' && e.cancelable) e.preventDefault();
+  terminar(true);
+};
+const onTouchCancel = () => terminar(false);
+
+onBeforeUnmount(() => {
+  if (timer) clearTimeout(timer);
+  cancelAnimationFrame(raf);
+  limpiarDestino();
+  fila.value?.removeEventListener('touchstart', onTouchStart);
+  fila.value?.removeEventListener('touchmove', onTouchMove);
+  fila.value?.removeEventListener('touchend', onTouchEnd);
+  fila.value?.removeEventListener('touchcancel', onTouchCancel);
+});
+
+const estilo = computed(() => (levantada.value ? { transform: `translateY(${desplazamientoY.value}px)` } : undefined));
+const descanso = computed(() => (props.serie.DescansoSeg != null ? textoDescanso(props.serie.DescansoSeg) : ''));
+const resumenAria = computed(() =>
+  `Serie ${props.n}: ${kgTexto(props.serie.Kg)} kilos por ${props.serie.Reps} repeticiones. ${props.completada ? 'Hecha' : 'Pendiente'}${props.serie.PR ? ', récord personal' : ''}`);
 </script>
 
 <template>
-  <div 
-    class="serie-card" 
-    :class="{ 
-      'editing': isEditing, 
-      'serie-done': isCompleted, 
-      'serie-pending': !isCompleted,
-    }"
-    draggable="true"
+  <div
+    ref="fila"
+    class="fila"
+    :class="{ 'fila--hecha': completada, 'fila--actual': actual && !completada, 'fila--levantada': levantada }"
+    :style="estilo"
+    :draggable="conRaton"
     :data-serie-id="serie.SerieId"
     @dragstart="onDragStart"
     @dragover.prevent
     @drop.prevent="onDrop"
-    @click="onCardClick"
+    @contextmenu.prevent
   >
-    <!-- MODO VISUALIZACIÓN -->
-    <template v-if="!isEditing">
-      <div class="serie-info" :class="{ 'text-dimmed': isCompleted }">
-        <h3>
-          <div @click.stop="$emit('goToEjercicio', serie.ExerciciId)" style="cursor: pointer;">
-            {{ nombreEjercicio }}
-          </div>
-        </h3>
-        <p class="serie-stats">
-          <span class="kg">{{ serie.Kg }} kg</span> x 
-          <span class="reps">{{ serie.Reps }} reps</span> = 
-          <span class="carga">{{ serie.Carga }} kg</span>
-          <span v-if="serie.DescansoSeg != null" class="descanso-tag" title="Descanso propio de esta serie">⏱ {{ textoDescanso(serie.DescansoSeg) }}</span>
-        </p>
-        <p v-if="serie.PR" class="pr-badge">🏆 PR</p>
-        
-
-      </div>
-      
-      <div class="serie-right-column" :class="{ 'text-dimmed': isCompleted }">
-<div class="grupo-muscular-container" v-if="grupoMuscularNombre && grupoMuscularNombre.length">
-  <span v-for="(nom, i) in grupoMuscularNombre" :key="i" class="grupo-muscular">{{ nom }}</span>
-</div>
-        <div class="serie-actions">
-          <button
-            type="button"
-            class="drag-handle"
-            :class="{ dragging: arrastrandoTactil }"
-            aria-label="Arrastrar para reordenar"
-            title="Arrastra para reordenar"
-            @click.stop
-            @pointerdown="onHandleDown"
-            @pointermove="onHandleMove"
-            @pointerup="onHandleUp"
-            @pointercancel="onHandleUp"
-          >⠿</button>
-          <button class="btn btn-secondary btn-sm" @click.stop="startEdit" :disabled="isLoading">Editar</button>
-          <button class="btn btn-quiet-danger btn-sm" @click.stop="deleteSerie" :disabled="isLoading">Eliminar</button>
-        </div>
-      </div>
-    </template>
-
-    <!-- MODO EDICIÓN -->
-    <template v-else>
-      <div class="serie-info edit-mode-full" @mousedown.stop @touchstart.stop @click.stop>
-        <SerieForm
-          mode="editar"
-          :ejercicio-id="serieEditada.ejercicioId"
-          :kg="serieEditada.kg"
-          :reps="serieEditada.reps"
-          :descanso-seg="serieEditada.descansoSeg"
-          :ejercicios="ejercicios"
-          :saving="isLoading"
-          :error="errorEdicion"
-          @submit="saveEdit"
-          @cancel="cancelEdit"
-          @open-modal-ejercicio="$emit('openModalEjercicio')"
-        />
-      </div>
-    </template>
+    <button type="button" class="fila-toque" :aria-pressed="completada" :aria-label="resumenAria" @click="onClick">
+      <span class="fila-num" aria-hidden="true">{{ n }}</span>
+      <span class="fila-datos">
+        <span class="fila-cifras" aria-hidden="true">
+          <span class="kg">{{ kgTexto(serie.Kg) }}</span><span class="por">×</span><span class="reps">{{ serie.Reps }}</span>
+          <span class="uds">kg · reps</span>
+        </span>
+        <span v-if="descanso || serie.PR" class="fila-meta" aria-hidden="true">
+          <span v-if="serie.PR" class="fila-pr">PR</span>
+          <span v-if="descanso" class="fila-descanso" title="Descanso propio de esta serie"><Timer :size="13" :stroke-width="2" />{{ descanso }}</span>
+        </span>
+      </span>
+      <span class="luz" :class="{ 'luz--hecha': completada, 'luz--actual': actual && !completada }" aria-hidden="true"></span>
+    </button>
+    <button type="button" class="fila-editar" :aria-label="`Editar serie ${n}`" @click.stop="emit('edit', serie)">
+      <Pencil :size="18" :stroke-width="2" aria-hidden="true" />
+    </button>
   </div>
 </template>
 
-<style src="../styles/detalle-entreno.css"></style>
-
 <style scoped>
-.drag-handle {
-  min-width: var(--touch-min);
-  min-height: var(--touch-min);
+.fila {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  background: var(--n1);
+  border: 1px solid var(--n3);
+  border-radius: var(--radius-md);
+  box-shadow: var(--bevel);
+  /* Sin selección de texto ni menú contextual (iOS) al mantener pulsado */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: pan-y;
+}
+.fila--actual { border-color: rgba(255, 176, 32, 0.55); background: var(--n2); }
+.fila--levantada {
+  z-index: 5;
+  pointer-events: none;
+  background: var(--n3);
+  border-color: var(--n6);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.6);
+}
+.fila.serie-drop-target { border-color: var(--led-amber); background: var(--led-amber-dim); }
+
+.fila-toque {
+  flex: 1;
+  min-width: 0;
+  min-height: 3.5rem;
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem 0.35rem 0.5rem;
   background: none;
   border: none;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+  color: var(--n8);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-touch-callout: none;
+}
+.fila-num {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--n6);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.fila-datos { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.fila-cifras {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.kg, .reps { font-size: 1.45rem; font-weight: 600; }
+.por { color: var(--n6); font-size: 1.1rem; }
+.uds {
+  margin-left: 0.15rem;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--n6);
+}
+.fila-meta { display: flex; align-items: center; gap: 0.6rem; font-size: 0.8rem; color: var(--n7); }
+.fila-descanso { display: inline-flex; align-items: center; gap: 0.25rem; font-variant-numeric: tabular-nums; }
+.fila-pr {
+  padding: 0 0.35rem;
+  border: 1px solid var(--judge-white);
   border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  font-size: 1.25rem;
-  line-height: 1;
-  cursor: grab;
-  touch-action: none; /* el gesto sobre el asa reordena, no hace scroll */
-  user-select: none;
-}
-.drag-handle.dragging { color: var(--accent-primary-hover); background: var(--bg-tertiary); }
-@media (hover: hover) and (pointer: fine) { .drag-handle { display: none; } }
-.serie-card.serie-drop-target { outline: 2px dashed var(--accent-primary); outline-offset: 2px; }
-.serie-card {
-  position: relative;
-  background-color: var(--bg-secondary);
-  user-select: none; /* Importante para evitar selección de texto al mantener pulsado */
-  transition: transform 0.1s, background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-  border: 1px solid transparent;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--judge-white);
+  line-height: 1.35;
 }
 
-.serie-done {
-  background: rgba(20, 184, 166, 0.08);
-  border-color: rgba(20, 184, 166, 0.45);
+/* Estado de la serie: pendiente (aro) · en curso (ámbar) · hecha (blanco de jueces) */
+.luz {
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 50%;
+  border: 2px solid var(--n5);
+  background: transparent;
 }
+.luz--actual { border-color: var(--led-amber); background: var(--led-amber); }
+.luz--hecha { border-color: var(--judge-white); background: var(--judge-white); }
 
-/* Marca de serie completada, en lugar de un borde lateral grueso */
-.serie-done::after {
-  content: '✓';
-  position: absolute;
-  top: -0.5rem;
-  left: -0.5rem;
-  width: 1.5rem;
-  height: 1.5rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+.fila--hecha .kg, .fila--hecha .reps { color: var(--n7); }
+.fila--hecha .fila-num { color: var(--n5); }
+
+.fila-editar {
+  flex: 0 0 var(--touch-min);
+  min-height: 3.5rem;
   display: grid;
   place-items: center;
-  border-radius: 50%;
-  background: var(--accent-primary);
-  color: var(--on-accent);
-  font-size: 0.75rem;
-  font-weight: 800;
+  background: none;
+  border: none;
+  border-left: 1px solid var(--n3);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  color: var(--n7);
+  cursor: pointer;
 }
-
-.serie-pending {
-  background-color: rgba(255, 255, 255, 0.02);
-  border-color: rgba(255, 255, 255, 0.12);
-}
-
-.text-dimmed {
-  opacity: 0.38;
-  transition: opacity 0.3s ease;
-}
-
-.press-hint {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  margin-top: 0.25rem;
-  font-style: italic;
-  opacity: 0.6;
-}
-
-
-@media (max-width: 480px) {
-  .serie-actions {
-    flex-direction: column;
-    gap: 0.5rem;
-    width: 100%;
-  }
-  .serie-actions button {
-    width: 100%;
-  }
-  .serie-right-column {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    min-width: 80px;
-  }
-}
+.fila-editar:hover { background: var(--n3); color: var(--n8); }
+.fila-toque:focus-visible, .fila-editar:focus-visible { outline-offset: -3px; }
+.fila-toque:hover { background: rgba(255, 255, 255, 0.02); }
 </style>

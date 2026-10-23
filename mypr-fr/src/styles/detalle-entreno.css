@@ -1,1225 +1,241 @@
-.detalle-entreno .page-header {
-    align-items: center;
-}
+/* Pantalla de entreno — marcador LED de competición. Estilos de la vista; cada componente lleva los suyos. */
 
-.detalle-entreno .entreno-title {
-    margin: 0;
-    font-size: clamp(1.1rem, 3.5vw, 1.35rem);
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    flex: 1;
-    text-align: left;
-    color: var(--text-primary);
-}
-
-/* Hueco para que el botón flotante del entrenador no tape los últimos controles */
 .detalle-entreno {
-    padding-bottom: 6rem;
-}
-
-.entreno-title:first-letter {
-    text-transform: uppercase;
-}
-
-@media (max-width: 480px) {
-    .header {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .entreno-title {
-        text-align: center;
-    }
-}
-
-.entreno-info-card {
-    background: linear-gradient(160deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
-    border-radius: var(--radius-lg);
-    padding: 1.25rem;
-    margin-bottom: 1.5rem;
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow-sm);
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1rem;
-}
-
-@media (min-width: 768px) {
-    .entreno-info-card {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        padding: 1.5rem;
-    }
-}
-
-.info-row {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    padding: 0.5rem;
-    background-color: var(--bg-primary);
-    border-radius: 6px;
-}
-
-.label {
-    font-weight: 500;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-}
-
-.value {
-    font-weight: 600;
-    font-size: 1rem;
-}
-
-@media (min-width: 768px) {
-    .value {
-        font-size: 1.1rem;
-    }
-}
-
-h2 {
-    margin: 2rem 0 1.5rem;
-    font-size: 1.5rem;
-}
-
-.serie-card h3 {
-    margin: 0 0 0.5rem;
-    font-size: 1.1rem;
-    color: var(--color-cobalt-blue);
-    padding-bottom: 0.5rem;
     width: 100%;
+    max-width: var(--max-content);
+    margin: 0 auto;
+    /* Hueco para que el reloj de descanso acoplado no tape la última fila */
+    padding-bottom: 5.5rem;
 }
 
-.grupo-muscular-container {
-    margin-bottom: 1rem;
-}
-
-.grupo-muscular {
-    display: inline-block;
-    background-color: transparent;
-    color: #777;
-    padding: 0.15rem 0.35rem;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    border: none;
-}
-
-.serie-card {
-    background-color: var(--bg-secondary);
+/* ---- Avisos ---- */
+.detalle-entreno .aviso {
+    position: fixed;
+    left: 0.75rem;
+    right: 0.75rem;
+    top: max(0.75rem, env(safe-area-inset-top));
+    max-width: 26rem;
+    margin: 0 auto;
+    z-index: 2900;
+    padding: 0.7rem 1rem;
     border-radius: var(--radius-md);
-    padding: 1rem 1.125rem;
-    margin-bottom: 0.75rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border: 1px solid var(--border);
-    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.serie-card:hover {
-    border-color: var(--border-strong);
-    box-shadow: var(--shadow-sm);
-}
-
-.serie-info {
-    width: 100%;
-}
-
-.serie-info p {
-    margin: 0.5rem 0;
-}
-
-.serie-stats {
-    margin: 0.5rem 0;
-    font-size: 1.1rem;
-}
-
-.kg,
-.reps,
-.carga {
+    border: 1px solid var(--n5);
+    background: var(--n3);
+    color: var(--n8);
+    font-family: var(--font-display);
+    font-size: 1.05rem;
     font-weight: 600;
-}
-
-.carga {
-    color: var(--color-cobalt-blue);
-}
-
-.pr-badge {
-    display: inline-block;
-    background-color: var(--pr);
-    color: #2a1a00;
-    padding: 0.25rem 0.6rem;
-    border-radius: var(--radius-full);
-    font-size: 0.78rem;
-    font-weight: 800;
     letter-spacing: 0.04em;
-    margin-top: 0.5rem;
+    text-transform: uppercase;
+    box-shadow: var(--shadow-lg);
 }
 
-.serie-right-column {
+.detalle-entreno .aviso--alerta {
+    border-color: var(--led-red);
+    color: var(--led-red);
+    background: var(--n2);
+}
+
+/* ---- Estados de carga / error ---- */
+.detalle-entreno .estado {
+    margin: 1.25rem 0.75rem;
+    padding: 2rem 1rem;
+    text-align: center;
+    background: var(--n1);
+    border: 1px solid var(--n3);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--bevel);
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
-}
-
-.serie-actions {
-    display: flex;
+    align-items: center;
     gap: 0.5rem;
 }
 
-.add-serie {
-    margin-bottom: 1.5rem;
-    width: 100%;
+.detalle-entreno .estado p {
+    margin: 0 0 0.5rem;
+    color: var(--n7);
 }
 
-.add-serie button {
-    width: 100%;
-    min-height: 56px;
-    font-size: 1.125rem;
+.detalle-entreno .estado--error p {
+    color: var(--led-red);
+}
+
+.detalle-entreno .btn-quiet {
+    background: transparent;
+    color: var(--n7);
+}
+
+/* ---- Barra de herramientas: vista, descanso manual, terminar ---- */
+.detalle-entreno .herramientas {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.75rem 0.75rem 0;
+}
+
+.detalle-entreno .segmento {
+    display: inline-flex;
+    border: 1px solid var(--n4);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.detalle-entreno .segmento-btn {
+    min-height: var(--touch-min);
+    padding: 0 0.9rem;
+    background: var(--n1);
+    color: var(--n7);
+    border: none;
+    font-family: var(--font-display);
+    font-size: 0.95rem;
     font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
 }
 
-.new-serie-card {
-    margin-bottom: 2rem;
-    border: 2px dashed rgba(45, 212, 191, 0.45);
-    background-color: rgba(45, 212, 191, 0.06);
-    display: block;
-    padding: 1.5rem;
-    border-radius: var(--radius-lg);
+.detalle-entreno .segmento-btn + .segmento-btn {
+    border-left: 1px solid var(--n4);
 }
 
-.loading,
-.error,
-.no-series {
-    text-align: center;
-    padding: 2rem;
-    background-color: var(--bg-secondary);
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    margin: 1.5rem 0;
+.detalle-entreno .segmento-btn.activo {
+    background: var(--n8);
+    color: var(--n0);
 }
 
-.error {
-    color: var(--error);
+.detalle-entreno .segmento-btn:focus-visible {
+    outline-offset: -3px;
 }
 
-/* Buttons inherit from global design system */
-
-.form-container {
-    background-color: var(--bg-secondary);
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    border: 1px solid var(--border);
+.detalle-entreno .icono-btn {
+    flex: 0 0 var(--touch-min);
+    min-height: var(--touch-min);
+    display: grid;
+    place-items: center;
+    background: var(--n1);
+    color: var(--n7);
+    border: 1px solid var(--n4);
+    border-radius: var(--radius-md);
+    cursor: pointer;
 }
 
-.serie-form {
+.detalle-entreno .icono-btn:hover {
+    background: var(--n2);
+    color: var(--n8);
+}
+
+.detalle-entreno .terminar {
+    margin-left: auto;
+    padding: 0 0.85rem;
+    white-space: nowrap;
+}
+
+/* ---- Series agrupadas por ejercicio ---- */
+.detalle-entreno .grupos {
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
-    width: 100%;
+    margin: 1rem 0.75rem 0;
 }
 
-.form-group {
+.detalle-entreno .grupo-cab {
     display: flex;
-    flex-direction: column;
+    align-items: baseline;
+    justify-content: space-between;
     gap: 0.75rem;
 }
 
-.form-row {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-}
-
-.form-row .form-group {
-    flex: 1;
-    min-width: 120px;
-}
-
-.detalle-entreno input.form-control,
-.detalle-entreno textarea.form-control,
-.detalle-entreno select.form-control,
-.modal-container input.form-control,
-.modal-container textarea.form-control,
-.modal-container select.form-control,
-.serie-form input.form-control,
-.serie-form textarea.form-control,
-.serie-form select.form-control,
-.edit-form input.form-control,
-.edit-form textarea.form-control {
-    padding: 0.5rem;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border-strong);
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    font-size: 1rem;
-    height: 38px;
-    box-sizing: border-box;
-    width: 100%;
-}
-
-.detalle-entreno textarea.form-control,
-.modal-container textarea.form-control,
-.serie-form textarea.form-control,
-.edit-form textarea.form-control {
-    height: auto;
-    min-height: 100px;
-}
-
-.detalle-entreno input.form-control:focus,
-.detalle-entreno textarea.form-control:focus,
-.modal-container input.form-control:focus,
-.modal-container textarea.form-control:focus,
-.serie-form input.form-control:focus,
-.serie-form textarea.form-control:focus {
-    outline: none;
-    border-color: var(--accent-primary);
-    box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
-}
-
-.form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-    margin-top: 1.5rem;
-}
-
-
-.carga-calculada {
-    background-color: var(--bg-primary);
-    padding: 0.75rem;
-    border-radius: 4px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.carga-calculada .value {
-    color: var(--color-cobalt-blue);
-    font-size: 1.1rem;
-}
-
-.edit-form {
-    margin-top: 1rem;
-    width: 100%;
-}
-
-.edit-form .form-row {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-
-.edit-form .form-group {
-    flex: 1;
-}
-
-.edit-form input.form-control,
-.edit-form textarea.form-control {
-    width: 100%;
-}
-
-.edit-form .carga-calculada {
-    margin-top: 0.5rem;
-}
-
-.edit-actions {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-top: 1.5rem;
-}
-
-.edit-actions button {
-    width: 50%;
-    padding: 0.75rem 0;
-    font-size: 1rem;
-    font-weight: 500;
-    border-radius: 6px;
-}
-
-.ml-2 {
-    margin-left: 0.5rem;
-}
-
-.ejercicio-select-container {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-}
-
-.select-wrapper {
-    width: 100%;
-}
-
-.input-with-button {
-    display: flex;
-    align-items: stretch;
-    gap: 0.5rem;
-    width: 100%;
-}
-
-.input-with-button input.form-control,
-.input-with-button select.form-control {
-    flex: 1;
-}
-
-.ejercicio-btn {
-    height: auto;
+.detalle-entreno .grupo-nombre {
     min-height: var(--touch-min);
-    min-width: var(--touch-min);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0;
     padding: 0;
-    font-size: 1.2rem;
-    line-height: 1;
-    border-radius: 4px;
-}
-
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    animation: fadeIn 0.2s ease-out;
-}
-
-.modal-container {
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    width: 95%;
-    max-width: 600px;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    animation: slideUp 0.3s ease-out;
-    margin: 1rem;
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid var(--border);
-}
-
-.modal-header h3 {
-    margin: 0;
-    font-size: 1.25rem;
-}
-
-.btn-close {
     background: none;
     border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: var(--text-secondary);
-}
-
-.btn-close:hover {
-    color: var(--text-primary);
-}
-
-.modal-body {
-    padding: 1.5rem;
-}
-
-.grupos-seleccion {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 0.75rem;
-    margin-top: 0.5rem;
-}
-
-@media (min-width: 768px) {
-    .grupos-seleccion {
-        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    }
-}
-
-.grupo-checkbox {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.checkbox-input {
-    margin: 0;
-}
-
-.checkbox-label {
-    cursor: pointer;
-}
-
-.select-help {
-    display: block;
-    margin-top: 0.5rem;
-    color: var(--text-secondary);
-    font-size: 0.8rem;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-}
-
-@keyframes slideUp {
-    from {
-        transform: translateY(50px);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-@keyframes slideIn {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-.serie-card.editing {
-    display: block;
-    padding: 1.5rem;
-}
-
-.entreno-header {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-bottom: 1rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border);
-}
-
-.entreno-edit-form {
-    grid-column: 1 / -1;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    margin-bottom: 1rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border);
-}
-
-.detalle-entreno textarea.form-control,
-.modal-container textarea.form-control {
-    resize: vertical;
-}
-
-.star-btn {
-    color: grey;
-    border-color: grey;
-    margin-right: 0.3rem;
-}
-
-.rating-input {
-    display: flex;
-    gap: 0.25rem;
-}
-
-.filled {
-    color: var(--color-cobalt-blue);
-    border-color: var(--color-cobalt-blue);
-}
-
-.w-100 {
-    width: 100%;
-}
-
-.edit-button-container {
-    grid-column: 1 / -1;
-    width: 100%;
-}
-
-.edit-button-container .btn {
-    width: 100%;
-}
-
-@media (max-width: 480px) {
-    .form-row {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .form-row .form-group {
-        width: 100%;
-    }
-
-    .detalle-entreno input.form-control,
-    .detalle-entreno textarea.form-control,
-    .modal-container input.form-control,
-    .modal-container textarea.form-control {
-        width: 100%;
-        box-sizing: border-box;
-    }
-}
-
-/* Móvil: la tarjeta ocupa casi toda la pantalla (cabecera + paneles + navegación ≈ 17rem) */
-@media (max-width: 640px) {
-    .serie-card-big {
-        height: max(60dvh, calc(100dvh - 17rem));
-        border-radius: var(--radius-lg);
-        padding: 1.25rem 1rem;
-    }
-
-    .swipe-area {
-        gap: 0.25rem;
-    }
-}
-
-.filled {
-    color: var(--accent-primary) !important;
-}
-
-/* Collapsible panels */
-.collapsible-panel {
-    background: linear-gradient(160deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-lg);
-    margin-bottom: 0.75rem;
-    box-shadow: var(--shadow-sm);
-    overflow: hidden;
-}
-
-.collapsible-header {
-    width: 100%;
-    min-height: var(--touch-min);
-    background: none;
-    border: none;
-    font-family: inherit;
+    color: var(--n8);
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
     text-align: left;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.875rem 1.125rem;
+    text-transform: uppercase;
+    line-height: 1.1;
     cursor: pointer;
-    user-select: none;
-    font-weight: 700;
-    font-size: 0.95rem;
-    color: var(--text-primary);
-    transition: background 0.2s;
-}
-
-.collapsible-header:hover {
-    background: rgba(255, 255, 255, 0.03);
-}
-
-.chevron {
-    font-size: 0.75rem;
-    transition: transform 0.25s ease;
-    color: var(--text-secondary);
-}
-
-.chevron.open {
-    transform: rotate(90deg);
-}
-
-.collapsible-body {
-    max-height: 0;
-    opacity: 0;
-    overflow: hidden;
-    padding: 0 1.125rem;
-    transition: max-height 0.25s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease;
-    border-top: 1px solid transparent;
-}
-
-.collapsible-body.open {
-    max-height: 800px;
-    opacity: 1;
-    padding: 0 1.125rem 1rem;
-    border-top-color: var(--border);
-}
-
-.collapsible-body .info-row {
-    background: transparent;
-    padding: 0.625rem 0;
-    margin: 0;
-    border-bottom: 1px solid var(--border);
-}
-
-.collapsible-body .info-row:last-child {
-    border-bottom: none;
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        max-height: 0;
-    }
-    to {
-        opacity: 1;
-        max-height: 300px;
-    }
-}
-
-/* Editable name in header */
-.editable-name {
-    cursor: pointer;
-    border-bottom: 1px dashed var(--text-muted);
-    transition: border-color 0.2s;
-}
-
-.editable-name:hover {
-    border-color: var(--accent-primary);
-}
-
-.nombre-input-inline {
-    font-family: inherit;
-    font-size: inherit;
-    font-weight: 800;
-    letter-spacing: inherit;
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    -webkit-text-fill-color: var(--text-primary);
-    border: 1px solid var(--accent-primary);
-    border-radius: var(--radius-sm);
-    padding: 0.25rem 0.5rem;
-    outline: none;
-    width: 100%;
-}
-
-/* Muscle group graph */
-.musculo-graph {
-    margin-top: 1rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--border);
-}
-
-.graph-toggle {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
-}
-
-.toggle-btn {
-    padding: 0.3rem 0.75rem;
-    border-radius: var(--radius-full);
-    border: 1px solid var(--border-strong);
-    background: transparent;
-    color: var(--text-secondary);
-    font-family: inherit;
-    font-size: 0.75rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.toggle-btn.active {
-    background: var(--accent-primary);
-    color: #042f2e;
-    border-color: var(--accent-primary);
-}
-
-.toggle-btn:hover:not(.active) {
-    border-color: var(--accent-primary);
-    color: var(--accent-primary);
-}
-
-.graph-bars {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.graph-row {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.graph-label {
-    flex: 0 0 80px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    text-align: right;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.bar-track {
-    flex: 1;
-    height: 14px;
-    background: var(--bg-primary);
-    border-radius: var(--radius-full);
-    overflow: hidden;
-}
-
-.bar-fill {
-    height: 100%;
-    background: var(--accent-primary);
-    border-radius: var(--radius-full);
-    transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-    min-width: 2px;
-}
-
-.graph-value {
-    flex: 0 0 30px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: var(--text-secondary);
-    text-align: right;
-}
-
-/* View toggle (Lista / Tarjetas) */
-.view-toggle {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-    justify-content: center;
-}
-
-/* Swipe area */
-.swipe-area {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin: 0 auto 1rem;
-    max-width: 640px;
-    width: 100%;
-    user-select: none;
-    touch-action: pan-y;
-}
-
-
-/* Big card */
-.serie-card-big {
-    flex: 1;
-    background: linear-gradient(160deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
-    border: 2px solid var(--border-strong);
-    border-radius: var(--radius-xl);
-    padding: 1.5rem 2rem;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-    height: clamp(420px, 62dvh, 560px);
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-    box-shadow: var(--shadow-md);
-    overflow: hidden;
-}
-
-.serie-card-big:active {
-    transform: scale(0.97);
-}
-
-.serie-card-big.serie-done {
-    border-color: rgba(15, 139, 141, 0.6);
-    background: linear-gradient(160deg, rgba(15,139,141,0.12) 0%, var(--bg-secondary) 100%);
-    border-top: 6px solid #0f8b8d;
-    opacity: 0.7;
-}
-
-.big-ejercicio {
-    font-size: clamp(1.5rem, 6vw, 2rem);
-    line-height: 1.15;
-    font-weight: 800;
-    color: var(--text-primary);
-    letter-spacing: -0.02em;
-    margin-bottom: 0.5rem;
-    max-width: 100%;
     overflow-wrap: anywhere;
 }
 
-.big-stats {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    justify-content: center;
-    gap: 0.25rem 0.75rem;
-    margin: 0.75rem 0;
-    font-variant-numeric: tabular-nums;
-    max-width: 100%;
+.detalle-entreno .grupo-nombre:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
 }
 
-.big-kg {
-    font-size: clamp(3rem, 17vw, 5.5rem);
-    line-height: 1;
-    font-weight: 800;
-    color: var(--accent-primary);
-    letter-spacing: -0.03em;
-}
-
-.big-x {
-    font-size: clamp(1.5rem, 7vw, 2.5rem);
-    color: var(--text-muted);
-}
-
-.big-reps {
-    font-size: clamp(3rem, 17vw, 5.5rem);
-    line-height: 1;
-    font-weight: 800;
-    color: var(--color-coral);
-    letter-spacing: -0.03em;
-}
-
-.descanso-tag {
-    margin-left: 0.5rem;
-    font-size: 0.75rem;
-    font-weight: 400;
-    color: var(--text-muted);
-    white-space: nowrap;
-}
-
-.big-carga {
-    font-variant-numeric: tabular-nums;
-    font-size: 1.125rem;
-    color: var(--text-secondary);
-    font-weight: 600;
-    margin: 0.25rem 0;
-}
-
-.big-grupo {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border-radius: var(--radius-full);
-    font-size: 0.8rem;
-    font-weight: 600;
-    background: rgba(45, 212, 191, 0.12);
-    color: var(--accent-primary);
-    border: 1px solid rgba(45, 212, 191, 0.25);
-    margin-top: 0.5rem;
-}
-
-.big-actions {
-    display: flex;
-    gap: 0.75rem;
-    margin-top: auto;
-    padding-top: 1rem;
-    width: 100%;
-    max-width: 360px;
-}
-
-.big-actions .btn {
-    flex: 1;
-    min-height: var(--touch-min);
-    font-size: 1rem;
-    padding: 0.65rem 0.5rem;
-    border-radius: var(--radius-md);
-}
-
-.serie-card-big.serie-done .big-actions {
-    opacity: 0.5;
-}
-
-/* Edición dentro de la tarjeta: formulario único (SerieForm), con scroll si no cabe */
-.serie-card-big.editing-card {
-    cursor: default;
-    padding: 1.25rem;
-    height: auto;
-    min-height: 0;
-    justify-content: flex-start;
-    align-items: stretch;
-    text-align: left;
-    overflow-y: auto;
-}
-
-/* Dots de progreso */
-.card-dots {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-    margin-bottom: 1rem;
-}
-
-.dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--bg-elevated);
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.dot.active {
-    background: var(--accent-primary);
-    transform: scale(1.3);
-}
-
-.dot.done {
-    background: var(--accent-primary-dark);
-}
-
-.dot-break {
-    color: var(--text-muted);
-    font-size: 0.7rem;
-    line-height: 10px;
-    user-select: none;
-}
-
-.dot-count {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    margin-left: 0.5rem;
-}
-
-/* Slide animation */
-.serie-card-slide-wrapper {
-    flex: 1;
-    display: flex;
-}
-
-.slide-next-enter-active,
-.slide-next-leave-active,
-.slide-prev-enter-active,
-.slide-prev-leave-active {
-    transition: transform 0.28s ease, opacity 0.28s ease;
-}
-
-.slide-next-enter-from {
-    transform: translateX(60%);
-    opacity: 0;
-}
-.slide-next-leave-to {
-    transform: translateX(-60%);
-    opacity: 0;
-}
-.slide-prev-enter-from {
-    transform: translateX(-60%);
-    opacity: 0;
-}
-.slide-prev-leave-to {
-    transform: translateX(60%);
-    opacity: 0;
-}
-
-/* Card navigation row */
-.card-nav-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-}
-
-.card-nav-row .card-dots {
-    flex: 1;
-    margin-bottom: 0;
-    min-width: 0;
-    overflow: hidden;
-    flex-wrap: nowrap;
-}
-
-.card-nav-btn {
-    min-width: var(--touch-min);
-    min-height: var(--touch-min);
-    padding: 0.25rem 0.5rem;
-}
-
-/* Multiple muscle group chips in big card */
-.big-grupos {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.4rem;
-    margin-top: 0.5rem;
-}
-
-.big-grupo-chip {
-    padding: 0.25rem 0.75rem;
-    border-radius: var(--radius-full);
-    font-size: 0.8rem;
-    font-weight: 600;
-    background: rgba(45, 212, 191, 0.12);
-    color: var(--accent-primary);
-    border: 1px solid rgba(45, 212, 191, 0.25);
-}
-
-.grupo-muscular-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.3rem;
-    justify-content: flex-end;
-}
-
-/* ---- Formulario de nueva serie: pensado para una mano en el gimnasio ---- */
-.serie-form .form-row.steppers {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.75rem;
-}
-
-.stepper {
-    display: grid;
-    grid-template-columns: 40px minmax(0, 1fr) 40px;
-    align-items: stretch;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-md);
-    background: var(--bg-secondary);
-    overflow: hidden;
-}
-
-.stepper:focus-within {
-    border-color: var(--accent-primary);
-    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.2);
-}
-
-.stepper button {
-    min-height: 52px;
-    border: none;
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-    font-family: inherit;
-    font-size: 1.35rem;
+.detalle-entreno .grupo-cuenta {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
     font-weight: 700;
-    cursor: pointer;
-    touch-action: manipulation;
-}
-
-.stepper button:active {
-    background: var(--bg-elevated);
-}
-
-.stepper input.form-control {
-    border: none;
-    border-radius: 0;
-    background: transparent;
-    text-align: center;
-    font-size: 1.125rem;
-    font-weight: 800;
-    font-variant-numeric: tabular-nums;
-    padding: 0.5rem 0.25rem;
-    min-width: 0;
-    height: 100%;
-}
-
-.stepper input.form-control:focus {
-    box-shadow: none;
-}
-
-.last-set-hint {
-    margin: -0.25rem 0 0.75rem;
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
-}
-
-.last-set-hint strong {
-    color: var(--text-primary);
+    color: var(--n8);
     font-variant-numeric: tabular-nums;
 }
 
-.serie-form .nueva-serie-actions {
+.detalle-entreno .grupo-total {
+    color: var(--n6);
+}
+
+.detalle-entreno .chips {
     display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    list-style: none;
+    margin: -0.35rem 0 0.5rem;
+    padding: 0;
 }
 
-.nueva-serie-actions .btn {
-    width: 100%;
-}
-
-.nueva-serie-actions .btn-primary {
-    width: 100%;
-    min-height: 56px;
-    font-size: 1.05rem;
-}
-
-.empty-series {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.empty-series p {
-    margin: 0;
-}
-
-.resumen-stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.5rem;
-    padding-top: 0.875rem;
-}
-
-.resumen-stat {
-    display: flex;
-    flex-direction: column;
-    gap: 0.125rem;
-}
-
-.resumen-stat .value {
-    font-size: 1.25rem;
-    font-weight: 800;
-    font-variant-numeric: tabular-nums;
-    color: var(--text-primary);
-}
-
-.resumen-stat .label {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-}
-
-.form-label {
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-}
-
-/* Título y error del formulario único de serie */
-.serie-form-title {
-    margin: 0;
-    font-size: 1.125rem;
-    font-weight: 700;
-    color: var(--text-primary);
-}
-
-.serie-form-error {
-    margin: 0;
-    padding: 0.5rem 0.75rem;
+.detalle-entreno .chip-m {
+    padding: 0 0.5rem;
+    border: 1px solid var(--n4);
     border-radius: var(--radius-sm);
-    border: 1px solid var(--error);
-    background: rgba(248, 113, 113, 0.1);
-    color: var(--error);
-    font-size: 0.875rem;
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--n7);
+    line-height: 1.6;
 }
 
-/* Sin animación de deslizamiento si el usuario pide menos movimiento */
-@media (prefers-reduced-motion: reduce) {
-    .slide-next-enter-from,
-    .slide-next-leave-to,
-    .slide-prev-enter-from,
-    .slide-prev-leave-to {
-        transform: none;
-    }
+.detalle-entreno .grupo-filas {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
 
-    .serie-card-big:active {
-        transform: none;
+.detalle-entreno .pista-reordenar {
+    margin: 0;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--n6);
+}
+
+/* ---- Añadir serie ---- */
+.detalle-entreno .anadir {
+    margin: 1.25rem 0.75rem 0;
+}
+
+.detalle-entreno .anadir-btn {
+    width: 100%;
+    min-height: 3.25rem;
+    border-style: dashed;
+}
+
+.cerrar-resumen {
+    width: 100%;
+    min-height: 3.5rem;
+    font-size: 1.15rem;
+}
+
+@media (min-width: 768px) {
+    .detalle-entreno .grupos,
+    .detalle-entreno .herramientas,
+    .detalle-entreno .anadir {
+        margin-left: 0;
+        margin-right: 0;
     }
 }
