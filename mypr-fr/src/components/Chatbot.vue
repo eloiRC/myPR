@@ -112,14 +112,14 @@ const sendMessage = async () => {
     const validHistory = firstUserIndex !== -1 ? rawHistory.slice(firstUserIndex) : [];
 
     const history = validHistory.map(msg => ({
-      role: msg.isUser ? 'user' : 'model',
-      parts: [{ text: msg.text }]
+      role: msg.isUser ? 'user' : 'assistant',
+      content: msg.text
     }));
 
     // 1) Lanzar trabajo. El requestId hace el envío idempotente: si la petición se repite,
     // el backend devuelve el mismo job en vez de duplicar las series.
     const requestId = crypto.randomUUID();
-    const launch = await apiFetch<{ jobId: string }>('/api/gemini', {
+    const launch = await apiFetch<{ jobId: string }>('/api/coach', {
       message: userMessage, currentTraining, chatId: null, history, requestId
     });
 

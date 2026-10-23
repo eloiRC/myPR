@@ -1,0 +1,99 @@
+import { addUsage, EMPTY_USAGE, type LlmInput, type LlmMessage, type LlmProvider, type LlmStopReason, type LlmToolCall, type LlmUsage } from './types';
+
+export const MAX_TOOL_ITERATIONS = 5;
+
+export interface ToolExecResult {
+  content: string;
+  isError: boolean;
+}
+
+export type ToolExecutor = (call: LlmToolCall) => Promise<ToolExecResult>;
+
+export interface ToolLoopResult {
+  /** Texto de todos los turnos (separados por párrafo) */
+  text: string;
+  stopReason: LlmStopReason | 'iteration_cap';
+  iterations: number;
+  usage: LlmUsage;
+  messages: LlmMessage[];
+}
+
+/** Resultados de herramientas de un turno: una única entrada con todos los resultados. */
+export async function executeToolCalls(calls: LlmToolCall[], exec: ToolExecutor): Promise<LlmMessage> {
+  const results: { id: string; content: string; isError: boolean }[] = [];
+  for (const call of calls) {
+    if (call.argsError) {
+      // JSON ilegible: se devuelve el error al modelo para que reintente
+      results.push({ id: call.id, content: JSON.stringify({ error: `Argumentos inválidos: ${call.argsError}` }), isError: true });
+      continue;
+    }
+    try {
+      const r = await exec(call);
+      results.push({ id: call.id, content: r.content, isError: r.isError });
+    } catch (e: any) {
+      results.push({ id: call.id, content: JSON.stringify({ error: e?.message || 'Error ejecutando la herramienta' }), isError: true });
+    }
+  }
+  return { role: 'tool_results', results };
+}
+
+/** Texto de cierre cuando el modelo no terminó limpiamente. */
+export function closingNote(stopReason: ToolLoopResult['stopReason'], text: string): string {
+  if (stopReason === 'max_tokens') return '\n\n_(Respuesta cortada por límite de longitud. Pídeme que continúe.)_';
+  if (stopReason === 'refusal') return text.trim() ? '' : 'No puedo ayudarte con esa petición.';
+  if (stopReason === 'iteration_cap') return '\n\n_(He alcanzado el límite de acciones en un mismo mensaje. Revisa el entreno y dime si falta algo.)_';
+  return '';
+}
+
+/**
+ * Bucle manual de herramientas independiente del proveedor.
+ * Llama al modelo, ejecuta TODAS las tool calls de cada turno, devuelve un único mensaje
+ * con todos los resultados y repite, con un máximo de `maxIterations` turnos.
+ */
+export async function runToolLoop(opts: {
+  provider: LlmProvider;
+  input: Omit<LlmInput, 'messages'> & { messages: LlmMessage[] };
+  exec: ToolExecutor;
+  onText: (delta: string) => void;
+  maxIterations?: number;
+}): Promise<ToolLoopResult> {
+  const max = opts.maxIterations ?? MAX_TOOL_ITERATIONS;
+  const messages: LlmMessage[] = [...opts.input.messages];
+  let text = '';
+  let usage = EMPTY_USAGE;
+  let iterations = 0;
+  let stopReason: ToolLoopResult['stopReason'] = 'end';
+
+  const emit = (delta: string) => {
+    text += delta;
+    opts.onText(delta);
+  };
+
+  while (iterations < max) {
+    iterations++;
+    let separated = false;
+    const hadText = text.trim().length > 0;
+    const turn = await opts.provider.runTurn({ ...opts.input, messages }, delta => {
+      // Separa el texto de turnos distintos con un párrafo
+      if (!separated && hadText && delta.trim()) { emit('\n\n'); separated = true; }
+      emit(delta);
+    });
+    usage = addUsage(usage, turn.usage);
+    stopReason = turn.stopReason;
+
+    if (turn.stopReason === 'tool_use' && turn.toolCalls.length > 0) {
+      messages.push(turn.assistant);
+      messages.push(await executeToolCalls(turn.toolCalls, opts.exec));
+      if (iterations >= max) stopReason = 'iteration_cap';
+      continue;
+    }
+    // end, max_tokens (nunca se ejecutan tool calls truncadas) o refusal
+    if (stopReason === 'tool_use') stopReason = 'end';
+    messages.push(turn.assistant);
+    break;
+  }
+
+  const note = closingNote(stopReason, text);
+  if (note) emit(note);
+  return { text, stopReason, iterations, usage, messages };
+}

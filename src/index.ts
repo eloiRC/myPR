@@ -3,10 +3,15 @@ import { logger } from 'hono/logger'
 import { zValidator } from '@hono/zod-validator'
 import { HTTPException } from 'hono/http-exception'
 import { cors } from 'hono/cors'
-import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars, getExercici, getPesosHistorial, nouEntreno, editEntreno, getCargaHistorial, chatGPT, updateUser, getUser, deleteEntreno, reorderSerie, garminCredentialsSave, garminCredentialsDelete, garminRecovery, garminActivity, toggleSerieCompletada, chatStatus } from './schema'
+import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars, getExercici, getPesosHistorial, nouEntreno, editEntreno, getCargaHistorial, chatGPT, updateUser, getUser, deleteEntreno, reorderSerie, garminCredentialsSave, garminCredentialsDelete, garminRecovery, garminActivity, toggleSerieCompletada, chatStatus, memoryList, memoryUpdate, memoryDelete } from './schema'
 import { hashPassword, verifyPassword, generateJWT, verifyJWT } from './jwt'
 import { encrypt, decrypt } from './crypto'
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai'
+import { createProvider, formatUsage } from './llm'
+import { runToolLoop } from './llm/loop'
+import { convertHistory } from './llm/history'
+import { executeTool, TOOL_DEFS, type ToolContext } from './coachTools'
+import { COACH_PERSONA, buildVolatileContext } from './coachPrompt'
+import { listActiveMemories, listAllMemories, updateMemory as updateCoachMemory, deleteMemory as deleteCoachMemory } from './coachMemory'
 import { createOrGetJob, getJob, updateJobText, finishJob, failJob, normalizeRequestId, shouldFlush } from './chatJobs'
 import { analyzeTraining, type HistoryRow, type ExerciseRow } from './coachAnalysis'
 
@@ -16,7 +21,10 @@ type Bindings = {
   DB: D1Database;
   test_password: string;
   jwt_secret: string;
-  GEMINI_API_KEY: string;
+  ANTHROPIC_API_KEY: string;
+  OPENAI_API_KEY: string;
+  LLM_PROVIDER: string;
+  LLM_MODEL?: string;
   GARMIN_API_KEY: string;
   GARMIN_ENCRYPTION_KEY: string;
 }
@@ -63,7 +71,7 @@ app.use('/api/*', async (c, next) => {
   }
 })
 
-// Función auxiliar para añadir series (Refactorizada para usar en API y Gemini)
+// Función auxiliar para añadir series (Refactorizada para usar en API y en las herramientas del coach)
 async function addSerieToDb(c: any, userId: number, entrenoId: number, exerciciId: number, kg: number, reps: number) {
   const data = Math.floor(Date.now() / 1000)
   const carga = kg * reps
@@ -596,8 +604,48 @@ app.post('/api/updateUser', zValidator('json', updateUser), async (c) => {
 });
 
 
-// Endpoint para Gemini (Long-polling)
-app.post('/api/gemini', zValidator('json', chatGPT), async (c) => {
+// ---- Memoria del entrenador IA (JWT, siempre filtrada por usuario) ----
+
+app.post('/api/memory/list', zValidator('json', memoryList), async (c) => {
+  const userId = await c.get('jwtPayload').UserId;
+  try {
+    return c.json(await listAllMemories(c.env.DB, userId));
+  } catch (error) {
+    console.error('memory/list error:', error);
+    throw new HTTPException(500, { message: 'error sql query' });
+  }
+});
+
+app.post('/api/memory/update', zValidator('json', memoryUpdate), async (c) => {
+  const { memoryId, text, status } = await c.req.json();
+  const userId = await c.get('jwtPayload').UserId;
+  try {
+    const done = await updateCoachMemory(c.env.DB, userId, memoryId, { text, status });
+    if (!done) throw new HTTPException(404, { message: 'Memoria no encontrada' });
+    return c.json({ message: 'Memoria actualizada' });
+  } catch (error) {
+    if (error instanceof HTTPException) throw error;
+    console.error('memory/update error:', error);
+    throw new HTTPException(500, { message: 'error sql query' });
+  }
+});
+
+app.post('/api/memory/delete', zValidator('json', memoryDelete), async (c) => {
+  const { memoryId } = await c.req.json();
+  const userId = await c.get('jwtPayload').UserId;
+  try {
+    const done = await deleteCoachMemory(c.env.DB, userId, memoryId);
+    if (!done) throw new HTTPException(404, { message: 'Memoria no encontrada' });
+    return c.json({ message: 'Memoria borrada' });
+  } catch (error) {
+    if (error instanceof HTTPException) throw error;
+    console.error('memory/delete error:', error);
+    throw new HTTPException(500, { message: 'error sql query' });
+  }
+});
+
+// Endpoint del coach IA (long-polling). /api/gemini se mantiene como alias para clientes antiguos en caché.
+const coachHandler = async (c: any) => {
   const { message, currentTraining, history, requestId: rawRequestId } = await c.req.json();
   const userId = await c.get('jwtPayload').UserId;
   const requestId = normalizeRequestId(rawRequestId);
@@ -608,187 +656,94 @@ app.post('/api/gemini', zValidator('json', chatGPT), async (c) => {
     c.executionCtx.waitUntil(procesarChatJob(jobId, userId, message, currentTraining, history, c));
   }
   return c.json({ jobId });
-});
+};
+app.post('/api/coach', zValidator('json', chatGPT), coachHandler);
+app.post('/api/gemini', zValidator('json', chatGPT), coachHandler);
 
-async function procesarChatJob(jobId: string, userId: number, message: string, currentTraining: any, history: any[], c: any) {
-  // Si falla a mitad de un plan, se registra que ya se aplicó algo para que el front refresque
-  let workoutUpdated = false;
+async function procesarChatJob(jobId: string, userId: number, message: string, currentTraining: any, history: unknown, c: any) {
+  // Si falla a mitad, se registra si ya se aplicó algo para que el front refresque
+  const state = { workoutUpdated: false };
   try {
-    const [coachData, seriesCurrentTraining, user] = await Promise.all([
-      getCoachData(userId, currentTraining.entreno.EntrenoId, c),
-      getFullSeriesListFromTraining(currentTraining.entreno.EntrenoId, userId, c),
-      c.env.DB.prepare('SELECT ChatbotPrompt FROM Users WHERE UserId = ?').bind(userId).first()
+    // Falla pronto (y en español) si falta la clave del proveedor seleccionado
+    const provider = createProvider(c.env);
+
+    const entrenoId = Number(currentTraining.entreno.EntrenoId);
+    const [entreno, coachData, seriesCurrentTraining, user, memories] = await Promise.all([
+      c.env.DB.prepare('SELECT EntrenoId, Nom FROM Entreno WHERE EntrenoId = ? AND UserId = ?').bind(entrenoId, userId).first(),
+      getCoachData(userId, entrenoId, c),
+      getFullSeriesListFromTraining(entrenoId, userId, c),
+      c.env.DB.prepare('SELECT ChatbotPrompt FROM Users WHERE UserId = ?').bind(userId).first(),
+      listActiveMemories(c.env.DB, userId),
     ]);
+    if (!entreno) throw new Error('Entreno no encontrado');
 
     const analysis = analyzeTraining(coachData);
-    const userCustomPrompt = user?.ChatbotPrompt ? `\n\nINSTRUCCIONES PERSONALIZADAS DEL USUARIO:\n${user.ChatbotPrompt}` : '';
+    const nowSec = Math.floor(Date.now() / 1000);
 
-    const basePersona = `
-SYSTEM INSTRUCTIONS: EXPERT STRENGTH COACH
-
-Eres un Coach de Élite especializado en Fuerza y Hipertrofia. Actúas como un motor de análisis de rendimiento: directo, técnico, basado en datos, pero también creativo al programar. Un buen coach NO repite la misma sesión una y otra vez.
-
-CONTEXTO DE ENTRADA
-
-Al final recibirás un ANÁLISIS PRECALCULADO del historial del usuario (ya filtrado de series de aproximación): enfoque sugerido, frescura por grupo muscular, últimas sesiones, estancamientos, candidatos de rotación y el catálogo de ejercicios con sus grupos musculares. Confía en esos números; no los recalcules.
-
-PROTOCOLO PARA PROPONER UN ENTRENO
-
-1. Elegir músculos: prioriza los grupos más descansados (arriba en "FRESCURA"). Evita grupos entrenados hace ≤1 día salvo que el usuario lo pida.
-2. Elegir enfoque: usa el "ENFOQUE SUGERIDO PARA HOY" como esquema de reps/descansos. Si el usuario indica cansancio, mal descanso o molestias, baja volumen ~30% y evita el enfoque FUERZA.
-3. Estructura: 1-2 básicos multiarticulares + 2-4 accesorios.
-   - Básicos que están PROGRESANDO: mantenlos y aplica microcarga (+1.25 a +2.5 kg) o +1 rep.
-   - Básicos ESTANCADOS: cambia la variante (ángulo, agarre, unilateral, máquina) o el esquema (rest-pause, top set + back-offs, drop set).
-4. VARIEDAD OBLIGATORIA:
-   - Al menos 2 ejercicios de la propuesta deben NO aparecer en "USADOS EN LAS 2 ÚLTIMAS SESIONES". Prioriza los "CANDIDATOS DE ROTACIÓN".
-   - Nunca copies literalmente una sesión anterior (mismos ejercicios + mismos pesos/reps).
-   - Si propones un ejercicio que el usuario no ha hecho recientemente, estima el peso de forma conservadora a partir de su PR o de ejercicios similares.
-5. Volumen: máximo ~10 series efectivas por grupo muscular en la sesión.
-6. Justifica en 1 línea por ejercicio el porqué (frescura, estancamiento, rotación, progresión).
-
-Si el usuario pide ideas o alternativas, ofrece 2 opciones distintas (A/B) y deja que elija.
-
-TÍTULO AUTOMÁTICO DEL ENTRENO:
-- Si el nombre actual del entreno es automático (formato "Entreno #X") y el usuario te pide crear o modificar la rutina, genera un nombre descriptivo breve (ej. "Pecho y Tríceps", "Full Body Fuerza", "Push Pull Legs").
-- Incluye [TITULO_AUTO: nombre] al final de tu respuesta para que el sistema lo aplique automáticamente.
-
-REGLAS PARA AÑADIR SERIES (JSON_PLAN):
-- Si el usuario pide añadir 1 o más ejercicios específicos (ej: "añade 80kg x 8 reps de Press Banca"), genera el JSON_plan INMEDIATAMENTE sin pedir confirmación.
-- Si el usuario pide un plan de entrenamiento COMPLETO, usa el flujo de propuesta → preguntar confirmación → JSON.
-- Cada objeto en el JSON es UNA serie individual. Puede haber 1 objeto o muchos.
-- El JSON se ejecuta en cuanto aparece — no necesita palabra de confirmación.
-
-FORMATO JSON_PLAN
-
-\`\`\`json_plan
-[
-  { "ExerciciId": integer, "Kg": float, "Reps": integer }
-]
-\`\`\`
-
-Regla de Oro: Un objeto por cada serie individual (4 series del mismo ejercicio = 4 objetos).
-Precisión: Máximo 1 decimal en Kg. Mayor a 0.
-Consistencia: Usa exclusivamente IDs presentes en el catálogo de ejercicios.
-
-TONO Y ESTILO
-
-Sin saludos innecesarios. Directo al grano.
-Emojis funcionales: 📈 (Progreso), ⚠️ (Fatiga/Volumen basura), 🎯 (Objetivo).
-Nunca muestres IDs de ejercicio al usuario.
-
-RESTRICCIONES
-
-Continuidad: No cambies un básico que aparezca en "PROGRESANDO"; la variedad se aplica sobre accesorios y básicos estancados.
-Resolución de dudas: Si el usuario pregunta algo técnico o sobre una molestia, suspende la propuesta y responde a la consulta con prioridad máxima.
-`;
-
-    const contextData = `
-SITUACIÓN ACTUAL:
-- Entrenando: ${currentTraining.entreno.Nom} (ID: ${currentTraining.entreno.EntrenoId})
-- Nombre automático: ${/^Entreno #\d+$/.test(currentTraining.entreno.Nom) ? 'Sí (el usuario no lo ha personalizado)' : 'No (el usuario ya lo personalizó)'}
-- Series ya realizadas hoy: ${seriesCurrentTraining}
-
-ANÁLISIS PRECALCULADO
-${analysis.text}
-    `;
-
-    const finalSystemInstruction = `${basePersona}\n${userCustomPrompt}\n\n${contextData}`;
-
-    if (!c.env.GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY no está configurada');
-    }
-
-    const genAI = new GoogleGenerativeAI(c.env.GEMINI_API_KEY);
-
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-3.5-flash',
-      systemInstruction: finalSystemInstruction,
-      // 0.2 hacía la salida casi determinista: mismo contexto -> misma rutina
-      generationConfig: { temperature: 0.8, topP: 0.95 },
-      safetySettings: [{
-        category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-        threshold: HarmBlockThreshold.BLOCK_NONE,
-      }]
+    const volatile = buildVolatileContext({
+      dateLabel: new Date().toLocaleDateString('es-ES'),
+      nowSec,
+      entreno: { EntrenoId: entrenoId, Nom: entreno.Nom || '' },
+      seriesToday: seriesCurrentTraining,
+      memories,
+      muscleGroups: coachData.muscleGroups,
+      analysisText: analysis.text,
+      userPrompt: user?.ChatbotPrompt,
     });
 
-    let chatHistory: any[] = [];
-    if (history && Array.isArray(history)) {
-      chatHistory = history;
-    }
+    const toolCtx: ToolContext = {
+      db: c.env.DB,
+      userId,
+      entrenoId,
+      validExerciseIds: analysis.validExerciseIds,
+      validMuscleGroupIds: new Set(coachData.muscleGroups.map(g => g.GrupMuscularId)),
+      state,
+      deps: {
+        addSerie: (exerciciId, kg, reps) => addSerieToDb(c, userId, entrenoId, exerciciId, kg, reps),
+        checkPr: (exerciciId, kg) => checkPr(c, userId, exerciciId, kg),
+        updateCargaTotal: (id) => updateCargaTotal(c, userId, id),
+      },
+    };
 
-    const chatConfig: any = {};
-    if (chatHistory.length > 0) {
-      chatConfig.history = chatHistory;
-    }
-    const chat = model.startChat(chatConfig);
-
-    const promptUsuario = `[Fecha: ${new Date().toLocaleDateString('es-ES')}] ${message}`;
-
-    const streamResult = await chat.sendMessageStream(promptUsuario);
-
+    // Texto en streaming hacia D1 con throttle (no en cada delta)
     let fullText = '';
     let lastFlush = 0;
     let flushedLength = 0;
-
-    for await (const chunk of streamResult.stream) {
-      const chunkText = chunk.text();
-      if (chunkText) {
-        fullText += chunkText;
-        // Volcado a D1 con throttle (no en cada chunk)
-        const now = Date.now();
-        if (shouldFlush(now, lastFlush, fullText.length - flushedLength)) {
-          await updateJobText(c.env.DB, jobId, fullText);
-          lastFlush = now;
-          flushedLength = fullText.length;
-        }
+    let flushing: Promise<void> = Promise.resolve();
+    const onText = (delta: string) => {
+      fullText += delta;
+      const now = Date.now();
+      if (shouldFlush(now, lastFlush, fullText.length - flushedLength)) {
+        lastFlush = now;
+        flushedLength = fullText.length;
+        const snapshot = fullText;
+        flushing = flushing.then(() => updateJobText(c.env.DB, jobId, snapshot)).catch(e => console.error('flush error:', e));
       }
-    }
-    if (fullText.length > flushedLength) await updateJobText(c.env.DB, jobId, fullText);
+    };
 
-    let cleanedText = fullText;
+    const result = await runToolLoop({
+      provider,
+      input: {
+        system: { stable: COACH_PERSONA, volatile },
+        messages: [...convertHistory(history), { role: 'user', text: message }],
+        tools: TOOL_DEFS,
+        maxTokens: 8000,
+      },
+      exec: call => executeTool(toolCtx, call.name, call.args),
+      onText,
+    });
+    await flushing;
 
-    const tituloMatch = fullText.match(/\[TITULO_AUTO:\s*(.*?)\]/);
-    if (tituloMatch && tituloMatch[1]) {
-      const titleAuto = tituloMatch[1].trim();
-      const currentNom = currentTraining.entreno.Nom || '';
-      if (/^Entreno #\d+$/.test(currentNom) || !currentNom) {
-        await c.env.DB.prepare('UPDATE Entreno SET Nom=? WHERE UserId=? AND EntrenoId=?')
-          .bind(titleAuto, userId, currentTraining.entreno.EntrenoId).run();
-        workoutUpdated = true;
-      }
-      cleanedText = cleanedText.replace(tituloMatch[0], '').trim();
-    }
+    console.log(formatUsage(provider.name, provider.model, result.usage), `iterations=${result.iterations} stop=${result.stopReason}`);
 
-    const jsonBlockRegex = /```json_plan\s*([\s\S]*?)\s*```/;
-    const match = fullText.match(jsonBlockRegex);
-
-    if (match && match[1]) {
-      try {
-        const plan = JSON.parse(match[1]);
-        if (Array.isArray(plan)) {
-          for (const serie of plan) {
-            const exerciciId = Number(serie.ExerciciId);
-            const reps = Math.round(Number(serie.Reps));
-            const kg = Math.round((Number(serie.Kg) || 0) * 10) / 10;
-            // Solo IDs del catálogo del usuario: evita IDs inventados o de otros usuarios
-            if (analysis.validExerciseIds.has(exerciciId) && reps > 0 && kg >= 0) {
-              await addSerieToDb(c, userId, currentTraining.entreno.EntrenoId, exerciciId, kg, reps);
-              workoutUpdated = true;
-            }
-          }
-          cleanedText = cleanedText.replace(match[0], "").trim();
-        }
-      } catch (e) {
-        console.error("Error al procesar el plan JSON de Gemini:", e);
-      }
-    }
-
-    await finishJob(c.env.DB, jobId, workoutUpdated, cleanedText);
+    let finalText = result.text.trim();
+    if (!finalText) finalText = state.workoutUpdated ? 'Hecho.' : 'No he podido generar una respuesta. Inténtalo de nuevo.';
+    await finishJob(c.env.DB, jobId, state.workoutUpdated, finalText);
 
   } catch (error: any) {
-    console.error('❌ Error Gemini:', error);
+    console.error('❌ Error coach IA:', error);
     try {
-      await failJob(c.env.DB, jobId, error.message || 'Error desconocido', workoutUpdated);
+      await failJob(c.env.DB, jobId, error.message || 'Error desconocido', state.workoutUpdated);
     } catch (e) {
       console.error('No se pudo marcar el job como fallido:', e);
     }
