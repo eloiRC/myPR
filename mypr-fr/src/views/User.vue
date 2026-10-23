@@ -1,11 +1,34 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { apiFetch } from '../services/api';
+import { useRestTimer, DURACIONES_PRESET, DURACION_MIN_SEG, DURACION_MAX_SEG } from '../composables/useRestTimer';
 
 const router = useRouter();
 const authStore = useAuthStore();
+
+// Temporizador de descanso (ajustes por dispositivo)
+const rest = useRestTimer();
+const esPersonalizada = ref(!DURACIONES_PRESET.includes(rest.duracionSeg.value));
+const duracionPersonalizada = ref(rest.duracionSeg.value);
+const valorSelector = computed(() => (esPersonalizada.value ? 'custom' : String(rest.duracionSeg.value)));
+const onCambiarDuracion = (e: Event) => {
+  const v = (e.target as HTMLSelectElement).value;
+  if (v === 'custom') {
+    esPersonalizada.value = true;
+    rest.setDuracion(duracionPersonalizada.value);
+  } else {
+    esPersonalizada.value = false;
+    rest.setDuracion(Number(v));
+  }
+};
+const onCambiarPersonalizada = (e: Event) => {
+  const n = Number((e.target as HTMLInputElement).value);
+  if (!Number.isFinite(n)) return;
+  duracionPersonalizada.value = n;
+  rest.setDuracion(n);
+};
 
 const isLoading = ref(false);
 const error = ref('');
@@ -221,6 +244,32 @@ onMounted(() => {
       </div>
 
       <div class="card">
+        <h2>Temporizador de descanso</h2>
+        <label class="rest-row">
+          <span>Activar temporizador</span>
+          <input type="checkbox" role="switch" class="rest-switch" :checked="rest.habilitado.value" @change="rest.setHabilitado(($event.target as HTMLInputElement).checked)" />
+        </label>
+        <template v-if="rest.habilitado.value">
+          <label class="rest-row">
+            <span>Duración por defecto</span>
+            <select class="input rest-select" :value="valorSelector" @change="onCambiarDuracion">
+              <option v-for="d in DURACIONES_PRESET" :key="d" :value="String(d)">{{ d }} s</option>
+              <option value="custom">Personalizada</option>
+            </select>
+          </label>
+          <label v-if="esPersonalizada" class="rest-row">
+            <span>Segundos ({{ DURACION_MIN_SEG }}-{{ DURACION_MAX_SEG }})</span>
+            <input type="number" inputmode="numeric" class="input rest-select" :min="DURACION_MIN_SEG" :max="DURACION_MAX_SEG" :value="rest.duracionSeg.value" @change="onCambiarPersonalizada" />
+          </label>
+          <label class="rest-row">
+            <span>Iniciar al completar una serie</span>
+            <input type="checkbox" role="switch" class="rest-switch" :checked="rest.autoIniciar.value" @change="rest.setAutoIniciar(($event.target as HTMLInputElement).checked)" />
+          </label>
+        </template>
+        <p class="description rest-hint">Se guarda solo en este dispositivo.</p>
+      </div>
+
+      <div class="card">
         <h2>Personalizar el entrenador IA</h2>
         <p class="description" style="margin-bottom: 1rem;">
           Define instrucciones específicas para tu entrenador AI (ej: "Tengo una lesión en la espalda", "Quiero priorizar fuerza", "Soy principiante").
@@ -249,6 +298,48 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.rest-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: var(--touch-min);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.rest-select {
+  width: 9rem;
+  min-height: var(--touch-min);
+}
+.rest-switch {
+  appearance: none;
+  -webkit-appearance: none;
+  flex-shrink: 0;
+  position: relative;
+  width: 52px;
+  height: 32px;
+  margin: 0;
+  border-radius: var(--radius-full);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-strong);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.rest-switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background: var(--text-secondary);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+.rest-switch:checked { background: var(--accent-primary); }
+.rest-switch:checked::after { transform: translateX(20px); background: var(--on-accent); }
+.rest-switch:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+.rest-hint { margin: 0.5rem 0 0; font-size: 0.8rem; color: var(--text-muted); }
 .card h2 {
   margin: 0 0 1rem;
   font-size: 1rem;

@@ -8,6 +8,8 @@ import { evaluarFormulaPeso, formatKgInput } from '../utils/pesoFormula';
 import Chatbot from '../components/Chatbot.vue';
 import BuscadorSelect from '../components/BuscadorSelect.vue';
 import SerieItem from '../components/SerieItem.vue';
+import RestTimer from '../components/RestTimer.vue';
+import { useRestTimer } from '../composables/useRestTimer';
 
 const authStore = useAuthStore();
 
@@ -268,6 +270,8 @@ const cargarCompletadas = () => {
   completadasMap.value = map;
 };
 
+const restTimer = useRestTimer();
+
 const toggleCompletadoCard = async (serieId: number) => {
   const currentState = completadasMap.value[serieId] ?? false;
   const newState = !currentState;
@@ -278,6 +282,7 @@ const toggleCompletadoCard = async (serieId: number) => {
     if (serie) serie.Completada = state ? 1 : 0;
   };
   setLocal(newState);
+  if (newState) restTimer.iniciarAuto(); // temporizador de descanso (solo al marcar, no al desmarcar)
   try {
     await apiFetch('/api/toggleSerieCompletada', { serieId, completada: newState });
   } catch {
@@ -777,6 +782,7 @@ const onDrop = async (targetId: number) => {
       <div v-if="series.length > 0" class="view-toggle">
         <button class="toggle-btn" :class="{ active: modoVisualizacion === 'lista' }" @click="modoVisualizacion = 'lista'">Lista</button>
         <button class="toggle-btn" :class="{ active: modoVisualizacion === 'tarjetas' }" @click="cambiarModoTarjetas">Tarjetas</button>
+        <button v-if="restTimer.habilitado.value" class="toggle-btn" aria-label="Iniciar temporizador de descanso" @click="restTimer.iniciar()">⏱</button>
       </div>
       
       <!-- Formulario Nueva Serie -->
@@ -946,6 +952,8 @@ const onDrop = async (targetId: number) => {
     </div>
   </div>
   
+  <RestTimer />
+
   <!-- Chatbot conectado con @refresh para actualizar datos si la AI hace cambios -->
   <!-- Se oculta mientras se registra una serie para no tapar «Guardar serie» -->
   <Chatbot
