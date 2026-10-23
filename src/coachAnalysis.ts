@@ -123,12 +123,10 @@ export function analyzeTraining(opts: {
 
   // --- Uso por ejercicio ---
   const lastUsed = new Map<number, number>();
-  const uses28 = new Map<number, number>();
   const perExerciseHistory = new Map<number, SetInfo[][]>(); // más reciente primero
   for (const s of sessions) {
     for (const [id, sets] of s.exercises) {
       if (!lastUsed.has(id)) lastUsed.set(id, s.data);
-      if (now - s.data <= 28 * DAY) uses28.set(id, (uses28.get(id) || 0) + 1);
       const h = perExerciseHistory.get(id) || [];
       h.push(sets);
       perExerciseHistory.set(id, h);
@@ -185,18 +183,25 @@ export function analyzeTraining(opts: {
   const sessionsLast7 = sessions.filter(s => now - s.data <= 7 * DAY).length;
   const focus = SESSION_FOCUSES[(sessions.length + sessionsLast7) % SESSION_FOCUSES.length];
 
-  // --- Catálogo enriquecido ---
+  // --- Catálogo: TODOS los ejercicios (para poder elegir cualquiera), en formato compacto.
+  // El uso reciente ya está resumido en frescura, estancados, progresando y rotación.
   const catalog = opts.exercises.map(ex => {
     const groups = muscleGroupsOf(ex).map(g => gmName.get(g) ?? g).join('/') || 'sin grupo';
-    const last = lastUsed.get(ex.ExerciciId);
-    const usage = last ? `último hace ${daysAgo(last, now)}d, ${uses28.get(ex.ExerciciId) || 0}× en 28d` : 'nunca usado';
-    return `ID: ${ex.ExerciciId} - ${ex.Nom} [${groups}] (${usage}${ex.PR ? `, PR ${ex.PR}kg` : ''}${ex.DescansoSeg ? `, descanso ${ex.DescansoSeg} s` : ''})`;
+    const extra = [
+      ex.PR ? `PR ${ex.PR} kg` : '',
+      ex.DescansoSeg != null ? (ex.DescansoSeg === 0 ? 'sin descanso' : `descanso ${ex.DescansoSeg} s`) : '',
+    ].filter(Boolean).join(' · ');
+    return `- ${ex.ExerciciId}: ${ex.Nom} [${groups}]${extra ? ` · ${extra}` : ''}`;
   });
 
-  // --- Resumen compacto de las últimas sesiones ---
-  const recent = sessions.slice(0, 12).map(s => {
-    const parts = Array.from(s.exercises.entries()).map(([id, sets]) => `${exName(id)}: ${fmtSets(sets)}`);
-    return `- hace ${daysAgo(s.data, now)}d · ${s.nom || 'Sin nombre'} → ${parts.join(' | ')}`;
+  // --- Últimas sesiones: las 6 más recientes con sus series; de la 7.ª a la 12.ª solo los ejercicios ---
+  const DETAILED_SESSIONS = 6;
+  const recent = sessions.slice(0, 12).map((s, i) => {
+    const head = `- hace ${daysAgo(s.data, now)}d · ${s.nom || 'Sin nombre'} →`;
+    if (i < DETAILED_SESSIONS) {
+      return `${head} ${Array.from(s.exercises.entries()).map(([id, sets]) => `${exName(id)}: ${fmtSets(sets)}`).join(' | ')}`;
+    }
+    return `${head} ${Array.from(s.exercises.keys()).map(exName).join(', ')}`;
   });
 
   // Ejercicios de las 2 últimas sesiones: no copiarlos como accesorios
@@ -211,13 +216,40 @@ export function analyzeTraining(opts: {
       `${focus.nom}: ${focus.reps}, descanso ${focus.descanso}, ${focus.rir}. ${focus.nota}`,
     ]),
     section('FRESCURA POR GRUPO MUSCULAR (más descansado primero)', gmLines),
-    section('ÚLTIMAS SESIONES (solo series de trabajo)', recent),
+    section('ÚLTIMAS SESIONES (las 6 primeras con series de trabajo; las anteriores solo ejercicios)', recent),
     section('EJERCICIOS ESTANCADOS (candidatos a cambiar variante o esquema)', stagnant, 'Ninguno detectado.'),
     section('EJERCICIOS PROGRESANDO (mantener)', progressing, 'Ninguno detectado.'),
     section('CANDIDATOS DE ROTACIÓN (no usados en 21+ días)', rotationLines, 'Ninguno: el usuario usa todo su catálogo.'),
     section('USADOS EN LAS 2 ÚLTIMAS SESIONES (evita repetirlos como accesorios)', Array.from(recentlyUsed).map(id => `- ${exName(id)}`), 'Ninguno.'),
-    section('CATÁLOGO DE EJERCICIOS (usa SOLO estos IDs)', catalog),
+    section('CATÁLOGO DE EJERCICIOS (formato "ID: nombre [grupos]"; usa SOLO estos IDs)', catalog),
   ].join('\n\n');
 
   return { focus, text, validExerciseIds: new Set(opts.exercises.map(e => e.ExerciciId)) };
+}
+
+export interface SerieHoyRow {
+  SerieId: number;
+  ExerciciId: number;
+  NomExercici: string | null;
+  Kg: number;
+  Reps: number;
+  PR?: number | boolean | null;
+  Completada?: number | null;
+  DescansoSeg?: number | null;
+}
+
+/**
+ * Series del entreno actual en texto compacto para el modelo (antes iban en JSON con todos los campos).
+ * Conserva lo necesario para editar/borrar: id de serie, ejercicio (nombre e id), kg×reps, hecha, PR y descanso.
+ */
+export function formatSeriesHoy(rows: SerieHoyRow[]): string {
+  if (!rows.length) return 'Ninguna todavía.';
+  return '\n' + rows.map(r => {
+    const flags = [
+      r.Completada ? 'hecha' : '',
+      r.PR ? 'PR' : '',
+      r.DescansoSeg != null ? (r.DescansoSeg === 0 ? 'sin descanso' : `descanso ${r.DescansoSeg} s`) : '',
+    ].filter(Boolean).join(' · ');
+    return `- serie ${r.SerieId}: ${r.NomExercici ?? 'Ejercicio'} (ej. ${r.ExerciciId}) ${r.Kg}kg×${r.Reps}${flags ? ` · ${flags}` : ''}`;
+  }).join('\n');
 }

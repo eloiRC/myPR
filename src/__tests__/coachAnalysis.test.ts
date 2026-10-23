@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { analyzeTraining, buildSessions, type HistoryRow, type ExerciseRow } from '../coachAnalysis';
+import { analyzeTraining, buildSessions, formatSeriesHoy, type HistoryRow, type ExerciseRow } from '../coachAnalysis';
 
 const DAY = 86400;
 const NOW = 1_800_000_000;
@@ -67,5 +67,38 @@ describe('analyzeTraining', () => {
     const a = analyzeTraining({ rows, exercises, muscleGroups, now: NOW }).focus.nom;
     const b = analyzeTraining({ rows: [...rows, row(6, 0, 3, 60, 10)], exercises, muscleGroups, now: NOW }).focus.nom;
     expect(a).not.toBe(b);
+  });
+
+  it('el catálogo incluye todos los ejercicios (también los nunca usados), sin estadísticas de uso', () => {
+    const catalogo = result.text.split('### CATÁLOGO DE EJERCICIOS')[1];
+    for (const ex of exercises) expect(catalogo).toContain(`- ${ex.ExerciciId}: ${ex.Nom}`);
+    expect(catalogo).not.toMatch(/último hace|en 28d|nunca usado/);
+  });
+
+  it('las sesiones a partir de la 7.ª solo listan ejercicios, sin series', () => {
+    const many = Array.from({ length: 9 }, (_, i) => row(100 + i, i + 1, 2, 100, 5));
+    const text = analyzeTraining({ rows: many, exercises, muscleGroups, now: NOW }).text;
+    const lines = text.split('### ÚLTIMAS SESIONES')[1].split('###')[0].trim().split('\n').slice(1);
+    expect(lines).toHaveLength(9);
+    expect(lines[5]).toContain('100kg×5');
+    expect(lines[6]).not.toContain('kg×');
+    expect(lines[6]).toContain('Sentadilla');
+  });
+});
+
+describe('formatSeriesHoy', () => {
+  it('compacta las series con lo necesario para editarlas', () => {
+    const txt = formatSeriesHoy([
+      { SerieId: 10, ExerciciId: 3, NomExercici: 'Press Banca', Kg: 80, Reps: 8, PR: 1, Completada: 1, DescansoSeg: 150 },
+      { SerieId: 11, ExerciciId: 3, NomExercici: 'Press Banca', Kg: 80, Reps: 7, PR: 0, Completada: 0, DescansoSeg: 0 },
+      { SerieId: 12, ExerciciId: 5, NomExercici: 'Curl', Kg: 14, Reps: 12, PR: 0, Completada: 0, DescansoSeg: null },
+    ]);
+    expect(txt).toContain('- serie 10: Press Banca (ej. 3) 80kg×8 · hecha · PR · descanso 150 s');
+    expect(txt).toContain('- serie 11: Press Banca (ej. 3) 80kg×7 · sin descanso');
+    expect(txt).toContain('- serie 12: Curl (ej. 5) 14kg×12');
+    expect(txt).not.toContain('serie 12: Curl (ej. 5) 14kg×12 ·');
+  });
+  it('sin series', () => {
+    expect(formatSeriesHoy([])).toBe('Ninguna todavía.');
   });
 });

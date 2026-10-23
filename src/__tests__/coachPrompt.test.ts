@@ -97,7 +97,7 @@ describe('descansos en el prompt', () => {
         { ExerciciId: 2, Nom: 'Remo', PR: 0, DescansoSeg: null, GrupMuscular1: 1 },
       ],
     });
-    expect(a.text).toMatch(/ID: 1 - Peso Muerto .*descanso 180 s/);
-    expect(a.text).not.toMatch(/ID: 2 - Remo .*descanso/);
+    expect(a.text).toMatch(/- 1: Peso Muerto .*descanso 180 s/);
+    expect(a.text).not.toMatch(/- 2: Remo .*descanso/);
   });
 });
