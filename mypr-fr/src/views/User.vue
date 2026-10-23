@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, nextTick, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { apiFetch } from '../services/api';
@@ -172,11 +172,17 @@ const onMemoryTextBlur = (m: CoachMemory, ev: Event) => {
   updateMemory(m, { text });
 };
 
-const autoGrow = (ev: Event) => {
-  const el = ev.target as HTMLTextAreaElement;
+const ajustarAltura = (el: HTMLTextAreaElement) => {
   el.style.height = 'auto';
-  el.style.height = el.scrollHeight + 'px';
+  // border-box: scrollHeight no incluye el borde, hay que sumarlo
+  el.style.height = el.scrollHeight + (el.offsetHeight - el.clientHeight) + 'px';
 };
+const autoGrow = (ev: Event) => ajustarAltura(ev.target as HTMLTextAreaElement);
+
+// Cada memoria es un campo editable: al pintarse debe mostrar todo su texto, no solo una línea
+watch(memories, () => nextTick(() => {
+  document.querySelectorAll<HTMLTextAreaElement>('textarea.memory-text').forEach(ajustarAltura);
+}), { deep: true });
 
 const addMemory = async () => {
   const text = newText.value.trim();
