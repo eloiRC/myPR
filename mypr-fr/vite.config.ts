@@ -13,8 +13,8 @@ export default defineConfig({
         name: 'MyPR - Tu Entrenador Personal',
         short_name: 'MyPR',
         description: 'Registro de entrenos, series y récords personales',
-        theme_color: '#171c2a',
-        background_color: '#171c2a',
+        theme_color: '#0d0e10',
+        background_color: '#0d0e10',
         display: 'standalone',
         orientation: 'portrait',
         icons: [

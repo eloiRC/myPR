@@ -38,9 +38,6 @@ watch(() => auth.isAuthenticated, (ok) => { if (ok) restTimer.cargarDesdeServido
   display: flex;
   flex-direction: column;
   background-color: var(--bg-primary);
-  background-image:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(45, 212, 191, 0.08), transparent),
-    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(249, 115, 22, 0.05), transparent);
   color: var(--text-primary);
 }
 
@@ -59,16 +56,13 @@ watch(() => auth.isAuthenticated, (ok) => { if (ok) restTimer.cargarDesdeServido
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--bg-elevated);
-  border-radius: var(--radius-full);
+  background: var(--n4);
+  border-radius: var(--radius-sm);
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }
 
-::selection {
-  background-color: rgba(45, 212, 191, 0.35);
-  color: var(--text-primary);
-}
+
 </style>

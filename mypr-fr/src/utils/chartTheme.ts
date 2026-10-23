@@ -5,9 +5,9 @@ import type { ScriptableContext } from 'chart.js';
 // trazos y puntos redondeados, relleno en degradado y tooltips redondeados.
 
 export const CHART_COLORS = {
-  accent: '#2dd4bf',
-  pr: '#fbbf24',
-  surface: '#1c2233',
+  accent: '#ffb020',
+  pr: '#f4f6f7',
+  surface: '#141518',
 } as const;
 
 let themed = false;
@@ -20,9 +20,9 @@ export function applyChartTheme() {
   ChartJS.register(Filler);
 
   const d = ChartJS.defaults;
-  d.font.family = "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
+  d.font.family = "'Barlow', system-ui, -apple-system, sans-serif";
   d.font.size = 12;
-  d.color = '#9aa3b5';
+  d.color = '#8a9099';
   d.borderColor = 'rgba(255, 255, 255, 0.06)';
 
   // defaults.set crea la ruta aunque ese tipo de elemento aún no esté registrado
@@ -123,7 +123,7 @@ export function roundedBarDataset(label: string, data: number[], color: string =
   return {
     label,
     data,
-    borderRadius: 8,
+    borderRadius: 3,
     borderSkipped: false as const,
     maxBarThickness: 22,
     categoryPercentage: 0.9,
