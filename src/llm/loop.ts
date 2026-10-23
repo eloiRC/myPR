@@ -68,6 +68,12 @@ export async function runToolLoop(opts: {
   /** Progreso: nuevo turno del modelo, primer texto del turno y herramienta a punto de ejecutarse */
   onPhase?: PhaseListener;
   maxIterations?: number;
+  /**
+   * Herramientas que no necesitan que el modelo vuelva a hablar después: si en un turno el modelo
+   * ya ha escrito texto y SOLO llama a estas herramientas y todas van bien, se termina sin otra
+   * llamada al modelo (ahorra una ida y vuelta completa).
+   */
+  terminalTools?: ReadonlySet<string>;
 }): Promise<ToolLoopResult> {
   const max = opts.maxIterations ?? MAX_TOOL_ITERATIONS;
   const messages: LlmMessage[] = [...opts.input.messages];
@@ -102,7 +108,12 @@ export async function runToolLoop(opts: {
 
     if (turn.stopReason === 'tool_use' && turn.toolCalls.length > 0) {
       messages.push(turn.assistant);
-      messages.push(await executeToolCalls(turn.toolCalls, opts.exec, opts.onPhase ? phase : undefined));
+      const results = await executeToolCalls(turn.toolCalls, opts.exec, opts.onPhase ? phase : undefined);
+      messages.push(results);
+      if (puedeTerminarTrasHerramientas(turn.text, turn.toolCalls, results, opts.terminalTools)) {
+        stopReason = 'end';
+        break;
+      }
       if (iterations >= max) stopReason = 'iteration_cap';
       continue;
     }
@@ -115,4 +126,16 @@ export async function runToolLoop(opts: {
   const note = closingNote(stopReason, text);
   if (note) emit(note);
   return { text, stopReason, iterations, usage, messages };
+}
+
+/** ¿Se puede cerrar el turno sin volver a llamar al modelo? (ver `terminalTools` en runToolLoop) */
+export function puedeTerminarTrasHerramientas(
+  text: string,
+  calls: LlmToolCall[],
+  results: LlmMessage,
+  terminal: ReadonlySet<string> | undefined,
+): boolean {
+  if (!terminal || !text.trim() || calls.length === 0) return false;
+  if (!calls.every(c => terminal.has(c.name))) return false;
+  return results.role === 'tool_results' && results.results.every(r => !r.isError);
 }

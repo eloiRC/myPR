@@ -13,7 +13,9 @@
   // Proveedor del coach IA: "anthropic" (claude-haiku-5-5) u "openai" (gpt-6-luna). LLM_MODEL (opcional) sobrescribe el modelo.
   // Las claves ANTHROPIC_API_KEY / OPENAI_API_KEY son secretos: wrangler secret put <NAME>
   "vars": {
-    "LLM_PROVIDER": "anthropic"
+    "LLM_PROVIDER": "anthropic",
+    // "off" = sin razonamiento previo (respuesta más rápida). Bórralo o pon "adaptive" para que piense antes.
+    "LLM_THINKING": "off"
   },
   "d1_databases": [
     {

@@ -307,3 +307,12 @@ export async function executeTool(ctx: ToolContext, name: string, rawArgs: unkno
     return fail(e?.message || 'Error interno');
   }
 }
+
+/**
+ * Herramientas tras las que no hace falta otra llamada al modelo si ya escribió su frase
+ * (ver runToolLoop.terminalTools). create_exercise NO: suele ir seguida de add_sets.
+ */
+export const TERMINAL_TOOLS: ReadonlySet<string> = new Set([
+  'add_sets', 'edit_set', 'delete_set', 'update_workout', 'set_exercise_rest',
+  'save_memory', 'update_memory', 'delete_memory', 'suggest_replies',
+]);

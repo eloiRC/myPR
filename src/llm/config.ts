@@ -4,6 +4,8 @@ export const OPENAI_DEFAULT_MODEL = 'gpt-6-luna';
 export interface LlmEnv {
   LLM_PROVIDER?: string;
   LLM_MODEL?: string;
+  /** "off" desactiva el razonamiento previo (más rápido); cualquier otro valor = adaptativo */
+  LLM_THINKING?: string;
   ANTHROPIC_API_KEY?: string;
   OPENAI_API_KEY?: string;
 }
@@ -12,6 +14,7 @@ export interface ProviderConfig {
   provider: 'anthropic' | 'openai';
   model: string;
   apiKey: string;
+  thinking: 'adaptive' | 'off';
 }
 
 /** Resuelve proveedor, modelo y clave desde el entorno; lanza un error en español si falta la clave. */
@@ -25,5 +28,6 @@ export function resolveProviderConfig(env: LlmEnv): ProviderConfig {
   if (!apiKey) {
     throw new Error(`El entrenador IA no está configurado: falta ${raw === 'anthropic' ? 'ANTHROPIC_API_KEY' : 'OPENAI_API_KEY'}.`);
   }
-  return { provider: raw, model, apiKey };
+  const thinking = env.LLM_THINKING?.trim().toLowerCase() === 'off' ? 'off' : 'adaptive';
+  return { provider: raw, model, apiKey, thinking };
 }

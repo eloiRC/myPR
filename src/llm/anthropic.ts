@@ -4,17 +4,23 @@ import { mapAnthropicStopReason, mapAnthropicUsage, toAnthropicMessages, toAnthr
 
 import { ANTHROPIC_DEFAULT_MODEL } from './config';
 
-export function createAnthropicProvider(apiKey: string, model = ANTHROPIC_DEFAULT_MODEL): LlmProvider {
+export function createAnthropicProvider(apiKey: string, model = ANTHROPIC_DEFAULT_MODEL, opts: { thinking?: 'adaptive' | 'off' } = {}): LlmProvider {
   const client = new Anthropic({ apiKey });
 
   return {
     name: 'anthropic',
     model,
     async runTurn(input: LlmInput, onText: (delta: string) => void): Promise<LlmTurn> {
-      // Haiku 5.5: pensamiento adaptativo siempre activo. Sin budget_tokens, temperature, top_p, top_k ni prefill.
+      // Haiku 5.5: sin budget_tokens, temperature, top_p, top_k ni prefill.
+      // thinking "off" (LLM_THINKING=off) quita el razonamiento previo: primer texto mucho antes.
+      // Haiku 5.5 solo acepta thinking desactivado con effort <= high (usamos low).
+      // cache_control de nivel superior: cachea también historial y resultados de herramientas,
+      // así la 2.ª llamada del bucle reutiliza la 1.ª (más rápida y barata).
       const stream = client.messages.stream({
         model,
         max_tokens: input.maxTokens,
+        cache_control: { type: 'ephemeral' },
+        ...(opts.thinking === 'off' ? { thinking: { type: 'disabled' as const } } : {}),
         system: toAnthropicSystem(input.system),
         messages: toAnthropicMessages(input.messages) as Anthropic.MessageParam[],
         tools: toAnthropicTools(input.tools) as Anthropic.Tool[],

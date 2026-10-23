@@ -244,7 +244,8 @@ export interface SerieHoyRow {
  */
 export function formatSeriesHoy(rows: SerieHoyRow[]): string {
   if (!rows.length) return 'Ninguna todavía.';
-  return '\n' + rows.map(r => {
+  const hechas = rows.filter(r => r.Completada).length;
+  return `(${hechas} de ${rows.length} hechas; las no marcadas como "hecha" están pendientes)\n` + rows.map(r => {
     const flags = [
       r.Completada ? 'hecha' : '',
       r.PR ? 'PR' : '',

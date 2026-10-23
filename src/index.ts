@@ -8,7 +8,7 @@ import { hashPassword, verifyPassword, generateJWT, verifyJWT } from './jwt'
 import { createProvider, formatUsage } from './llm'
 import { runToolLoop, type LoopPhaseEvent } from './llm/loop'
 import { convertHistory } from './llm/history'
-import { executeTool, TOOL_DEFS, type ToolContext } from './coachTools'
+import { executeTool, TOOL_DEFS, TERMINAL_TOOLS, type ToolContext } from './coachTools'
 import { COACH_PERSONA, buildVolatileContext } from './coachPrompt'
 import { listActiveMemories, listAllMemories, insertMemory, updateMemory as updateCoachMemory, deleteMemory as deleteCoachMemory } from './coachMemory'
 import { createOrGetJob, getJob, updateJobText, setJobPhase, finishJob, failJob, normalizeRequestId, shouldFlush, phaseForTool, effectiveJobView, decideJobRun, PHASE_THINKING, PHASE_WRITING, RETRY_ABORT_MESSAGE } from './chatJobs'
@@ -815,6 +815,7 @@ async function procesarChatJob(jobId: string, userId: number, payload: CoachPayl
       exec: call => executeTool(toolCtx, call.name, call.args),
       onText,
       onPhase,
+      terminalTools: TERMINAL_TOOLS,
     });
     await flushing;
 

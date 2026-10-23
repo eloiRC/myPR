@@ -140,11 +140,15 @@ describe('adaptador OpenAI: conversión', () => {
 
 describe('selección de proveedor', () => {
   it('por defecto anthropic con claude-haiku-5-5', () => {
-    expect(resolveProviderConfig({ ANTHROPIC_API_KEY: 'k' })).toEqual({ provider: 'anthropic', model: 'claude-haiku-5-5', apiKey: 'k' });
+    expect(resolveProviderConfig({ ANTHROPIC_API_KEY: 'k' })).toEqual({ provider: 'anthropic', model: 'claude-haiku-5-5', apiKey: 'k', thinking: 'adaptive' });
   });
   it('openai con gpt-6-luna y override de modelo', () => {
-    expect(resolveProviderConfig({ LLM_PROVIDER: 'openai', OPENAI_API_KEY: 'o' })).toEqual({ provider: 'openai', model: 'gpt-6-luna', apiKey: 'o' });
+    expect(resolveProviderConfig({ LLM_PROVIDER: 'openai', OPENAI_API_KEY: 'o' })).toEqual({ provider: 'openai', model: 'gpt-6-luna', apiKey: 'o', thinking: 'adaptive' });
     expect(resolveProviderConfig({ LLM_PROVIDER: 'openai', OPENAI_API_KEY: 'o', LLM_MODEL: 'otro' }).model).toBe('otro');
+  });
+  it('LLM_THINKING=off desactiva el razonamiento previo', () => {
+    expect(resolveProviderConfig({ ANTHROPIC_API_KEY: 'k', LLM_THINKING: 'off' }).thinking).toBe('off');
+    expect(resolveProviderConfig({ ANTHROPIC_API_KEY: 'k', LLM_THINKING: 'loquesea' }).thinking).toBe('adaptive');
   });
   it('falta la clave: error en español', () => {
     expect(() => resolveProviderConfig({})).toThrow(/ANTHROPIC_API_KEY/);
