@@ -15,7 +15,8 @@ export interface ChatJob {
 }
 
 const JOB_TTL_MS = 3600000;
-const FLUSH_INTERVAL_MS = 1000;
+// Cada cuánto se vuelca el texto en streaming a D1 (menos = el usuario lo ve antes)
+const FLUSH_INTERVAL_MS = 400;
 const MAX_REQUEST_ID_LENGTH = 100;
 
 // ---- Lógica pura (testeable sin D1) ----

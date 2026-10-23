@@ -81,7 +81,8 @@ const toggleChat = () => {
   }
 };
 
-const POLL_INTERVAL_MS = 1500;
+// Consulta frecuente para que el texto aparezca casi en tiempo real (lecturas D1 baratas)
+const POLL_INTERVAL_MS = 600;
 
 const sendMessage = async () => {
   if (!newMessage.value.trim() || isLoading.value) return;

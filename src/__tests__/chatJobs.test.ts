@@ -20,8 +20,8 @@ describe('shouldFlush', () => {
     expect(shouldFlush(5000, 0, 0)).toBe(false);
   });
   it('respeta el intervalo de throttle', () => {
-    expect(shouldFlush(1500, 1000, 10)).toBe(false);
-    expect(shouldFlush(2000, 1000, 10)).toBe(true);
+    expect(shouldFlush(1300, 1000, 10)).toBe(false);
+    expect(shouldFlush(1400, 1000, 10)).toBe(true);
   });
 });
 

@@ -680,6 +680,9 @@ app.post('/api/gemini', zValidator('json', chatGPT), coachHandler);
 async function procesarChatJob(jobId: string, userId: number, message: string, currentTraining: any, history: unknown, c: any) {
   // Si falla a mitad, se registra si ya se aplicó algo para que el front refresque
   const state = { workoutUpdated: false };
+  // Tiempos para diagnosticar la latencia percibida (se registran al final del job)
+  const t0 = Date.now();
+  let tCtx = 0, tFirstText = 0;
   try {
     // Falla pronto (y en español) si falta la clave del proveedor seleccionado
     const provider = createProvider(c.env);
@@ -693,6 +696,7 @@ async function procesarChatJob(jobId: string, userId: number, message: string, c
       c.env.DB.prepare('SELECT RestTimerEnabled, RestTimerDefaultSec, RestTimerAutoStart FROM Users WHERE UserId = ?').bind(userId).first(),
     ]);
     if (!entreno) throw new Error('Entreno no encontrado');
+    tCtx = Date.now() - t0;
 
     const analysis = analyzeTraining(coachData);
     const nowSec = Math.floor(Date.now() / 1000);
@@ -732,6 +736,7 @@ async function procesarChatJob(jobId: string, userId: number, message: string, c
     let flushedLength = 0;
     let flushing: Promise<void> = Promise.resolve();
     const onText = (delta: string) => {
+      if (!tFirstText && delta.trim()) tFirstText = Date.now() - t0;
       fullText += delta;
       const now = Date.now();
       if (shouldFlush(now, lastFlush, fullText.length - flushedLength)) {
@@ -756,6 +761,7 @@ async function procesarChatJob(jobId: string, userId: number, message: string, c
     await flushing;
 
     console.log(formatUsage(provider.name, provider.model, result.usage), `iterations=${result.iterations} stop=${result.stopReason}`);
+    console.log(`[coach-timing] contexto_ms=${tCtx} primer_texto_ms=${tFirstText} total_ms=${Date.now() - t0} iteraciones=${result.iterations} historial=${Array.isArray(history) ? history.length : 0}`);
 
     let finalText = result.text.trim();
     if (!finalText) finalText = state.workoutUpdated ? 'Hecho.' : 'No he podido generar una respuesta. Inténtalo de nuevo.';
