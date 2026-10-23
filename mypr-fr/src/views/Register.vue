@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
+import AuthShell from '../components/perfil/AuthShell.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -63,63 +64,60 @@ const handleRegister = async () => {
 </script>
 
 <template>
-  <div class="auth-page">
-    <div class="card auth-card">
-      <div class="auth-brand">
-        <span class="auth-logo">MyPR</span>
-        <h1>Crear cuenta</h1>
-        <p class="auth-subtitle">Empieza a registrar tus entrenamientos hoy</p>
+  <AuthShell titulo="Crear cuenta" subtitulo="Empieza a registrar tus entrenamientos hoy">
+    <form @submit.prevent="handleRegister" class="au-form">
+      <div class="form-group">
+        <label for="email">Correo electrónico</label>
+        <input
+          id="email"
+          type="email"
+          v-model="email"
+          class="input"
+          placeholder="tu@email.com"
+          required
+          autocomplete="email"
+          :aria-invalid="errorMessage ? 'true' : undefined"
+          :aria-describedby="errorMessage ? 'auth-error' : undefined"
+        />
       </div>
 
-      <form @submit.prevent="handleRegister" class="auth-form">
-        <div class="form-group">
-          <label for="email">Correo electrónico</label>
-          <input 
-            id="email" 
-            type="email" 
-            v-model="email" 
-            class="input" 
-            placeholder="tu@email.com"
-            required
-          />
-        </div>
-        
-        <div class="form-group">
-          <label for="password">Contraseña</label>
-          <input 
-            id="password" 
-            type="password" 
-            v-model="password" 
-            class="input" 
-            placeholder="Tu contraseña"
-            required
-          />
-        </div>
+      <div class="form-group">
+        <label for="password">Contraseña</label>
+        <input
+          id="password"
+          type="password"
+          v-model="password"
+          class="input"
+          placeholder="Mínimo 8 caracteres, letra y número"
+          required
+          autocomplete="new-password"
+          :aria-invalid="errorMessage ? 'true' : undefined"
+          :aria-describedby="errorMessage ? 'auth-error' : undefined"
+        />
+      </div>
 
-        <div class="form-group">
-          <label for="confirmPassword">Confirmar Contraseña</label>
-          <input 
-            id="confirmPassword" 
-            type="password" 
-            v-model="confirmPassword" 
-            class="input" 
-            placeholder="Confirma tu contraseña"
-            required
-          />
-        </div>
-        
-        <div v-if="errorMessage" class="error-message">
-          {{ errorMessage }}
-        </div>
-        
-        <button type="submit" class="btn btn-primary auth-submit" :disabled="isLoading">
-          {{ isLoading ? 'Registrando...' : 'Registrarse' }}
-        </button>
+      <div class="form-group">
+        <label for="confirmPassword">Confirmar contraseña</label>
+        <input
+          id="confirmPassword"
+          type="password"
+          v-model="confirmPassword"
+          class="input"
+          placeholder="Repite tu contraseña"
+          required
+          autocomplete="new-password"
+          :aria-invalid="errorMessage ? 'true' : undefined"
+          :aria-describedby="errorMessage ? 'auth-error' : undefined"
+        />
+      </div>
 
-        <router-link to="/login" class="auth-link">
-          ¿Ya tienes cuenta? Inicia sesión
-        </router-link>
-      </form>
-    </div>
-  </div>
+      <p v-if="errorMessage" id="auth-error" class="au-error" role="alert">{{ errorMessage }}</p>
+
+      <button type="submit" class="btn btn-primary au-submit" :disabled="isLoading">
+        {{ isLoading ? 'Registrando...' : 'Registrarse' }}
+      </button>
+
+      <router-link to="/login" class="au-link">¿Ya tienes cuenta?<strong>Inicia sesión</strong></router-link>
+    </form>
+  </AuthShell>
 </template>
