@@ -173,6 +173,7 @@ export const chatStatus = z.object({
 
 export const chatGPT = z.object({
   message: z.string().min(1),
+  requestId: z.string().optional(),
   currentTraining: z.object({
     entreno: z.object({
       EntrenoId: z.number(),

@@ -116,17 +116,16 @@ const sendMessage = async () => {
       parts: [{ text: msg.text }]
     }));
 
-    // 1) Lanzar trabajo
+    // 1) Lanzar trabajo. El requestId hace el envío idempotente: si la petición se repite,
+    // el backend devuelve el mismo job en vez de duplicar las series.
+    const requestId = crypto.randomUUID();
     const launch = await apiFetch<{ jobId: string }>('/api/gemini', {
-      message: userMessage, currentTraining, chatId: null, history
+      message: userMessage, currentTraining, chatId: null, history, requestId
     });
 
     // 2) Polling hasta que termine
-    let accumulatedText = '';
-    let lastChunksLength = 0;
-
     type ChatStatus = {
-      status: string; chunks: string[]; fullText: string;
+      status: string; fullText: string;
       workoutUpdated: boolean; error?: string;
     };
     const MAX_POLL_FAILURES = 5;
@@ -143,29 +142,34 @@ const sendMessage = async () => {
       } catch (pollError: any) {
         // Errores de red puntuales se reintentan; un job perdido o fallos repetidos no
         if (pollError.message?.includes('Job no encontrado') || ++pollFailures >= MAX_POLL_FAILURES) {
+          // Puede que el plan ya se haya aplicado: refrescar para mostrar lo guardado
+          emit('refresh');
           throw new Error('Se perdió la conexión con el entrenador. Inténtalo de nuevo.');
         }
         console.warn('Poll retry:', pollError);
         continue;
       }
 
-      if (status.chunks.length > lastChunksLength) {
-        const newChunks = status.chunks.slice(lastChunksLength);
-        accumulatedText += newChunks.join('');
-        lastChunksLength = status.chunks.length;
+      // El backend devuelve el texto acumulado hasta el momento
+      if (status.fullText) {
         const botMsg = messages.value.find(m => m.id === botMessageId);
-        if (botMsg) botMsg.text = accumulatedText;
-        nextTick(() => scrollToBottom());
+        if (botMsg && botMsg.text !== status.fullText) {
+          botMsg.text = status.fullText;
+          nextTick(() => scrollToBottom());
+        }
       }
 
       if (status.status === 'done') {
         const botMsg = messages.value.find(m => m.id === botMessageId);
         if (botMsg) botMsg.text = status.fullText;
-        if (status.workoutUpdated) emit('refresh');
+        // Siempre se refresca: es barato y evita páginas desfasadas
+        emit('refresh');
         break;
       }
       if (status.status === 'error') {
         console.error('Error del entrenador:', status.error);
+        // Un plan parcial pudo aplicarse antes del fallo
+        emit('refresh');
         throw new Error('⚠️ El entrenador no ha podido responder. Inténtalo de nuevo en unos segundos.');
       }
     }
