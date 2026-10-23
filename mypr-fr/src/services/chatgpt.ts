@@ -6,6 +6,7 @@ interface ChatMessage {
     isUser: boolean;
     timestamp: Date;
     quickReplies?: string[];
+    isError?: boolean;
 }
 
 // El historial se guarda por entreno: si fuera global, en un entreno nuevo
@@ -59,7 +60,8 @@ class ChatGPTService {
                         text: msg.text,
                         isUser: msg.isUser,
                         timestamp: new Date(msg.timestamp),
-                        quickReplies: sanitizeQuickReplies(msg.quickReplies)
+                        quickReplies: sanitizeQuickReplies(msg.quickReplies),
+                        ...(msg.isError ? { isError: true } : {})
                     }));
                 }
             }

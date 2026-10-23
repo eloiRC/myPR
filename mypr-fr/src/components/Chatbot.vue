@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { RotateCcw, SendHorizontal, TriangleAlert, RefreshCw } from 'lucide-vue-next';
+import BottomSheet from './BottomSheet.vue';
 import chatGPTService from '../services/chatgpt';
 import { apiFetch } from '../services/api';
 import { renderChatMarkdown } from '../utils/chatMarkdown';
@@ -25,8 +28,18 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits(['refresh']);
 
 // Estados reactivos
-const isOpen = ref(false);
-const messages = ref<Array<{id: number, text: string, isUser: boolean, timestamp: Date, quickReplies?: string[]}>>([]);
+const route = useRoute();
+const router = useRouter();
+// El chat vive en una hoja inferior que se abre con ?chat=1 (lo pone la pantalla del entreno o la navegación)
+const isOpen = computed(() => route.query.chat === '1');
+const closeChat = () => {
+  const { chat: _chat, ...rest } = route.query;
+  void router.replace({ query: rest });
+};
+const openChat = () => {
+  void router.replace({ query: { ...route.query, chat: '1' } });
+};
+const messages = ref<Array<{id: number, text: string, isUser: boolean, timestamp: Date, quickReplies?: string[], isError?: boolean}>>([]);
 const newMessage = ref('');
 const isLoading = ref(false);
 const isFirstMessage = ref(true);
@@ -37,7 +50,7 @@ const mounted = ref(true);
 
 // Mensaje de bienvenida
 const welcomeMessage = computed(() => {
-  return '¡Hola! Soy tu entrenador. Conozco tu historial, tus récords y qué músculos llevan más tiempo sin trabajar. Pídeme el entreno de hoy o elige una sugerencia.';
+  return 'Conozco tu historial, tus récords y qué músculos llevan más tiempo sin trabajar. Pídeme el entreno de hoy o elige una sugerencia.';
 });
 
 const QUICK_PROMPTS = [
@@ -63,23 +76,43 @@ const autoResize = () => {
   el.style.height = Math.min(el.scrollHeight, 120) + 'px';
 };
 
-// Función para abrir/cerrar el chat
-const toggleChat = () => {
-  isOpen.value = !isOpen.value;
-  
-  if (isOpen.value) {
-    if (messages.value.length === 0) {
-      messages.value.push({
-        id: Date.now(),
-        text: welcomeMessage.value,
-        isUser: false,
-        timestamp: new Date()
-      });
-    }
-    nextTick(() => {
-      scrollToBottom();
-      inputRef.value?.focus();
-    });
+// Al abrir: bienvenida si no hay conversación, scroll al final y foco en el campo de texto
+const onOpened = () => {
+  if (messages.value.length === 0) {
+    messages.value.push({ id: Date.now(), text: welcomeMessage.value, isUser: false, timestamp: new Date() });
+  }
+  // BottomSheet enfoca su panel tras el nextTick; el foco al campo va después
+  nextTick(() => {
+    scrollToBottom();
+    setTimeout(() => inputRef.value?.focus(), 60);
+  });
+};
+
+watch(isOpen, (open) => {
+  if (open) onOpened();
+  keyboardInset(open);
+});
+
+// Mantiene el compositor sobre el teclado móvil: reduce la hoja según el viewport visual
+let vv: VisualViewport | null = null;
+const updateKeyboard = () => {
+  if (!vv) return;
+  const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+  document.documentElement.style.setProperty('--chat-kb', `${Math.round(inset)}px`);
+  nextTick(scrollToBottom);
+};
+const keyboardInset = (open: boolean) => {
+  if (typeof window === 'undefined' || !window.visualViewport) return;
+  if (open && !vv) {
+    vv = window.visualViewport;
+    vv.addEventListener('resize', updateKeyboard);
+    vv.addEventListener('scroll', updateKeyboard);
+    updateKeyboard();
+  } else if (!open && vv) {
+    vv.removeEventListener('resize', updateKeyboard);
+    vv.removeEventListener('scroll', updateKeyboard);
+    vv = null;
+    document.documentElement.style.removeProperty('--chat-kb');
   }
 };
 
@@ -206,6 +239,7 @@ const followJob = async (jobId: string, botMessageId: number) => {
   } catch (error: any) {
     const botMsg = ensureBotMessage(botMessageId);
     botMsg.text = error.message || 'Lo siento, hubo un error al procesar tu mensaje. Por favor, intenta de nuevo.';
+    botMsg.isError = true;
   } finally {
     // Si otro bucle sigue activo (no debería) no se baja el estado de carga
     if (!pollGuard.busy) isLoading.value = false;
@@ -276,6 +310,7 @@ const sendText = async (raw: string) => {
   } catch (error: any) {
     const botMsg = ensureBotMessage(botMessageId);
     botMsg.text = error.message || 'Lo siento, hubo un error al procesar tu mensaje. Por favor, intenta de nuevo.';
+    botMsg.isError = true;
     isLoading.value = false;
     return;
   }
@@ -293,6 +328,22 @@ const sendQuickReply = (text: string) => {
   void sendText(text);
 };
 
+// Reintentar: quita el error y el mensaje del usuario que lo provocó, y lo envía de nuevo
+const retryLast = (errorId: number) => {
+  if (isLoading.value) return;
+  const idx = messages.value.findIndex(m => m.id === errorId);
+  const prev = idx > 0 ? messages.value[idx - 1] : undefined;
+  if (idx === -1 || !prev?.isUser) return;
+  const text = prev.text;
+  messages.value.splice(idx - 1, 2);
+  void sendText(text);
+};
+const lastErrorId = computed(() => {
+  if (isLoading.value) return null;
+  const last = messages.value[messages.value.length - 1];
+  return last?.isError ? last.id : null;
+});
+
 // Función para manejar Enter
 const handleKeyPress = (event: KeyboardEvent) => {
   if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
@@ -302,9 +353,8 @@ const handleKeyPress = (event: KeyboardEvent) => {
 };
 
 const scrollToBottom = () => {
-  if (messagesContainer.value) {
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-  }
+  const scroller = messagesContainer.value?.closest('.sheet-body') as HTMLElement | null;
+  if (scroller) scroller.scrollTop = scroller.scrollHeight;
 };
 
 // Cargar mensajes al montar el componente
@@ -315,25 +365,22 @@ onMounted(() => {
   messages.value = savedMessages;
   isFirstMessage.value = savedIsFirstMessage;
   
-  document.addEventListener('mousedown', handleClickOutside);
-  document.addEventListener('keydown', handleEscape);
   document.addEventListener('visibilitychange', handleVisibility);
+  if (isOpen.value) {
+    onOpened();
+    keyboardInset(true);
+  }
 
   // Si había una respuesta en curso (pantalla bloqueada, app cerrada), se retoma
   resumePending();
 });
-
-const handleEscape = (event: KeyboardEvent) => {
-  if (event.key === 'Escape' && isOpen.value) isOpen.value = false;
-};
 
 onUnmounted(() => {
   mounted.value = false;
   pollGuard.cancel();
   wakePoller();
   document.removeEventListener('visibilitychange', handleVisibility);
-  document.removeEventListener('mousedown', handleClickOutside);
-  document.removeEventListener('keydown', handleEscape);
+  keyboardInset(false);
 });
 
 // Modificar el watch de messages
@@ -360,126 +407,116 @@ const resetConversation = () => {
     isUser: false,
     timestamp: new Date()
   });
-};
-
-// Función para manejar clics fuera del chat
-const handleClickOutside = (event: MouseEvent) => {
-  const chatWindow = document.querySelector('.chatbot-window');
-  const chatToggle = document.querySelector('.chatbot-toggle');
-  
-  if (isOpen.value && chatWindow && chatToggle) {
-    // Verificar si el clic fue fuera tanto de la ventana como del botón
-    if (!chatWindow.contains(event.target as Node) && 
-        !chatToggle.contains(event.target as Node)) {
-      isOpen.value = false;
-    }
-  }
+  nextTick(() => inputRef.value?.focus());
 };
 
 </script>
 
 <template>
-  <div class="chatbot-container">
-    <button
-      @click="toggleChat"
-      class="chatbot-toggle"
-      :class="{ 'active': isOpen }"
-      :aria-label="isOpen ? 'Cerrar entrenador IA' : 'Abrir entrenador IA'"
-      :aria-expanded="isOpen"
-      title="Entrenador IA"
-    >
-      <span class="chatbot-icon" aria-hidden="true">{{ isOpen ? '✕' : '🤖' }}</span>
-    </button>
-
-    <div v-if="isOpen" class="chatbot-window" role="dialog" aria-label="Entrenador IA">
-      <div class="chatbot-header">
-        <div class="chatbot-title">
-          <h3>Entrenador IA</h3>
-          <span v-if="entrenoData?.Nom" class="chatbot-subtitle">{{ entrenoData.Nom }}</span>
+  <div class="chatbot-root">
+    <BottomSheet :open="isOpen" title="Entrenador" height="full" @close="closeChat">
+      <template #header>
+        <div class="chat-head">
+          <h2 class="chat-title">Entrenador</h2>
+          <span v-if="entrenoData?.Nom" class="chat-subtitle">{{ entrenoData.Nom }}</span>
         </div>
-        <div class="header-buttons">
-          <button @click="resetConversation" class="icon-btn" title="Nueva conversación" aria-label="Nueva conversación">↺</button>
-          <button @click="toggleChat" class="icon-btn" aria-label="Cerrar">&times;</button>
-        </div>
-      </div>
+        <button type="button" class="chat-icon-btn" aria-label="Nueva conversación" title="Nueva conversación" @click="resetConversation">
+          <RotateCcw :size="20" aria-hidden="true" />
+        </button>
+      </template>
 
-      <div class="chatbot-messages" ref="messagesContainer" aria-live="polite">
-        <div class="messages-wrapper">
+      <div ref="messagesContainer" class="chat-messages" aria-live="polite" aria-relevant="additions text">
+        <template v-for="message in messages" :key="message.id">
           <div
-            v-for="message in messages"
-            :key="message.id"
             v-show="message.text || message.isUser"
             class="message"
-            :class="{ 'user-message': message.isUser, 'bot-message': !message.isUser }">
+            :class="{ 'user-message': message.isUser, 'bot-message': !message.isUser, 'is-error': message.isError }"
+          >
             <div class="message-content">
-              <div v-if="message.isUser" class="message-text">{{ message.text }}</div>
+              <div v-if="message.isError" class="error-line">
+                <TriangleAlert :size="16" aria-hidden="true" />
+                <span class="message-text">{{ message.text }}</span>
+              </div>
+              <div v-else-if="message.isUser" class="message-text">{{ message.text }}</div>
               <!-- renderChatMarkdown escapa el HTML antes de aplicar formato -->
               <div v-else class="message-text md" v-html="renderChatMarkdown(message.text)"></div>
-              <div class="message-time">
-                {{ message.timestamp.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) }}
+              <div class="message-foot">
+                <button
+                  v-if="message.id === lastErrorId"
+                  type="button"
+                  class="retry-btn"
+                  @click="retryLast(message.id)"
+                ><RefreshCw :size="14" aria-hidden="true" />Reintentar</button>
+                <time class="message-time">{{ message.timestamp.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) }}</time>
               </div>
               <!-- Línea de estado bajo el texto en streaming mientras corren herramientas -->
-              <div v-if="statusLine && !awaitingFirstText && message.id === messages[messages.length - 1]?.id" class="phase-status">{{ statusLine }}</div>
+              <div v-if="statusLine && !awaitingFirstText && message.id === messages[messages.length - 1]?.id" class="phase-status" role="status"><span class="led-dot" aria-hidden="true"></span>{{ statusLine }}</div>
             </div>
           </div>
+        </template>
 
-          <!-- Respuestas rápidas del coach: solo bajo el último mensaje del bot -->
-          <div v-if="chipsMessageId !== null" class="quick-prompts quick-replies" role="group" aria-label="Respuestas rápidas">
-            <button
-              v-for="reply in messages[messages.length - 1].quickReplies"
-              :key="reply"
-              type="button"
-              class="quick-prompt"
-              @click="sendQuickReply(reply)"
-            >{{ reply }}</button>
-          </div>
+        <!-- Respuestas rápidas del coach: solo bajo el último mensaje del bot -->
+        <div v-if="chipsMessageId !== null" class="chips quick-replies" role="group" aria-label="Respuestas rápidas">
+          <button
+            v-for="(reply, i) in messages[messages.length - 1].quickReplies"
+            :key="reply"
+            type="button"
+            class="chip"
+            :class="{ 'chip--primary': i === 0 }"
+            @click="sendQuickReply(reply)"
+          >{{ reply }}</button>
+        </div>
 
-          <!-- Indicador de carga (visible hasta que llega el primer token), con la fase actual -->
-          <div v-if="awaitingFirstText" class="message bot-message">
-            <div class="message-content">
-              <div class="typing-indicator" :aria-label="statusLine || 'Escribiendo'">
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-              <div v-if="statusLine" class="phase-status">{{ statusLine }}</div>
-            </div>
+        <!-- Estado en curso hasta que llega el primer texto -->
+        <div v-if="awaitingFirstText" class="message bot-message">
+          <div class="message-content">
+            <div class="phase-status" role="status"><span class="led-dot" aria-hidden="true"></span>{{ statusLine || 'Pensando…' }}</div>
           </div>
+        </div>
+
+        <div v-if="showQuickPrompts" class="chips prompts" role="group" aria-label="Sugerencias">
+          <button
+            v-for="(prompt, i) in QUICK_PROMPTS"
+            :key="prompt"
+            type="button"
+            class="chip"
+            :class="{ 'chip--primary': i === 0 }"
+            :disabled="isLoading"
+            @click="sendQuickPrompt(prompt)"
+          >{{ prompt }}</button>
         </div>
       </div>
 
-      <div v-if="showQuickPrompts" class="quick-prompts">
-        <button
-          v-for="prompt in QUICK_PROMPTS"
-          :key="prompt"
-          type="button"
-          class="quick-prompt"
-          :disabled="isLoading"
-          @click="sendQuickPrompt(prompt)"
-        >{{ prompt }}</button>
-      </div>
+      <template #footer>
+        <div class="composer">
+          <textarea
+            ref="inputRef"
+            v-model="newMessage"
+            class="composer-input"
+            rows="1"
+            placeholder="Pregunta a tu entrenador"
+            aria-label="Mensaje"
+            enterkeyhint="send"
+            @keydown="handleKeyPress"
+            @input="autoResize"
+          ></textarea>
+          <button
+            type="button"
+            class="send-btn"
+            :disabled="!newMessage.trim() || isLoading"
+            aria-label="Enviar"
+            @click="sendMessage"
+          ><SendHorizontal :size="20" aria-hidden="true" /></button>
+        </div>
+      </template>
+    </BottomSheet>
 
-      <div class="chatbot-input">
-        <textarea
-          ref="inputRef"
-          v-model="newMessage"
-          @keydown="handleKeyPress"
-          @input="autoResize"
-          placeholder="Pregunta a tu entrenador..."
-          class="message-input"
-          rows="1"
-          aria-label="Mensaje"
-        ></textarea>
-        <button
-          @click="sendMessage"
-          class="send-btn"
-          :disabled="!newMessage.trim() || isLoading"
-          aria-label="Enviar"
-        >
-          ➤
-        </button>
-      </div>
-    </div>
+    <!-- Con la hoja cerrada y una respuesta en curso: aviso discreto sobre la navegación inferior -->
+    <Teleport to="body">
+      <button v-if="isLoading && !isOpen" type="button" class="working-pill" aria-label="Entrenador respondiendo, abrir chat" @click="openChat">
+        <span class="led-dot" aria-hidden="true"></span>Entrenador respondiendo…
+      </button>
+    </Teleport>
   </div>
 </template>
 
