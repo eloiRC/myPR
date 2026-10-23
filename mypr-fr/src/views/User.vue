@@ -457,7 +457,10 @@ textarea.memory-text:focus {
   letter-spacing: -0.02em;
 }
 
-.btn-download,
+.btn-download {
+  width: 100%;
+  margin-bottom: 0.75rem;
+}
 </style>
 
 
