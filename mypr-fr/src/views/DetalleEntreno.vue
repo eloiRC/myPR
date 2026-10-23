@@ -9,7 +9,7 @@ import Chatbot from '../components/Chatbot.vue';
 import SerieForm from '../components/SerieForm.vue';
 import SerieItem from '../components/SerieItem.vue';
 import RestTimer from '../components/RestTimer.vue';
-import { useRestTimer } from '../composables/useRestTimer';
+import { useRestTimer, textoDescanso } from '../composables/useRestTimer';
 
 const authStore = useAuthStore();
 
@@ -34,6 +34,8 @@ interface Serie {
   Carga: number;
   PR: boolean;
   Completada?: number;
+  /** Descanso propio de la serie (s); null = el del ejercicio */
+  DescansoSeg?: number | null;
   Data: number;
 }
 
@@ -42,6 +44,8 @@ interface Ejercicio {
   Nom: string;
   UserId: number;
   PR: number;
+  /** Descanso por defecto del ejercicio (s) */
+  DescansoSeg?: number | null;
   GrupMuscular1: number | null;
   GrupMuscular2: number | null;
   GrupMuscular3: number | null;
@@ -100,7 +104,7 @@ const touchStartY = ref(0);
 const touchMoved = ref(false);
 const touchStartTime = ref(0);
 const editandoCard = ref(false);
-const cardEditData = ref({ ejercicioId: 0, kg: 0, reps: 0 });
+const cardEditData = ref<{ ejercicioId: number; kg: number; reps: number; descansoSeg: number | null }>({ ejercicioId: 0, kg: 0, reps: 0, descansoSeg: null });
 const cardGuardando = ref(false);
 const cardError = ref('');
 const nuevaSerieError = ref('');
@@ -286,7 +290,12 @@ const toggleCompletadoCard = async (serieId: number) => {
     if (serie) serie.Completada = state ? 1 : 0;
   };
   setLocal(newState);
-  if (newState) restTimer.iniciarAuto(); // temporizador de descanso (solo al marcar, no al desmarcar)
+  if (newState) {
+    // Temporizador de descanso (solo al marcar, no al desmarcar): serie > ejercicio > global
+    const serieHecha = series.value.find(s => s.SerieId === serieId);
+    const ejercicioHecho = serieHecha ? ejercicios.value.find(e => e.ExerciciId === serieHecha.ExerciciId) : undefined;
+    restTimer.iniciarAuto(serieHecha, ejercicioHecho);
+  }
   try {
     await apiFetch('/api/toggleSerieCompletada', { serieId, completada: newState });
   } catch {
@@ -366,7 +375,8 @@ const iniciarEdicionCard = () => {
   cardEditData.value = {
     ejercicioId: serieActual.value.ExerciciId,
     kg: serieActual.value.Kg,
-    reps: serieActual.value.Reps
+    reps: serieActual.value.Reps,
+    descansoSeg: serieActual.value.DescansoSeg ?? null
   };
   cardError.value = '';
   editandoCard.value = true;
@@ -376,7 +386,7 @@ const cancelarEdicionCard = () => {
   editandoCard.value = false;
 };
 
-const guardarEdicionCard = async (valores: { ejercicioId: number; kg: number; reps: number }) => {
+const guardarEdicionCard = async (valores: { ejercicioId: number; kg: number; reps: number; descansoSeg: number | null }) => {
   if (!serieActual.value || !entreno.value) return;
   const serieId = serieActual.value.SerieId;
   cardGuardando.value = true;
@@ -387,9 +397,10 @@ const guardarEdicionCard = async (valores: { ejercicioId: number; kg: number; re
       entrenoId: entreno.value.EntrenoId,
       exerciciId: valores.ejercicioId,
       kg: valores.kg,
-      reps: valores.reps
+      reps: valores.reps,
+      descansoSeg: valores.descansoSeg
     });
-    onSerieUpdated({ data, serieId, entrenoId: entreno.value.EntrenoId, exerciciId: valores.ejercicioId, kg: valores.kg, reps: valores.reps });
+    onSerieUpdated({ data, serieId, entrenoId: entreno.value.EntrenoId, exerciciId: valores.ejercicioId, kg: valores.kg, reps: valores.reps, descansoSeg: valores.descansoSeg });
     editandoCard.value = false;
   } catch {
     cardError.value = 'No se pudieron guardar los cambios. Inténtalo de nuevo.';
@@ -504,15 +515,15 @@ watch(() => nuevaSerie.value.ejercicioId, (newId) => {
 const onEjercicioNuevaSerie = (id: number) => { nuevaSerie.value.ejercicioId = id; };
 
 // Acciones Principales
-const guardarSerie = async (valores: { ejercicioId: number; kg: number; reps: number }) => {
-  // Mantenemos lo enviado como valores de partida de la siguiente serie
-  nuevaSerie.value = { ...valores };
+const guardarSerie = async (valores: { ejercicioId: number; kg: number; reps: number; descansoSeg: number | null }) => {
+  // Mantenemos ejercicio, peso y reps como valores de partida de la siguiente serie (el descanso no se arrastra)
+  nuevaSerie.value = { ejercicioId: valores.ejercicioId, kg: valores.kg, reps: valores.reps };
   nuevaSerieError.value = '';
 
   try {
     isSaving.value = true;
     const data = await apiFetch<any>('/api/novaSerie', {
-      entrenoId, exerciciId: nuevaSerie.value.ejercicioId, kg: nuevaSerie.value.kg, reps: nuevaSerie.value.reps
+      entrenoId, exerciciId: nuevaSerie.value.ejercicioId, kg: nuevaSerie.value.kg, reps: nuevaSerie.value.reps, descansoSeg: valores.descansoSeg
     });
     
     if (data.newPr) celebrarPr(nuevaSerie.value.ejercicioId, nuevaSerie.value.kg, nuevaSerie.value.reps);
@@ -523,7 +534,7 @@ const guardarSerie = async (valores: { ejercicioId: number; kg: number; reps: nu
       const nuevaSerieLocal: Serie = {
         SerieId: data.serieId, UserId: entreno.value.UserId, EntrenoId: entreno.value.EntrenoId,
         ExerciciId: nuevaSerie.value.ejercicioId, Kg: nuevaSerie.value.kg, Reps: nuevaSerie.value.reps,
-        Carga: nuevaSerie.value.kg * nuevaSerie.value.reps, PR: data.newPr, Data: Math.floor(Date.now() / 1000)
+        Carga: nuevaSerie.value.kg * nuevaSerie.value.reps, PR: data.newPr, DescansoSeg: valores.descansoSeg, Data: Math.floor(Date.now() / 1000)
       };
       series.value.push(nuevaSerieLocal);
     }
@@ -540,7 +551,7 @@ const guardarSerie = async (valores: { ejercicioId: number; kg: number; reps: nu
 // Handlers para eventos del hijo (SerieItem)
 const onSerieUpdated = (payload: any) => {
   // Actualización local sin recargar toda la página
-  const { data, serieId, exerciciId, kg, reps } = payload;
+  const { data, serieId, exerciciId, kg, reps, descansoSeg } = payload;
 
   // Actualizar totales del entreno (servidor devuelve en kg)
   if (entreno.value && data?.cargaTotal !== undefined) {
@@ -555,6 +566,7 @@ const onSerieUpdated = (payload: any) => {
     series.value[idx].Kg = kg;
     series.value[idx].Reps = reps;
     series.value[idx].Carga = kg * reps;
+    if (descansoSeg !== undefined) series.value[idx].DescansoSeg = descansoSeg;
 
     // Actualizar PR de la serie específica si el servidor devuelve nueva información
     if (data && typeof data.newPr !== 'undefined') {
@@ -856,7 +868,7 @@ const onDrop = async (targetId: number) => {
                 <span class="big-x">×</span>
                 <span class="big-reps">{{ serieActual.Reps }}</span>
               </div>
-              <div class="big-carga">{{ serieActual.Carga }} kg total</div>
+              <div class="big-carga">{{ serieActual.Carga }} kg total<span v-if="serieActual.DescansoSeg != null" class="descanso-tag" title="Descanso propio de esta serie">⏱ {{ textoDescanso(serieActual.DescansoSeg) }}</span></div>
               <div v-if="serieActual.PR" class="pr-badge">🏆 PR</div>
               <div v-if="gruposMuscularesDeSerie(serieActual).length" class="big-grupos">
                 <span v-for="(nom, i) in gruposMuscularesDeSerie(serieActual)" :key="i" class="big-grupo-chip">{{ nom }}</span>
@@ -872,6 +884,7 @@ const onDrop = async (targetId: number) => {
                 :ejercicio-id="cardEditData.ejercicioId"
                 :kg="cardEditData.kg"
                 :reps="cardEditData.reps"
+                :descanso-seg="cardEditData.descansoSeg"
                 :ejercicios="ejercicios"
                 :saving="cardGuardando"
                 :error="cardError"

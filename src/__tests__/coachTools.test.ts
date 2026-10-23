@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   addSetsInput, editSetInput, deleteSetInput, updateWorkoutInput, createExerciseInput,
-  saveMemoryInput, updateMemoryInput, deleteMemoryInput, capitalizeName, findInvalidExerciseIds,
+  setExerciseRestInput, saveMemoryInput, updateMemoryInput, deleteMemoryInput, capitalizeName, findInvalidExerciseIds,
   executeTool, TOOL_DEFS, MAX_SETS_PER_CALL, type ToolContext,
 } from '../coachTools';
 import { memoryUpdate, memoryDelete } from '../schema';
@@ -57,6 +57,77 @@ describe('schemas de herramientas', () => {
     expect(memoryUpdate.safeParse({ memoryId: 1, text: 'nuevo texto' }).success).toBe(true);
     expect(memoryUpdate.safeParse({ memoryId: 1 }).success).toBe(false);
     expect(memoryDelete.safeParse({ memoryId: 0 }).success).toBe(false);
+  });
+});
+
+describe('descansos (restSec)', () => {
+  it('add_sets: restSec opcional, 0 (sin descanso) o 15-900', () => {
+    const base = { exerciseId: 3, kg: 80, reps: 8 };
+    expect(addSetsInput.safeParse({ sets: [base] }).success).toBe(true);
+    expect(addSetsInput.safeParse({ sets: [{ ...base, restSec: 15 }] }).success).toBe(true);
+    expect(addSetsInput.safeParse({ sets: [{ ...base, restSec: 900 }] }).success).toBe(true);
+    expect(addSetsInput.safeParse({ sets: [{ ...base, restSec: null }] }).success).toBe(true);
+    expect(addSetsInput.safeParse({ sets: [{ ...base, restSec: 0 }] }).success).toBe(true);
+    expect(addSetsInput.safeParse({ sets: [{ ...base, restSec: 14 }] }).success).toBe(false);
+    expect(addSetsInput.safeParse({ sets: [{ ...base, restSec: -1 }] }).success).toBe(false);
+    expect(addSetsInput.safeParse({ sets: [{ ...base, restSec: 901 }] }).success).toBe(false);
+    expect(addSetsInput.safeParse({ sets: [{ ...base, restSec: 90.5 }] }).success).toBe(false);
+  });
+
+  it('edit_set: restSec cuenta como campo a cambiar y admite null', () => {
+    expect(editSetInput.safeParse({ serieId: 1, restSec: 120 }).success).toBe(true);
+    expect(editSetInput.safeParse({ serieId: 1, restSec: null }).success).toBe(true);
+    expect(editSetInput.safeParse({ serieId: 1, restSec: 0 }).success).toBe(true);
+    expect(editSetInput.safeParse({ serieId: 1, restSec: 5 }).success).toBe(false);
+  });
+
+  it('set_exercise_rest: restSec obligatorio (null borra)', () => {
+    expect(setExerciseRestInput.safeParse({ exerciseId: 1, restSec: 180 }).success).toBe(true);
+    expect(setExerciseRestInput.safeParse({ exerciseId: 1, restSec: null }).success).toBe(true);
+    expect(setExerciseRestInput.safeParse({ exerciseId: 1 }).success).toBe(false);
+    expect(setExerciseRestInput.safeParse({ exerciseId: 1, restSec: 1000 }).success).toBe(false);
+  });
+
+  const mkCtx = (changes = 1) => {
+    const binds: any[][] = [];
+    const db = { prepare: (_sql: string) => ({ bind: (...a: any[]) => { binds.push(a); return { run: async () => ({ meta: { changes } }) }; } }) };
+    const ctx = {
+      db, userId: 7, entrenoId: 1, validExerciseIds: new Set([1, 2]), validMuscleGroupIds: new Set([1]),
+      deps: {}, state: { workoutUpdated: false },
+    } as unknown as ToolContext;
+    return { ctx, binds };
+  };
+
+  it('set_exercise_rest rechaza ejercicios que no son del usuario sin tocar la BD', async () => {
+    const { ctx, binds } = mkCtx();
+    const r = await executeTool(ctx, 'set_exercise_rest', { exerciseId: 99, restSec: 120 });
+    expect(r.isError).toBe(true);
+    expect(binds).toEqual([]);
+  });
+
+  it('set_exercise_rest guarda y filtra por usuario; null borra', async () => {
+    const { ctx, binds } = mkCtx();
+    const r = await executeTool(ctx, 'set_exercise_rest', { exerciseId: 2, restSec: 180 });
+    expect(r.isError).toBe(false);
+    expect(binds[0]).toEqual([180, 2, 7]);
+    const r2 = await executeTool(ctx, 'set_exercise_rest', { exerciseId: 2, restSec: null });
+    expect(r2.isError).toBe(false);
+    expect(binds[1]).toEqual([null, 2, 7]);
+  });
+
+  it('set_exercise_rest valida el rango', async () => {
+    const { ctx, binds } = mkCtx();
+    expect((await executeTool(ctx, 'set_exercise_rest', { exerciseId: 1, restSec: 10 })).isError).toBe(true);
+    expect(binds).toEqual([]);
+  });
+
+  it('add_sets pasa restSec a la dependencia (null si se omite)', async () => {
+    const calls: any[] = [];
+    const { ctx } = mkCtx();
+    ctx.deps = { addSerie: async (e: number, kg: number, r: number, rest?: number | null) => { calls.push([e, kg, r, rest]); return { serieId: 1, newPr: false, cargaTotal: 1 }; } } as any;
+    const r = await executeTool(ctx, 'add_sets', { sets: [{ exerciseId: 1, kg: 100, reps: 5, restSec: 180 }, { exerciseId: 2, kg: 20, reps: 12 }] });
+    expect(r.isError).toBe(false);
+    expect(calls).toEqual([[1, 100, 5, 180], [2, 20, 12, null]]);
   });
 });
 
@@ -116,11 +187,13 @@ describe('executeTool sin tocar BD', () => {
 describe('definiciones de herramientas', () => {
   it('todas son estrictas y sin additionalProperties abiertas', () => {
     expect(TOOL_DEFS.map(t => t.name)).toEqual([
-      'add_sets', 'edit_set', 'delete_set', 'update_workout', 'create_exercise', 'save_memory', 'update_memory', 'delete_memory',
+      'add_sets', 'edit_set', 'set_exercise_rest', 'delete_set', 'update_workout', 'create_exercise', 'save_memory', 'update_memory', 'delete_memory',
     ]);
     for (const t of TOOL_DEFS) {
       expect((t.parameters as any).additionalProperties).toBe(false);
       expect((t.parameters as any).type).toBe('object');
+      // Modo estricto: sin minimum/maximum (los rangos se validan con zod)
+      expect(JSON.stringify(t.parameters)).not.toMatch(/"(minimum|maximum|minItems|maxItems)"/);
     }
   });
 });

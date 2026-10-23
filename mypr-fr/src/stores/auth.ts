@@ -65,6 +65,13 @@ export const useAuthStore = defineStore('auth', () => {
         localStorage.removeItem('token');
         localStorage.removeItem('userId');
         localStorage.removeItem('exp');
+        // Datos ligados al usuario que no deben pasar a otra cuenta en este dispositivo:
+        // ajustes del temporizador (y su migración pendiente), chats del entrenador y vista por entreno
+        try {
+            Object.keys(localStorage)
+                .filter(k => k.startsWith('mypr_rest_timer_') || k.startsWith('chatHistory') || k.startsWith('isFirstMessage') || k.startsWith('mypr_entreno_vista:'))
+                .forEach(k => localStorage.removeItem(k));
+        } catch { /* sin almacenamiento disponible */ }
         // Opcional: router.push('/login');
     }
 

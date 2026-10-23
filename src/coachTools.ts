@@ -2,6 +2,7 @@
 // userId y entrenoId vienen SIEMPRE del JWT y del entreno actual, nunca del modelo.
 import { z } from 'zod';
 import type { LlmToolDef } from './llm/types';
+import { restSegOrNoneSchema, REST_MIN_SEG, REST_MAX_SEG } from './schema';
 import { MEMORY_KINDS, MEMORY_STATUSES, MAX_MEMORY_TEXT, deleteMemory, insertMemory, updateMemory } from './coachMemory';
 
 export const MAX_SETS_PER_CALL = 30;
@@ -13,16 +14,20 @@ export const AUTO_NAME_REGEX = /^Entreno #\d+$/;
 const kgSchema = z.number().min(0).max(1000);
 const repsSchema = z.number().int().positive().max(1000);
 const idSchema = z.number().int().positive();
+// Descanso en segundos (15-900). En edit_set / set_exercise_rest, null = borrar el valor.
+const restSchema = restSegOrNoneSchema;
 
 export const addSetsInput = z.object({
-  sets: z.array(z.object({ exerciseId: idSchema, kg: kgSchema, reps: repsSchema })).min(1).max(MAX_SETS_PER_CALL),
+  sets: z.array(z.object({ exerciseId: idSchema, kg: kgSchema, reps: repsSchema, restSec: restSchema.nullable().optional() })).min(1).max(MAX_SETS_PER_CALL),
 });
 export const editSetInput = z.object({
   serieId: idSchema,
   exerciseId: idSchema.optional(),
   kg: kgSchema.optional(),
   reps: repsSchema.optional(),
-}).refine(v => v.exerciseId !== undefined || v.kg !== undefined || v.reps !== undefined, { message: 'Indica al menos un campo a cambiar' });
+  restSec: restSchema.nullable().optional(),
+}).refine(v => v.exerciseId !== undefined || v.kg !== undefined || v.reps !== undefined || v.restSec !== undefined, { message: 'Indica al menos un campo a cambiar' });
+export const setExerciseRestInput = z.object({ exerciseId: idSchema, restSec: restSchema.nullable() });
 export const deleteSetInput = z.object({ serieId: idSchema });
 export const updateWorkoutInput = z.object({
   name: z.string().trim().min(1).max(80).optional(),
@@ -54,15 +59,20 @@ const obj = (properties: Record<string, unknown>, required: string[]) => ({
 export const TOOL_DEFS: LlmToolDef[] = [
   {
     name: 'add_sets',
-    description: `Añade series al entreno actual. Una entrada por serie individual (4 series iguales = 4 entradas). Máximo ${MAX_SETS_PER_CALL} por llamada. Usa SOLO exerciseId del catálogo del usuario (o de un ejercicio creado antes con create_exercise). kg con máximo 1 decimal (0 permitido solo para peso corporal), reps entero positivo.`,
+    description: `Añade series al entreno actual. Una entrada por serie individual (4 series iguales = 4 entradas). Máximo ${MAX_SETS_PER_CALL} por llamada. Usa SOLO exerciseId del catálogo del usuario (o de un ejercicio creado antes con create_exercise). kg con máximo 1 decimal (0 permitido solo para peso corporal), reps entero positivo. restSec (opcional, úsalo solo cuando aporte algo): descanso en segundos de ESA serie (${REST_MIN_SEG} a ${REST_MAX_SEG}), o 0 para "sin descanso" (superserie/circuito: el temporizador no arranca). Omítelo para heredar el del ejercicio o el del usuario.`,
     parameters: obj({
-      sets: { type: 'array', items: obj({ exerciseId: { type: 'integer' }, kg: { type: 'number' }, reps: { type: 'integer' } }, ['exerciseId', 'kg', 'reps']) },
+      sets: { type: 'array', items: obj({ exerciseId: { type: 'integer' }, kg: { type: 'number' }, reps: { type: 'integer' }, restSec: { type: ['integer', 'null'] } }, ['exerciseId', 'kg', 'reps']) },
     }, ['sets']),
   },
   {
     name: 'edit_set',
-    description: 'Modifica una serie del entreno actual (ejercicio, kg y/o reps). serieId sale de "Series ya realizadas hoy". Solo envía los campos que cambian.',
-    parameters: obj({ serieId: { type: 'integer' }, exerciseId: { type: 'integer' }, kg: { type: 'number' }, reps: { type: 'integer' } }, ['serieId']),
+    description: `Modifica una serie del entreno actual (ejercicio, kg, reps y/o descanso). serieId sale de "Series ya realizadas hoy". Solo envía los campos que cambian. restSec: descanso propio de la serie en segundos (${REST_MIN_SEG} a ${REST_MAX_SEG}), 0 = sin descanso; null lo borra y la serie vuelve a heredar el del ejercicio.`,
+    parameters: obj({ serieId: { type: 'integer' }, exerciseId: { type: 'integer' }, kg: { type: 'number' }, reps: { type: 'integer' }, restSec: { type: ['integer', 'null'] } }, ['serieId']),
+  },
+  {
+    name: 'set_exercise_rest',
+    description: `Fija el descanso POR DEFECTO de un ejercicio del catálogo del usuario (segundos, ${REST_MIN_SEG} a ${REST_MAX_SEG}, o 0 = sin descanso); se aplica a sus series que no tengan descanso propio. restSec null borra el valor y vuelve al descanso global del usuario. Úsalo solo para valores estables del ejercicio (ej. peso muerto pesado 180 s), no para una sesión concreta.`,
+    parameters: obj({ exerciseId: { type: 'integer' }, restSec: { type: ['integer', 'null'] } }, ['exerciseId', 'restSec']),
   },
   {
     name: 'delete_set',
@@ -99,7 +109,7 @@ export const TOOL_DEFS: LlmToolDef[] = [
 // ---------- Contexto y ejecución ----------
 
 export interface ToolDeps {
-  addSerie(exerciciId: number, kg: number, reps: number): Promise<{ serieId: number; newPr: boolean; cargaTotal: number }>;
+  addSerie(exerciciId: number, kg: number, reps: number, restSec?: number | null): Promise<{ serieId: number; newPr: boolean; cargaTotal: number }>;
   checkPr(exerciciId: number, kg: number): Promise<unknown>;
   updateCargaTotal(entrenoId: number): Promise<{ results?: any[] }>;
 }
@@ -152,15 +162,16 @@ export async function executeTool(ctx: ToolContext, name: string, rawArgs: unkno
         if (!p.success) return fail(zodMessage(p.error));
         const invalid = findInvalidExerciseIds(p.data.sets.map(s => s.exerciseId), ctx.validExerciseIds);
         if (invalid.length) return fail(`exerciseId no válidos (no están en el catálogo): ${invalid.join(', ')}. No se ha añadido ninguna serie.`);
-        const added: { serieId: number; exerciseId: number; kg: number; reps: number; newPr: boolean }[] = [];
+        const added: { serieId: number; exerciseId: number; kg: number; reps: number; restSec: number | null; newPr: boolean }[] = [];
         let cargaTotal = 0;
         try {
           for (const s of p.data.sets) {
             const kg = round1(s.kg);
-            const r = await ctx.deps.addSerie(s.exerciseId, kg, s.reps);
+            const restSec = s.restSec ?? null;
+            const r = await ctx.deps.addSerie(s.exerciseId, kg, s.reps, restSec);
             ctx.state.workoutUpdated = true;
             cargaTotal = r.cargaTotal;
-            added.push({ serieId: r.serieId, exerciseId: s.exerciseId, kg, reps: s.reps, newPr: r.newPr });
+            added.push({ serieId: r.serieId, exerciseId: s.exerciseId, kg, reps: s.reps, restSec, newPr: r.newPr });
           }
         } catch (e: any) {
           return fail(`Error tras añadir ${added.length} series: ${e?.message || 'error de base de datos'}`);
@@ -178,14 +189,27 @@ export async function executeTool(ctx: ToolContext, name: string, rawArgs: unkno
         const kg = round1(p.data.kg ?? row.Kg);
         const reps = p.data.reps ?? row.Reps;
         // Mirror de /api/editSerie
-        await ctx.db.prepare('UPDATE Series SET ExerciciId=?, Kg=?, Reps=?, Carga=? WHERE UserId=? AND SerieId=? AND EntrenoId=?')
-          .bind(exerciseId, kg, reps, kg * reps, ctx.userId, row.SerieId, ctx.entrenoId).run();
+        // restSec: ausente = no tocar, null = borrar, número = fijar
+        const restSec = p.data.restSec === undefined ? (row.DescansoSeg ?? null) : p.data.restSec;
+        await ctx.db.prepare('UPDATE Series SET ExerciciId=?, Kg=?, Reps=?, Carga=?, DescansoSeg=? WHERE UserId=? AND SerieId=? AND EntrenoId=?')
+          .bind(exerciseId, kg, reps, kg * reps, restSec, ctx.userId, row.SerieId, ctx.entrenoId).run();
         const pr = await ctx.deps.checkPr(exerciseId, kg) as { prUpdated?: boolean; serieId?: number } | undefined;
         // Si cambió de ejercicio, el PR del ejercicio anterior también se recalcula
         if (exerciseId !== row.ExerciciId) await ctx.deps.checkPr(row.ExerciciId, 0);
         const ct = await ctx.deps.updateCargaTotal(ctx.entrenoId);
         ctx.state.workoutUpdated = true;
-        return ok({ serieId: row.SerieId, exerciseId, kg, reps, newPr: pr?.serieId === row.SerieId, cargaTotal: ct.results?.[0]?.CargaTotal ?? 0 });
+        return ok({ serieId: row.SerieId, exerciseId, kg, reps, restSec, newPr: pr?.serieId === row.SerieId, cargaTotal: ct.results?.[0]?.CargaTotal ?? 0 });
+      }
+
+      case 'set_exercise_rest': {
+        const p = setExerciseRestInput.safeParse(rawArgs);
+        if (!p.success) return fail(zodMessage(p.error));
+        if (!ctx.validExerciseIds.has(p.data.exerciseId)) return fail(`exerciseId no válido: ${p.data.exerciseId}`);
+        const res = await ctx.db.prepare('UPDATE Exercici SET DescansoSeg = ? WHERE ExerciciId = ? AND UserId = ?')
+          .bind(p.data.restSec, p.data.exerciseId, ctx.userId).run();
+        if (!(res.meta.changes ?? 0)) return fail('Ejercicio no encontrado.');
+        ctx.state.workoutUpdated = true; // el front recarga el catálogo y recoge el nuevo descanso
+        return ok({ exerciseId: p.data.exerciseId, restSec: p.data.restSec });
       }
 
       case 'delete_set': {

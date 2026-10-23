@@ -17,6 +17,8 @@ export interface ExerciseRow {
   ExerciciId: number;
   Nom: string;
   PR: number | null;
+  /** Descanso por defecto del ejercicio (s); null/ausente = usa el global */
+  DescansoSeg?: number | null;
   GrupMuscular1?: number | null;
   GrupMuscular2?: number | null;
   GrupMuscular3?: number | null;
@@ -188,7 +190,7 @@ export function analyzeTraining(opts: {
     const groups = muscleGroupsOf(ex).map(g => gmName.get(g) ?? g).join('/') || 'sin grupo';
     const last = lastUsed.get(ex.ExerciciId);
     const usage = last ? `último hace ${daysAgo(last, now)}d, ${uses28.get(ex.ExerciciId) || 0}× en 28d` : 'nunca usado';
-    return `ID: ${ex.ExerciciId} - ${ex.Nom} [${groups}] (${usage}${ex.PR ? `, PR ${ex.PR}kg` : ''})`;
+    return `ID: ${ex.ExerciciId} - ${ex.Nom} [${groups}] (${usage}${ex.PR ? `, PR ${ex.PR}kg` : ''}${ex.DescansoSeg ? `, descanso ${ex.DescansoSeg} s` : ''})`;
   });
 
   // --- Resumen compacto de las últimas sesiones ---

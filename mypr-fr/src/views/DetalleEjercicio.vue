@@ -6,6 +6,7 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 import { applyChartTheme, roundedLineDataset, roundedChartOptions, CHART_COLORS } from '../utils/chartTheme';
 import { useAuthStore } from '../stores/auth';
 import { apiFetch } from '../services/api';
+import { DURACION_MIN_SEG, DURACION_MAX_SEG, descansoAceptable, textoDescanso } from '../composables/useRestTimer';
 
 const authStore = useAuthStore();
 
@@ -20,6 +21,8 @@ interface Ejercicio {
   Nom: string;
   UserId: number;
   PR: number;
+  /** Descanso por defecto del ejercicio (s); null = usa el global */
+  DescansoSeg?: number | null;
   GrupMuscular1: number | null;
   GrupMuscular2: number | null;
   GrupMuscular3: number | null;
@@ -67,10 +70,17 @@ const cargadoCompleto = computed(() => ejercicio.value !== null && gruposMuscula
 const errorEdicion = ref('');
 const ejercicioEditado = ref({ Nom: '' });
 const gruposSeleccionados = ref<(number | null)[]>([]);
+// Descanso por defecto (opcional): vacío = el global del usuario
+const descansoEditado = ref<number | null>(null);
+const onDescansoInput = (e: Event) => {
+  const raw = (e.target as HTMLInputElement).value.trim();
+  descansoEditado.value = raw === '' ? null : Math.round(Number(raw));
+};
 
 const iniciarEdicion = () => {
   if (!ejercicio.value) return;
   ejercicioEditado.value = { Nom: ejercicio.value.Nom };
+  descansoEditado.value = ejercicio.value.DescansoSeg ?? null;
   gruposSeleccionados.value = [
     ejercicio.value.GrupMuscular1,
     ejercicio.value.GrupMuscular2,
@@ -93,11 +103,16 @@ const guardarEdicionEjercicio = async () => {
   if (groups.length === 0) {
     errorEdicion.value = 'Selecciona al menos un grupo muscular'; return;
   }
+  const d = descansoEditado.value;
+  if (!descansoAceptable(d)) {
+    errorEdicion.value = `El descanso debe ser 0 (sin descanso) o estar entre ${DURACION_MIN_SEG} y ${DURACION_MAX_SEG} s`; return;
+  }
   try {
     await apiFetch('/api/editExercici', {
       exerciciId: ejercicio.value.ExerciciId,
       nom: ejercicioEditado.value.Nom.trim(),
-      grupsMusculars: groups
+      grupsMusculars: groups,
+      descansoSeg: d
     });
     await loadEjercicio();
     editando.value = false;
@@ -287,6 +302,7 @@ onMounted(loadEjercicio);
             <span v-if="ejercicio.GrupMuscular5" class="chip">{{ getNombreGrupoMuscular(ejercicio.GrupMuscular5) }}</span>
           </div>
         </div>
+        <p v-if="ejercicio.DescansoSeg != null" class="descanso-ayuda">⏱ Descanso por defecto: {{ textoDescanso(ejercicio.DescansoSeg) }}</p>
       </div>
       <form v-else @submit.prevent="guardarEdicionEjercicio" class="card card-elevated">
         <h2>Editar {{ ejercicioEditado.Nom || 'ejercicio' }}</h2>
@@ -304,6 +320,11 @@ onMounted(loadEjercicio);
               <label :for="'edit-grp-' + grupo.GrupMuscularId">{{ grupo.Nom }}</label>
             </div>
           </div>
+        </div>
+        <div class="form-group descanso-ejercicio">
+          <label for="edit-descanso">Descanso por defecto (s), opcional</label>
+          <input id="edit-descanso" type="number" inputmode="numeric" class="form-control" min="0" :max="DURACION_MAX_SEG" step="5" :value="descansoEditado ?? ''" placeholder="Global (0 = sin descanso)" @input="onDescansoInput" />
+          <p class="descanso-ayuda">Vacío = el descanso global de Ajustes. Cada serie puede tener el suyo.</p>
         </div>
         <div v-if="errorEdicion" class="error-message">{{ errorEdicion }}</div>
         <div class="form-actions" style="margin-top:1rem;">
@@ -354,6 +375,8 @@ onMounted(loadEjercicio);
 </template>
 
 <style scoped>
+.descanso-ejercicio input { max-width: 10rem; }
+.descanso-ayuda { margin: 0.5rem 0 0; font-size: 0.8rem; color: var(--text-muted); }
 .ejercicio-content {
   display: flex;
   flex-direction: column;

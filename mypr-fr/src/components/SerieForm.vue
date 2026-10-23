@@ -3,6 +3,7 @@
 import { ref, computed, watch } from 'vue';
 import BuscadorSelect from './BuscadorSelect.vue';
 import { formatKgInput } from '../utils/pesoFormula';
+import { DURACIONES_PRESET, DURACION_MIN_SEG, DURACION_MAX_SEG, descansoAceptable, textoDescanso } from '../composables/useRestTimer';
 import { parseKgEscrito, resolverKgAlSalir, sumarKg, sumarReps, PASO_KG, PASO_REPS } from '../utils/kgInput';
 
 // Contador a nivel de módulo: ids únicos por instancia para que cada <label for> apunte a su input
@@ -15,15 +16,17 @@ interface Props {
   reps: number;
   ejercicios: any[];
   ultimaSerie?: { Kg: number; Reps: number } | null;
+  /** Descanso propio de la serie (s); null/undefined = usa el del ejercicio */
+  descansoSeg?: number | null;
   saving?: boolean;
   /** Error del servidor (p. ej. fallo al guardar), se muestra dentro del formulario */
   error?: string;
 }
 
-const props = withDefaults(defineProps<Props>(), { ultimaSerie: null, saving: false, error: '' });
+const props = withDefaults(defineProps<Props>(), { ultimaSerie: null, descansoSeg: null, saving: false, error: '' });
 
 const emit = defineEmits<{
-  (e: 'submit', valores: { ejercicioId: number; kg: number; reps: number }): void;
+  (e: 'submit', valores: { ejercicioId: number; kg: number; reps: number; descansoSeg: number | null }): void;
   (e: 'cancel'): void;
   (e: 'openModalEjercicio'): void;
   (e: 'ejercicioChange', id: number): void;
@@ -35,6 +38,9 @@ const ejercicioIdLocal = ref(props.ejercicioId);
 const kgLocal = ref(props.kg);
 const repsLocal = ref(props.reps);
 const errorLocal = ref('');
+// Descanso opcional (null = el del ejercicio). Se guarda como texto para admitir el campo vacío.
+const descansoLocal = ref<number | null>(props.descansoSeg ?? null);
+watch(() => props.descansoSeg, v => { descansoLocal.value = v ?? null; });
 
 // Si el padre cambia los valores iniciales (prefill, ejercicio recién creado...) los reflejamos
 watch(() => props.ejercicioId, v => { ejercicioIdLocal.value = v; });
@@ -73,6 +79,20 @@ const onKgBlur = (e: Event) => {
   }
 };
 
+const descansoDelEjercicio = computed(() => {
+  const ej = props.ejercicios.find((e: any) => e.ExerciciId === ejercicioIdLocal.value);
+  return ej?.DescansoSeg ?? null;
+});
+const placeholderDescanso = computed(() => descansoDelEjercicio.value ? `${descansoDelEjercicio.value} s (ejercicio)` : 'Global');
+const resumenDescanso = computed(() => descansoLocal.value !== null ? `⏱ ${textoDescanso(descansoLocal.value)}` : '');
+
+const elegirDescanso = (seg: number) => { descansoLocal.value = descansoLocal.value === seg ? null : seg; errorLocal.value = ''; };
+const onDescansoInput = (e: Event) => {
+  const raw = (e.target as HTMLInputElement).value.trim();
+  descansoLocal.value = raw === '' ? null : Math.round(Number(raw));
+  errorLocal.value = '';
+};
+
 const onRepsInput = (e: Event) => {
   const n = parseInt((e.target as HTMLInputElement).value, 10);
   repsLocal.value = isNaN(n) ? 0 : n;
@@ -85,8 +105,13 @@ const enviar = () => {
     errorLocal.value = 'Completa todos los campos correctamente (mínimo 0.5kg)';
     return;
   }
+  const d = descansoLocal.value;
+  if (!descansoAceptable(d)) {
+    errorLocal.value = `El descanso debe ser 0 (sin descanso) o estar entre ${DURACION_MIN_SEG} y ${DURACION_MAX_SEG} s`;
+    return;
+  }
   errorLocal.value = '';
-  emit('submit', { ejercicioId: ejercicioIdLocal.value, kg: kgLocal.value, reps: repsLocal.value });
+  emit('submit', { ejercicioId: ejercicioIdLocal.value, kg: kgLocal.value, reps: repsLocal.value, descansoSeg: d });
 };
 </script>
 
@@ -122,6 +147,20 @@ const enviar = () => {
       </div>
     </div>
     <div class="form-group" v-if="kgLocal > 0 && repsLocal > 0"><div class="carga-calculada"><span class="label">Total:</span><span class="value">{{ cargaCalculada }} kg</span></div></div>
+    <details class="mas-opciones">
+      <summary>Más opciones<span v-if="resumenDescanso" class="mas-opciones-resumen">{{ resumenDescanso }}</span></summary>
+      <div class="form-group descanso-group">
+        <label :for="`${uid}-descanso`">Descanso (s)</label>
+        <div class="descanso-presets" role="group" aria-label="Descansos habituales">
+          <button type="button" class="descanso-chip" :class="{ active: descansoLocal === 0 }" :aria-pressed="descansoLocal === 0" @click="elegirDescanso(0)">Sin descanso</button>
+          <button v-for="d in DURACIONES_PRESET" :key="d" type="button" class="descanso-chip" :class="{ active: descansoLocal === d }" :aria-pressed="descansoLocal === d" @click="elegirDescanso(d)">{{ d }}</button>
+        </div>
+        <div class="descanso-custom">
+          <input :id="`${uid}-descanso`" type="number" inputmode="numeric" class="form-control" min="0" :max="DURACION_MAX_SEG" step="5" :value="descansoLocal ?? ''" :placeholder="placeholderDescanso" @input="onDescansoInput">
+          <button type="button" class="btn-link-sutil" :disabled="descansoLocal === null" @click="descansoLocal = null">Usar el del ejercicio</button>
+        </div>
+      </div>
+    </details>
     <p v-if="mensajeError" class="serie-form-error" role="alert">{{ mensajeError }}</p>
     <div class="nueva-serie-actions">
       <button type="submit" class="btn btn-primary" :disabled="saving">{{ saving ? textos.guardando : textos.guardar }}</button>
@@ -129,3 +168,48 @@ const enviar = () => {
     </div>
   </form>
 </template>
+
+<style scoped>
+.mas-opciones { margin: 0.5rem 0 0; }
+.mas-opciones > summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  list-style: none;
+  padding: 0.25rem 0;
+  user-select: none;
+}
+.mas-opciones > summary::-webkit-details-marker { display: none; }
+.mas-opciones > summary::before { content: '+ '; }
+.mas-opciones[open] > summary::before { content: '− '; }
+.mas-opciones-resumen { margin-left: 0.5rem; }
+.descanso-group { margin-top: 0.25rem; }
+.descanso-presets { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.5rem; }
+.descanso-chip {
+  min-height: 2.25rem;
+  padding: 0 0.85rem;
+  border-radius: var(--radius-full, 999px);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.descanso-chip.active {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  background: rgba(20, 184, 166, 0.1);
+}
+.descanso-custom { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.descanso-custom input.form-control { width: 9rem; }
+.btn-link-sutil {
+  background: none;
+  border: 0;
+  padding: 0.5rem 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.btn-link-sutil:disabled { opacity: 0.4; cursor: default; text-decoration: none; }
+</style>
