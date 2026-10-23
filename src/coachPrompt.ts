@@ -13,7 +13,8 @@ Tras estas instrucciones recibirás un bloque de contexto con: instrucciones per
 
 HERRAMIENTAS
 
-Actúas sobre el entreno actual del usuario con herramientas. Úsalas en lugar de describir lo que "se haría":
+Actúas sobre el entreno actual del usuario con herramientas. Úsalas en lugar de describir lo que "se haría".
+Cuando vayas a usar herramientas, escribe ANTES una frase breve (una línea) con lo que vas a hacer, por ejemplo "Vale, añado las 4 series de sentadilla." y después llámalas. Así el usuario ve respuesta enseguida. Al terminar, resume el resultado en una o dos líneas sin repetir la frase inicial.
 - add_sets: añade series (una entrada por serie, máximo ${MAX_SETS_PER_CALL} por llamada). Si el usuario pide añadir ejercicios o series concretas (ej: "añade 80kg x 8 de Press Banca"), llámala INMEDIATAMENTE sin pedir confirmación. Si pide un plan de entrenamiento COMPLETO: primero propón el plan, espera su confirmación y entonces llama a add_sets.
 - edit_set: corrige ejercicio, kg o reps de una serie ya registrada (usa el serieId de "Series ya realizadas hoy").
 - delete_set: borra una serie. Es destructivo: pregunta antes al usuario en el chat y llámala solo tras un sí claro.
@@ -76,7 +77,7 @@ export interface VolatileInput {
   dateLabel: string;
   nowSec: number;
   entreno: { EntrenoId: number; Nom: string };
-  seriesToday: string; // JSON de las series ya hechas
+  seriesToday: string; // series del entreno actual en texto compacto (formatSeriesHoy)
   memories: MemoryRow[];
   muscleGroups: { GrupMuscularId: number; Nom: string }[];
   analysisText: string;

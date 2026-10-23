@@ -12,7 +12,7 @@ import { executeTool, TOOL_DEFS, type ToolContext } from './coachTools'
 import { COACH_PERSONA, buildVolatileContext } from './coachPrompt'
 import { listActiveMemories, listAllMemories, insertMemory, updateMemory as updateCoachMemory, deleteMemory as deleteCoachMemory } from './coachMemory'
 import { createOrGetJob, getJob, updateJobText, setJobPhase, finishJob, failJob, normalizeRequestId, shouldFlush, phaseForTool, effectiveJobView, decideJobRun, PHASE_THINKING, PHASE_WRITING, RETRY_ABORT_MESSAGE } from './chatJobs'
-import { analyzeTraining, type HistoryRow, type ExerciseRow } from './coachAnalysis'
+import { analyzeTraining, formatSeriesHoy, type HistoryRow, type ExerciseRow, type SerieHoyRow } from './coachAnalysis'
 
 /** Lo mínimo que usan los helpers de BD: sirve tanto el contexto de Hono como `{ env }` desde la cola. */
 type DbCtx = { env: { DB: D1Database } }
@@ -988,10 +988,11 @@ Series.EntrenoId = ? AND Series.UserId = ?;
 
 
 
-    return JSON.stringify(results)
+    // Texto compacto (antes JSON con todos los campos): menos tokens en cada llamada al modelo
+    return formatSeriesHoy((results || []) as unknown as SerieHoyRow[])
   } catch (error) {
     console.error("Error retrieving full history:", error);
     // You might want to throw a specific error or return an empty string/array
-    return JSON.stringify([]); // Return empty array on error
+    return formatSeriesHoy([]);
   }
 }
