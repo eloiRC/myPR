@@ -47,6 +47,7 @@ No son retoques: rediseño de toda la app pensado primero para el móvil en el g
 - Chat a pantalla completa.
 - Tarjetas de "cambios aplicados" con deshacer.
 - Iconos de verdad en lugar de emojis.
+- **Reordenar series con pulsación larga y arrastrar** (sin el botón ⠿): mantener ~0,45 s levanta la tarjeta con vibración; si el dedo se mueve antes, es scroll normal; desplazamiento automático cerca de los bordes; un toque corto sigue marcando la serie como hecha. Hay un prototipo descartado de esta sesión que sirve de referencia.
 
 **Reparto**: dirección y sistema de diseño en la sesión principal (decisiones contigo). Las pantallas, por agentes en paralelo una vez fijado el sistema, revisadas y probadas antes de publicar.
 
