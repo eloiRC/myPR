@@ -437,6 +437,7 @@ const loadEntreno = async () => {
     entreno.value = data.entreno[0];
     if (entreno.value) entreno.value.CargaTotal = parseFloat((entreno.value.CargaTotal / 1000).toFixed(2));
     series.value = data.series;
+    cargarCompletadas();
 
     await loadEjercicios();
     if (gruposMusculares.value.length === 0) await loadGruposMusculares();
@@ -828,6 +829,7 @@ const onDrop = async (targetId: number) => {
           :serie="serie"
           :ejercicios="ejercicios"
           :grupo-muscular-nombre="ejercicioGrupoMap.get(serie.ExerciciId)"
+          :completada="isCompletada(serie.SerieId)"
           @serieUpdated="onSerieUpdated"
           @serieDeleted="onSerieDeleted"
           @serieCompletadaToggled="toggleCompletadoCard"

@@ -8,6 +8,7 @@ interface Props {
   serie: any;
   ejercicios: any[];
   grupoMuscularNombre?: string[];
+  completada?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -24,8 +25,8 @@ const serieEditada = ref({
   reps: 0
 });
 
-// Estado completado desde prop
-const isCompleted = computed(() => (props.serie?.Completada ?? 0) === 1);
+// Estado completado desde prop (fuente de verdad compartida con la vista de tarjetas)
+const isCompleted = computed(() => props.completada ?? false);
 
 // --- Triple click / tap para marcar completado ---
 const onCardClick = () => {
