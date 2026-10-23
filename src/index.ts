@@ -7,7 +7,7 @@ import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, s
 import { hashPassword, verifyPassword, generateJWT, verifyJWT } from './jwt'
 import { encrypt, decrypt } from './crypto'
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai'
-import { createJob, getJob, appendChunk, finishJob, failJob } from './chatJobs'
+import { createOrGetJob, getJob, updateJobText, finishJob, failJob, normalizeRequestId, shouldFlush } from './chatJobs'
 import { analyzeTraining, type HistoryRow, type ExerciseRow } from './coachAnalysis'
 
 
@@ -598,15 +598,21 @@ app.post('/api/updateUser', zValidator('json', updateUser), async (c) => {
 
 // Endpoint para Gemini (Long-polling)
 app.post('/api/gemini', zValidator('json', chatGPT), async (c) => {
-  const { message, currentTraining, history } = await c.req.json();
+  const { message, currentTraining, history, requestId: rawRequestId } = await c.req.json();
   const userId = await c.get('jwtPayload').UserId;
-  const jobId = createJob(userId);
+  const requestId = normalizeRequestId(rawRequestId);
+  // Idempotente: un reintento con el mismo requestId devuelve el job existente
+  const { id: jobId, created } = await createOrGetJob(c.env.DB, userId, requestId);
 
-  c.executionCtx.waitUntil(procesarChatJob(jobId, userId, message, currentTraining, history, c));
+  if (created) {
+    c.executionCtx.waitUntil(procesarChatJob(jobId, userId, message, currentTraining, history, c));
+  }
   return c.json({ jobId });
 });
 
 async function procesarChatJob(jobId: string, userId: number, message: string, currentTraining: any, history: any[], c: any) {
+  // Si falla a mitad de un plan, se registra que ya se aplicó algo para que el front refresque
+  let workoutUpdated = false;
   try {
     const [coachData, seriesCurrentTraining, user] = await Promise.all([
       getCoachData(userId, currentTraining.entreno.EntrenoId, c),
@@ -721,16 +727,24 @@ ${analysis.text}
     const streamResult = await chat.sendMessageStream(promptUsuario);
 
     let fullText = '';
+    let lastFlush = 0;
+    let flushedLength = 0;
 
     for await (const chunk of streamResult.stream) {
       const chunkText = chunk.text();
       if (chunkText) {
         fullText += chunkText;
-        appendChunk(jobId, chunkText);
+        // Volcado a D1 con throttle (no en cada chunk)
+        const now = Date.now();
+        if (shouldFlush(now, lastFlush, fullText.length - flushedLength)) {
+          await updateJobText(c.env.DB, jobId, fullText);
+          lastFlush = now;
+          flushedLength = fullText.length;
+        }
       }
     }
+    if (fullText.length > flushedLength) await updateJobText(c.env.DB, jobId, fullText);
 
-    let workoutUpdated = false;
     let cleanedText = fullText;
 
     const tituloMatch = fullText.match(/\[TITULO_AUTO:\s*(.*?)\]/);
@@ -759,9 +773,9 @@ ${analysis.text}
             // Solo IDs del catálogo del usuario: evita IDs inventados o de otros usuarios
             if (analysis.validExerciseIds.has(exerciciId) && reps > 0 && kg >= 0) {
               await addSerieToDb(c, userId, currentTraining.entreno.EntrenoId, exerciciId, kg, reps);
+              workoutUpdated = true;
             }
           }
-          workoutUpdated = true;
           cleanedText = cleanedText.replace(match[0], "").trim();
         }
       } catch (e) {
@@ -769,11 +783,15 @@ ${analysis.text}
       }
     }
 
-    finishJob(jobId, workoutUpdated, cleanedText);
+    await finishJob(c.env.DB, jobId, workoutUpdated, cleanedText);
 
   } catch (error: any) {
     console.error('❌ Error Gemini:', error);
-    failJob(jobId, error.message || 'Error desconocido');
+    try {
+      await failJob(c.env.DB, jobId, error.message || 'Error desconocido', workoutUpdated);
+    } catch (e) {
+      console.error('No se pudo marcar el job como fallido:', e);
+    }
   }
 }
 
@@ -781,11 +799,10 @@ ${analysis.text}
 app.post('/api/chatStatus', zValidator('json', chatStatus), async (c) => {
   const { jobId } = await c.req.json();
   const userId = await c.get('jwtPayload').UserId;
-  const job = getJob(jobId, userId);
+  const job = await getJob(c.env.DB, jobId, userId);
   if (!job) throw new HTTPException(404, { message: 'Job no encontrado' });
   return c.json({
     status: job.status,
-    chunks: job.chunks,
     fullText: job.fullText,
     workoutUpdated: job.workoutUpdated,
     error: job.error
