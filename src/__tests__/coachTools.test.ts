@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   addSetsInput, editSetInput, deleteSetInput, updateWorkoutInput, createExerciseInput,
   setExerciseRestInput, saveMemoryInput, updateMemoryInput, deleteMemoryInput, capitalizeName, findInvalidExerciseIds,
-  executeTool, TOOL_DEFS, MAX_SETS_PER_CALL, type ToolContext,
+  suggestRepliesInput, executeTool, TOOL_DEFS, MAX_SETS_PER_CALL, type ToolContext,
 } from '../coachTools';
 import { memoryUpdate, memoryDelete } from '../schema';
 
@@ -184,10 +184,32 @@ describe('executeTool sin tocar BD', () => {
   });
 });
 
+describe('suggest_replies', () => {
+  it('2 a 4 opciones de 1 a 40 caracteres', () => {
+    expect(suggestRepliesInput.safeParse({ options: ['Sí, añádelo', 'No, gracias'] }).success).toBe(true);
+    expect(suggestRepliesInput.safeParse({ options: ['a', 'b', 'c', 'd'] }).success).toBe(true);
+    expect(suggestRepliesInput.safeParse({ options: ['solo una'] }).success).toBe(false);
+    expect(suggestRepliesInput.safeParse({ options: ['a', 'b', 'c', 'd', 'e'] }).success).toBe(false);
+    expect(suggestRepliesInput.safeParse({ options: ['a', 'x'.repeat(41)] }).success).toBe(false);
+    expect(suggestRepliesInput.safeParse({ options: ['a', 'x'.repeat(40)] }).success).toBe(true);
+    expect(suggestRepliesInput.safeParse({ options: ['a', '   '] }).success).toBe(false);
+  });
+
+  it('guarda las opciones sin duplicados y no marca workoutUpdated', async () => {
+    const ctx = { state: { workoutUpdated: false } } as unknown as ToolContext;
+    const r = await executeTool(ctx, 'suggest_replies', { options: ['Sí', 'sí', 'No, gracias'] });
+    expect(r.isError).toBe(false);
+    expect(ctx.state.quickReplies).toEqual(['Sí', 'No, gracias']);
+    expect(ctx.state.workoutUpdated).toBe(false);
+    const bad = await executeTool(ctx, 'suggest_replies', { options: ['uno'] });
+    expect(bad.isError).toBe(true);
+  });
+});
+
 describe('definiciones de herramientas', () => {
   it('todas son estrictas y sin additionalProperties abiertas', () => {
     expect(TOOL_DEFS.map(t => t.name)).toEqual([
-      'add_sets', 'edit_set', 'set_exercise_rest', 'delete_set', 'update_workout', 'create_exercise', 'save_memory', 'update_memory', 'delete_memory',
+      'add_sets', 'edit_set', 'set_exercise_rest', 'delete_set', 'update_workout', 'create_exercise', 'save_memory', 'update_memory', 'delete_memory', 'suggest_replies',
     ]);
     for (const t of TOOL_DEFS) {
       expect((t.parameters as any).additionalProperties).toBe(false);

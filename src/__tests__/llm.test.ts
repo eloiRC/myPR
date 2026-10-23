@@ -238,6 +238,26 @@ describe('runToolLoop', () => {
     expect(r.text).toContain('cortada');
   });
 
+  it('onPhase: pensando por turno, escribiendo al primer texto y herramienta antes de ejecutarla', async () => {
+    const events: string[] = [];
+    const provider = fakeProvider([
+      { text: 'Añado.', stopReason: 'tool_use', toolCalls: [{ id: 'a', name: 'add_sets', args: {} }] },
+      { text: 'Listo.', stopReason: 'end' },
+    ]);
+    await runToolLoop({
+      provider, input: baseInput, onText: () => {},
+      onPhase: async e => { events.push(e.type === 'tool' ? `tool:${e.call.name}` : e.type); },
+      exec: async c => { events.push(`exec:${c.name}`); return { content: '{}', isError: false }; },
+    });
+    expect(events).toEqual(['thinking', 'writing', 'tool:add_sets', 'exec:add_sets', 'thinking', 'writing']);
+  });
+
+  it('onPhase que falla no rompe la generación', async () => {
+    const provider = fakeProvider([{ text: 'Hola.', stopReason: 'end' }]);
+    const r = await runToolLoop({ provider, input: baseInput, onText: () => {}, onPhase: () => { throw new Error('D1 caído'); }, exec: async () => ({ content: '{}', isError: false }) });
+    expect(r.text).toBe('Hola.');
+  });
+
   it('refusal: no ejecuta herramientas y da mensaje si no hay texto', async () => {
     const provider = fakeProvider([{ stopReason: 'refusal', toolCalls: [{ id: 'a', name: 't', args: {} }] }]);
     let ran = false;

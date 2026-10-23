@@ -7,6 +7,14 @@ export interface ToolExecResult {
   isError: boolean;
 }
 
+/** Eventos de progreso del bucle (independientes del proveedor) para mostrar la fase al usuario. */
+export type LoopPhaseEvent =
+  | { type: 'thinking' }
+  | { type: 'writing' }
+  | { type: 'tool'; call: LlmToolCall };
+
+export type PhaseListener = (event: LoopPhaseEvent) => void | Promise<void>;
+
 export type ToolExecutor = (call: LlmToolCall) => Promise<ToolExecResult>;
 
 export interface ToolLoopResult {
@@ -19,7 +27,7 @@ export interface ToolLoopResult {
 }
 
 /** Resultados de herramientas de un turno: una única entrada con todos los resultados. */
-export async function executeToolCalls(calls: LlmToolCall[], exec: ToolExecutor): Promise<LlmMessage> {
+export async function executeToolCalls(calls: LlmToolCall[], exec: ToolExecutor, onPhase?: PhaseListener): Promise<LlmMessage> {
   const results: { id: string; content: string; isError: boolean }[] = [];
   for (const call of calls) {
     if (call.argsError) {
@@ -28,6 +36,8 @@ export async function executeToolCalls(calls: LlmToolCall[], exec: ToolExecutor)
       continue;
     }
     try {
+      // Se espera: el listener puede persistir un marcador que debe existir antes de que la herramienta tenga efectos
+      if (onPhase) await onPhase({ type: 'tool', call });
       const r = await exec(call);
       results.push({ id: call.id, content: r.content, isError: r.isError });
     } catch (e: any) {
@@ -55,6 +65,8 @@ export async function runToolLoop(opts: {
   input: Omit<LlmInput, 'messages'> & { messages: LlmMessage[] };
   exec: ToolExecutor;
   onText: (delta: string) => void;
+  /** Progreso: nuevo turno del modelo, primer texto del turno y herramienta a punto de ejecutarse */
+  onPhase?: PhaseListener;
   maxIterations?: number;
 }): Promise<ToolLoopResult> {
   const max = opts.maxIterations ?? MAX_TOOL_ITERATIONS;
@@ -73,8 +85,15 @@ export async function runToolLoop(opts: {
     iterations++;
     let separated = false;
     const hadText = text.trim().length > 0;
+    let wrote = false;
+    // Un fallo al informar de la fase nunca debe romper la generación
+    const phase = (e: LoopPhaseEvent): Promise<void> => {
+      try { return Promise.resolve(opts.onPhase?.(e)).catch(() => {}); } catch { return Promise.resolve(); }
+    };
+    void phase({ type: 'thinking' });
     const turn = await opts.provider.runTurn({ ...opts.input, messages }, delta => {
       // Separa el texto de turnos distintos con un párrafo
+      if (!wrote && delta.trim()) { wrote = true; void phase({ type: 'writing' }); }
       if (!separated && hadText && delta.trim()) { emit('\n\n'); separated = true; }
       emit(delta);
     });
@@ -83,7 +102,7 @@ export async function runToolLoop(opts: {
 
     if (turn.stopReason === 'tool_use' && turn.toolCalls.length > 0) {
       messages.push(turn.assistant);
-      messages.push(await executeToolCalls(turn.toolCalls, opts.exec));
+      messages.push(await executeToolCalls(turn.toolCalls, opts.exec, opts.onPhase ? phase : undefined));
       if (iterations >= max) stopReason = 'iteration_cap';
       continue;
     }

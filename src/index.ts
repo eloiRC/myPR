@@ -6,18 +6,25 @@ import { cors } from 'hono/cors'
 import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars, getExercici, getPesosHistorial, nouEntreno, editEntreno, getCargaHistorial, chatGPT, getUser, deleteEntreno, reorderSerie, toggleSerieCompletada, updateRestTimer, chatStatus, memoryList, memoryCreate, memoryUpdate, memoryDelete } from './schema'
 import { hashPassword, verifyPassword, generateJWT, verifyJWT } from './jwt'
 import { createProvider, formatUsage } from './llm'
-import { runToolLoop } from './llm/loop'
+import { runToolLoop, type LoopPhaseEvent } from './llm/loop'
 import { convertHistory } from './llm/history'
 import { executeTool, TOOL_DEFS, type ToolContext } from './coachTools'
 import { COACH_PERSONA, buildVolatileContext } from './coachPrompt'
 import { listActiveMemories, listAllMemories, insertMemory, updateMemory as updateCoachMemory, deleteMemory as deleteCoachMemory } from './coachMemory'
-import { createOrGetJob, getJob, updateJobText, finishJob, failJob, normalizeRequestId, shouldFlush } from './chatJobs'
+import { createOrGetJob, getJob, updateJobText, setJobPhase, finishJob, failJob, normalizeRequestId, shouldFlush, phaseForTool, effectiveJobView, decideJobRun, PHASE_THINKING, PHASE_WRITING, RETRY_ABORT_MESSAGE } from './chatJobs'
 import { analyzeTraining, type HistoryRow, type ExerciseRow } from './coachAnalysis'
 
+/** Lo mínimo que usan los helpers de BD: sirve tanto el contexto de Hono como `{ env }` desde la cola. */
+type DbCtx = { env: { DB: D1Database } }
 
+/** Datos que necesita la generación del coach (lo que se encola; el contexto pesado se recarga de D1). */
+type CoachPayload = { message: string; entrenoId: number; history: unknown }
+type CoachQueueMessage = { jobId: string; userId: number; payload: CoachPayload }
 
 type Bindings = {
   DB: D1Database;
+  // Cola de generación del coach; si falta (p. ej. entorno sin colas) se usa waitUntil
+  COACH_QUEUE?: Queue<CoachQueueMessage>;
   test_password: string;
   jwt_secret: string;
   ANTHROPIC_API_KEY: string;
@@ -66,7 +73,7 @@ app.use('/api/*', async (c, next) => {
 })
 
 // Función auxiliar para añadir series (Refactorizada para usar en API y en las herramientas del coach)
-async function addSerieToDb(c: any, userId: number, entrenoId: number, exerciciId: number, kg: number, reps: number, descansoSeg: number | null = null) {
+async function addSerieToDb(c: DbCtx,userId: number, entrenoId: number, exerciciId: number, kg: number, reps: number, descansoSeg: number | null = null) {
   const data = Math.floor(Date.now() / 1000)
   const carga = kg * reps
 
@@ -670,16 +677,52 @@ const coachHandler = async (c: any) => {
   const { id: jobId, created } = await createOrGetJob(c.env.DB, userId, requestId);
 
   if (created) {
-    c.executionCtx.waitUntil(procesarChatJob(jobId, userId, message, currentTraining, history, c));
+    // Solo viaja lo imprescindible: el contexto pesado (series, historial de entrenos) se recarga de D1
+    // al procesar, y los mensajes de cola tienen un límite de 128 KB.
+    const payload: CoachPayload = {
+      message,
+      entrenoId: Number(currentTraining.entreno.EntrenoId),
+      history: Array.isArray(history) ? history.slice(-60) : history,
+    };
+    let encolado = false;
+    if (c.env.COACH_QUEUE) {
+      try {
+        await c.env.COACH_QUEUE.send({ jobId, userId, payload });
+        encolado = true;
+      } catch (e) {
+        console.error('No se pudo encolar el job del coach, se usa waitUntil:', e);
+      }
+    }
+    // Sin cola (p. ej. entorno sin el binding) o si falla el envío: waitUntil, con su límite de ~30 s tras responder
+    if (!encolado) c.executionCtx.waitUntil(procesarChatJob(jobId, userId, payload, c.env));
   }
   return c.json({ jobId });
 };
 app.post('/api/coach', zValidator('json', chatGPT), coachHandler);
 app.post('/api/gemini', zValidator('json', chatGPT), coachHandler);
 
-async function procesarChatJob(jobId: string, userId: number, message: string, currentTraining: any, history: unknown, c: any) {
+/**
+ * Consumidor de la cola: una entrega por mensaje (max_batch_size 1).
+ * procesarChatJob captura sus propios errores y deja el job en 'error', así que solo se llega a una
+ * reentrega si el isolate muere a mitad. Ahí decideJobRun evita repetir herramientas ya ejecutadas.
+ */
+async function procesarMensajeCola(env: Bindings, body: CoachQueueMessage) {
+  const job = await getJob(env.DB, body.jobId, body.userId);
+  const decision = decideJobRun(job);
+  if (decision === 'skip') return;
+  if (decision === 'abort') {
+    await failJob(env.DB, body.jobId, RETRY_ABORT_MESSAGE, job?.workoutUpdated ?? false);
+    return;
+  }
+  await procesarChatJob(body.jobId, body.userId, body.payload, env);
+}
+
+async function procesarChatJob(jobId: string, userId: number, payload: CoachPayload, env: Bindings) {
+  const { message, entrenoId, history } = payload;
+  // Contexto mínimo { env } para los helpers que antes recibían el contexto de Hono
+  const c: DbCtx & { env: Bindings } = { env };
   // Si falla a mitad, se registra si ya se aplicó algo para que el front refresque
-  const state = { workoutUpdated: false };
+  const state: { workoutUpdated: boolean; quickReplies?: string[] } = { workoutUpdated: false };
   // Tiempos para diagnosticar la latencia percibida (se registran al final del job)
   const t0 = Date.now();
   let tCtx = 0, tFirstText = 0;
@@ -687,9 +730,8 @@ async function procesarChatJob(jobId: string, userId: number, message: string, c
     // Falla pronto (y en español) si falta la clave del proveedor seleccionado
     const provider = createProvider(c.env);
 
-    const entrenoId = Number(currentTraining.entreno.EntrenoId);
     const [entreno, coachData, seriesCurrentTraining, memories, restSettings] = await Promise.all([
-      c.env.DB.prepare('SELECT EntrenoId, Nom FROM Entreno WHERE EntrenoId = ? AND UserId = ?').bind(entrenoId, userId).first(),
+      c.env.DB.prepare('SELECT EntrenoId, Nom FROM Entreno WHERE EntrenoId = ? AND UserId = ?').bind(entrenoId, userId).first<{ EntrenoId: number; Nom: string | null }>(),
       getCoachData(userId, entrenoId, c),
       getFullSeriesListFromTraining(entrenoId, userId, c),
       listActiveMemories(c.env.DB, userId),
@@ -747,6 +789,21 @@ async function procesarChatJob(jobId: string, userId: number, message: string, c
       }
     };
 
+    // Fase visible: solo se escribe en D1 cuando cambia (el texto ya vuelca 'Escribiendo…' con su propio flush)
+    let currentPhase = PHASE_THINKING;
+    const onPhase = (e: LoopPhaseEvent): Promise<void> | void => {
+      if (e.type === 'writing') { currentPhase = PHASE_WRITING; return; }
+      // suggest_replies no cambia datos: ni cambia la fase ni cuenta como progreso para los reintentos
+      if (e.type === 'tool' && e.call.name === 'suggest_replies') return;
+      const label = e.type === 'thinking' ? PHASE_THINKING : phaseForTool(e.call.name, e.call.args);
+      const toolStarted = e.type === 'tool';
+      // En herramientas siempre se escribe: marca WorkoutUpdated antes de tener efectos (ver decideJobRun)
+      if (label === currentPhase && !toolStarted) return;
+      currentPhase = label;
+      flushing = flushing.then(() => setJobPhase(c.env.DB, jobId, label, toolStarted)).catch(err => console.error('phase error:', err));
+      return flushing;
+    };
+
     const result = await runToolLoop({
       provider,
       input: {
@@ -757,6 +814,7 @@ async function procesarChatJob(jobId: string, userId: number, message: string, c
       },
       exec: call => executeTool(toolCtx, call.name, call.args),
       onText,
+      onPhase,
     });
     await flushing;
 
@@ -765,7 +823,7 @@ async function procesarChatJob(jobId: string, userId: number, message: string, c
 
     let finalText = result.text.trim();
     if (!finalText) finalText = state.workoutUpdated ? 'Hecho.' : 'No he podido generar una respuesta. Inténtalo de nuevo.';
-    await finishJob(c.env.DB, jobId, state.workoutUpdated, finalText);
+    await finishJob(c.env.DB, jobId, state.workoutUpdated, finalText, state.quickReplies);
 
   } catch (error: any) {
     console.error('❌ Error coach IA:', error);
@@ -783,11 +841,15 @@ app.post('/api/chatStatus', zValidator('json', chatStatus), async (c) => {
   const userId = await c.get('jwtPayload').UserId;
   const job = await getJob(c.env.DB, jobId, userId);
   if (!job) throw new HTTPException(404, { message: 'Job no encontrado' });
+  // Un job en curso sin actividad reciente se informa como error (el isolate pudo morir)
+  const view = effectiveJobView(job, Date.now());
   return c.json({
-    status: job.status,
-    fullText: job.fullText,
-    workoutUpdated: job.workoutUpdated,
-    error: job.error
+    status: view.status,
+    fullText: view.fullText,
+    workoutUpdated: view.workoutUpdated,
+    error: view.error,
+    phase: view.phase ?? null,
+    quickReplies: view.quickReplies ?? null
   });
 });
 
@@ -816,9 +878,24 @@ app.onError((err, c) => {
 
 
 
-export default app
+// Worker con dos puntos de entrada: HTTP (Hono) y consumidor de la cola de generación del coach
+export default {
+  fetch: app.fetch,
+  async queue(batch: MessageBatch<CoachQueueMessage>, env: Bindings, _ctx: ExecutionContext) {
+    for (const msg of batch.messages) {
+      try {
+        await procesarMensajeCola(env, msg.body);
+        msg.ack();
+      } catch (e) {
+        // Fallo de infraestructura (p. ej. D1 caído antes de empezar): se reintenta; si se agotan, va a la DLQ
+        console.error('Error en el consumidor de la cola del coach:', e);
+        msg.retry();
+      }
+    }
+  },
+}
 
-async function checkPr(c: any, userId: any, exerciciId: any, kg: any) {
+async function checkPr(c: DbCtx,userId: any, exerciciId: any, kg: any) {
   try {
     const updatePr = c.env.DB.prepare('UPDATE Exercici SET PR=(SELECT MAX(Kg) FROM Series WHERE ExerciciId=?) WHERE UserId=? AND ExerciciId=? AND PR!=? RETURNING PR')
       .bind(exerciciId, userId, exerciciId, kg);
@@ -844,7 +921,7 @@ async function checkPr(c: any, userId: any, exerciciId: any, kg: any) {
   }
 }
 
-function updateCargaTotal(c: any, userId: any, entrenoId: any) {
+function updateCargaTotal(c: DbCtx,userId: any, entrenoId: any) {
 
   try {
     const updateCarga = c.env.DB.prepare('UPDATE Entreno SET CargaTotal=(SELECT SUM(Carga) From Series WHERE EntrenoId=?) WHERE UserId=? AND EntrenoId=?  RETURNING *').bind(entrenoId, userId, entrenoId).run()
@@ -859,7 +936,7 @@ function updateCargaTotal(c: any, userId: any, entrenoId: any) {
 }
 
 // Datos crudos para el análisis del coach (ver coachAnalysis.ts)
-async function getCoachData(userId: number, currentEntrenoId: number, c: any) {
+async function getCoachData(userId: number, currentEntrenoId: number, c: DbCtx) {
   // Últimos 40 entrenos (excluyendo el actual, que va aparte); limitamos por entreno, no por filas
   const historyStmt = c.env.DB.prepare(`
     SELECT E.EntrenoId, E.Nom, E.Data, S.ExerciciId, Ex.Nom AS NomExercici, S.Kg, S.Reps
@@ -886,7 +963,7 @@ async function getCoachData(userId: number, currentEntrenoId: number, c: any) {
 }
 
 
-async function getFullSeriesListFromTraining(EntrenoId: any, userId: any, c: any) {
+async function getFullSeriesListFromTraining(EntrenoId: any, userId: any, c: DbCtx) {
   try {
     const { results } = await c.env.DB.prepare(`
 SELECT
