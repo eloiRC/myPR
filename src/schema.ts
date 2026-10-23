@@ -1,5 +1,12 @@
 import { z } from 'zod'
 
+// Descanso en segundos: rango válido 15-900 (compartido con las herramientas del coach)
+export const REST_MIN_SEG = 15;
+export const REST_MAX_SEG = 900;
+export const restSegSchema = z.number().int().min(REST_MIN_SEG).max(REST_MAX_SEG);
+/** Opcional en la petición; null = borrar el valor; ausente = no tocar (clientes antiguos) */
+const descansoOpt = restSegSchema.nullable().optional();
+
 const passwordSchema = z.string()
   .min(8, 'Mínimo 8 caracteres')
   .regex(/[A-Za-z]/, 'Debe contener al menos una letra')
@@ -27,7 +34,8 @@ export const nouExercici = z.object({
 export const editExercici = z.object({
   exerciciId: z.number().min(1),
   nom: z.string().min(3),
-  grupsMusculars: z.number().int().positive().array().min(1).max(5)
+  grupsMusculars: z.number().int().positive().array().min(1).max(5),
+  descansoSeg: descansoOpt
 })
 
 export const getEntreno = z.object({
@@ -58,7 +66,8 @@ export const novaSerie = z.object({
   entrenoId: z.number().min(1),
   exerciciId: z.number().min(1),
   kg: z.number().positive().max(1000),
-  reps: z.number().int().positive().max(1000)
+  reps: z.number().int().positive().max(1000),
+  descansoSeg: descansoOpt
 })
 
 export const editSerie = z.object({
@@ -66,7 +75,8 @@ export const editSerie = z.object({
   entrenoId: z.number().min(1),
   exerciciId: z.number().min(1),
   kg: z.number().positive().max(1000),
-  reps: z.number().int().positive().max(1000)
+  reps: z.number().int().positive().max(1000),
+  descansoSeg: descansoOpt
 })
 
 export const deleteSerie = z.object({
@@ -96,6 +106,13 @@ export const reorderSerie = z.object({
 })
 
 export const getUser = z.object({})
+
+// Actualización parcial de los ajustes del temporizador de descanso (por usuario)
+export const updateRestTimer = z.object({
+  enabled: z.boolean().optional(),
+  defaultSec: restSegSchema.optional(),
+  autoStart: z.boolean().optional()
+}).refine(d => d.enabled !== undefined || d.defaultSec !== undefined || d.autoStart !== undefined, { message: 'Indica al menos un ajuste' })
 
 export const garminCredentialsSave = z.object({
   garminEmail: z.string().email(),

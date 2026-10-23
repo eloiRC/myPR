@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { signup, login, novaSerie, editSerie, nouExercici, editExercici, editEntreno, getEntrenos } from '../schema';
+import { signup, login, novaSerie, editSerie, nouExercici, editExercici, editEntreno, getEntrenos, updateRestTimer } from '../schema';
 
 describe('Schema validation', () => {
   describe('signup / login', () => {
@@ -92,5 +92,34 @@ describe('Schema validation', () => {
       const result = getEntrenos.parse({ dataInici: 1800000000, dataFi: 2000000000 });
       expect(result.dataInici).toBe(1800000000);
     });
+  });
+});
+
+describe('descansos (descansoSeg / updateRestTimer)', () => {
+  const serie = { entrenoId: 1, exerciciId: 1, kg: 50, reps: 8 };
+  it('novaSerie / editSerie: descansoSeg opcional (compatibilidad con clientes antiguos)', () => {
+    expect(novaSerie.safeParse(serie).success).toBe(true);
+    expect(novaSerie.parse(serie).descansoSeg).toBeUndefined();
+    expect(novaSerie.safeParse({ ...serie, descansoSeg: 120 }).success).toBe(true);
+    expect(novaSerie.safeParse({ ...serie, descansoSeg: null }).success).toBe(true);
+    expect(novaSerie.safeParse({ ...serie, descansoSeg: 14 }).success).toBe(false);
+    expect(novaSerie.safeParse({ ...serie, descansoSeg: 901 }).success).toBe(false);
+    expect(editSerie.safeParse({ ...serie, serieId: 3, descansoSeg: 15 }).success).toBe(true);
+    expect(editSerie.safeParse({ ...serie, serieId: 3, descansoSeg: 2.5 }).success).toBe(false);
+  });
+  it('editExercici: descansoSeg opcional', () => {
+    const ex = { exerciciId: 1, nom: 'Press', grupsMusculars: [1] };
+    expect(editExercici.safeParse(ex).success).toBe(true);
+    expect(editExercici.safeParse({ ...ex, descansoSeg: 180 }).success).toBe(true);
+    expect(editExercici.safeParse({ ...ex, descansoSeg: null }).success).toBe(true);
+    expect(editExercici.safeParse({ ...ex, descansoSeg: 1000 }).success).toBe(false);
+  });
+  it('updateRestTimer: parcial, con rango 15-900', () => {
+    expect(updateRestTimer.safeParse({ enabled: true }).success).toBe(true);
+    expect(updateRestTimer.safeParse({ defaultSec: 120, autoStart: false }).success).toBe(true);
+    expect(updateRestTimer.safeParse({}).success).toBe(false);
+    expect(updateRestTimer.safeParse({ defaultSec: 10 }).success).toBe(false);
+    expect(updateRestTimer.safeParse({ defaultSec: 901 }).success).toBe(false);
+    expect(updateRestTimer.safeParse({ enabled: 'yes' }).success).toBe(false);
   });
 });

@@ -8,7 +8,7 @@ import { useRestTimer, DURACIONES_PRESET, DURACION_MIN_SEG, DURACION_MAX_SEG } f
 const router = useRouter();
 const authStore = useAuthStore();
 
-// Temporizador de descanso (ajustes por dispositivo)
+// Temporizador de descanso (ajustes por usuario, guardados en el servidor)
 const rest = useRestTimer();
 const esPersonalizada = ref(!DURACIONES_PRESET.includes(rest.duracionSeg.value));
 const duracionPersonalizada = ref(rest.duracionSeg.value);
@@ -248,7 +248,11 @@ const descargarHistorial = async () => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
+  rest.cargarDesdeServidor().then(() => {
+    esPersonalizada.value = !DURACIONES_PRESET.includes(rest.duracionSeg.value);
+    duracionPersonalizada.value = rest.duracionSeg.value;
+  });
   if (!authStore.isAuthenticated) {
     router.push('/login');
   }
@@ -355,7 +359,7 @@ onMounted(() => {
             <input type="checkbox" role="switch" class="rest-switch" :checked="rest.autoIniciar.value" @change="rest.setAutoIniciar(($event.target as HTMLInputElement).checked)" />
           </label>
         </template>
-        <p class="description rest-hint">Se guarda solo en este dispositivo.</p>
+        <p v-if="rest.errorGuardado.value" class="rest-error" role="alert">{{ rest.errorGuardado.value }}</p>
       </div>
 
       <div class="card">
@@ -558,7 +562,7 @@ textarea.memory-text:focus {
 .rest-switch:checked { background: var(--accent-primary); }
 .rest-switch:checked::after { transform: translateX(20px); background: var(--on-accent); }
 .rest-switch:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
-.rest-hint { margin: 0.5rem 0 0; font-size: 0.8rem; color: var(--text-muted); }
+.rest-error { margin: 0.5rem 0 0; font-size: 0.8rem; color: var(--error); }
 .card h2 {
   margin: 0 0 1rem;
   font-size: 1rem;

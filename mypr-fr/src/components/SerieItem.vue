@@ -2,6 +2,7 @@
 import { ref, computed, watch, onBeforeUnmount } from 'vue';
 import SerieForm from './SerieForm.vue';
 import { apiFetch } from '../services/api';
+import { formatearMmSs } from '../composables/useRestTimer';
 
 // Props
 interface Props {
@@ -22,7 +23,8 @@ const isLoading = ref(false);
 const serieEditada = ref({
   ejercicioId: 0,
   kg: 0,
-  reps: 0
+  reps: 0,
+  descansoSeg: null as number | null
 });
 const errorEdicion = ref('');
 
@@ -57,7 +59,8 @@ const startEdit = () => {
   serieEditada.value = {
     ejercicioId: props.serie.ExerciciId,
     kg: props.serie.Kg,
-    reps: props.serie.Reps
+    reps: props.serie.Reps,
+    descansoSeg: props.serie.DescansoSeg ?? null
   };
   errorEdicion.value = '';
   isEditing.value = true;
@@ -71,7 +74,7 @@ const nombreEjercicio = computed(() => {
   return props.ejercicios.find(e => e.ExerciciId === props.serie.ExerciciId)?.Nom || 'Ejercicio desconocido';
 });
 
-const saveEdit = async (valores: { ejercicioId: number; kg: number; reps: number }) => {
+const saveEdit = async (valores: { ejercicioId: number; kg: number; reps: number; descansoSeg: number | null }) => {
   serieEditada.value = valores;
   errorEdicion.value = '';
   try {
@@ -81,7 +84,8 @@ const saveEdit = async (valores: { ejercicioId: number; kg: number; reps: number
       entrenoId: props.serie.EntrenoId,
       exerciciId: serieEditada.value.ejercicioId,
       kg: serieEditada.value.kg,
-      reps: serieEditada.value.reps
+      reps: serieEditada.value.reps,
+      descansoSeg: serieEditada.value.descansoSeg
     });
     emit('serieUpdated', {
       data,
@@ -89,7 +93,8 @@ const saveEdit = async (valores: { ejercicioId: number; kg: number; reps: number
       entrenoId: props.serie.EntrenoId,
       exerciciId: serieEditada.value.ejercicioId,
       kg: serieEditada.value.kg,
-      reps: serieEditada.value.reps
+      reps: serieEditada.value.reps,
+      descansoSeg: serieEditada.value.descansoSeg
     });
     isEditing.value = false;
   } catch (error) {
@@ -147,6 +152,7 @@ const deleteSerie = async () => {
           <span class="kg">{{ serie.Kg }} kg</span> x 
           <span class="reps">{{ serie.Reps }} reps</span> = 
           <span class="carga">{{ serie.Carga }} kg</span>
+          <span v-if="serie.DescansoSeg" class="descanso-tag" title="Descanso propio de esta serie">⏱ {{ formatearMmSs(serie.DescansoSeg * 1000) }}</span>
         </p>
         <p v-if="serie.PR" class="pr-badge">🏆 PR</p>
         
@@ -172,6 +178,7 @@ const deleteSerie = async () => {
           :ejercicio-id="serieEditada.ejercicioId"
           :kg="serieEditada.kg"
           :reps="serieEditada.reps"
+          :descanso-seg="serieEditada.descansoSeg"
           :ejercicios="ejercicios"
           :saving="isLoading"
           :error="errorEdicion"

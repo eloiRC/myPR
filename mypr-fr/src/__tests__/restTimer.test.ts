@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   iniciarEstado, restanteMs, pausarEstado, reanudarEstado, ajustarEstado,
-  progresoEstado, formatearMmSs, clampDuracionSeg, leerAjustes,
+  progresoEstado, formatearMmSs, clampDuracionSeg, leerAjustes, resolverDescanso, desdeServidor, haciaServidor,
+  debeMigrarLocales, sincronizarAjustes, type DepsSync,
 } from '../composables/useRestTimer';
 
 describe('temporizador de descanso (lógica pura)', () => {
@@ -73,7 +74,7 @@ describe('temporizador de descanso (lógica pura)', () => {
   });
 
   it('recorta la duración a un rango válido', () => {
-    expect(clampDuracionSeg(1)).toBe(5);
+    expect(clampDuracionSeg(1)).toBe(15);
     expect(clampDuracionSeg(99999)).toBe(900);
     expect(clampDuracionSeg(NaN)).toBe(90);
     expect(clampDuracionSeg(75.4)).toBe(75);
@@ -95,5 +96,114 @@ describe('ajustes persistidos', () => {
   it('lee valores guardados y sanea la duración', () => {
     localStorage.setItem('mypr_rest_timer_settings', JSON.stringify({ habilitado: true, duracionSeg: 5000, autoIniciar: false }));
     expect(leerAjustes()).toEqual({ habilitado: true, duracionSeg: 900, autoIniciar: false });
+  });
+});
+
+describe('resolverDescanso (jerarquía serie > ejercicio > global)', () => {
+  const aj = { duracionSeg: 90 };
+
+  it('usa el de la serie si lo tiene', () => {
+    expect(resolverDescanso({ DescansoSeg: 150 }, { DescansoSeg: 120 }, aj)).toBe(150);
+  });
+  it('si la serie no tiene, usa el del ejercicio', () => {
+    expect(resolverDescanso({ DescansoSeg: null }, { DescansoSeg: 120 }, aj)).toBe(120);
+    expect(resolverDescanso({}, { DescansoSeg: 120 }, aj)).toBe(120);
+  });
+  it('si ninguno tiene, usa el global', () => {
+    expect(resolverDescanso({ DescansoSeg: null }, { DescansoSeg: null }, aj)).toBe(90);
+    expect(resolverDescanso(undefined, undefined, aj)).toBe(90);
+    expect(resolverDescanso(null, null, { duracionSeg: 60 })).toBe(60);
+  });
+  it('ignora valores fuera de rango o no numéricos y cae al siguiente nivel', () => {
+    expect(resolverDescanso({ DescansoSeg: 0 }, { DescansoSeg: 120 }, aj)).toBe(120);
+    expect(resolverDescanso({ DescansoSeg: 5 }, { DescansoSeg: 2000 }, aj)).toBe(90);
+    expect(resolverDescanso({ DescansoSeg: NaN }, null, aj)).toBe(90);
+    expect(resolverDescanso({ DescansoSeg: '120' as any }, null, aj)).toBe(90);
+  });
+  it('los límites 15 y 900 son válidos', () => {
+    expect(resolverDescanso({ DescansoSeg: 15 }, null, aj)).toBe(15);
+    expect(resolverDescanso({ DescansoSeg: 900 }, null, aj)).toBe(900);
+  });
+});
+
+describe('ajustes del servidor', () => {
+  it('desdeServidor convierte 0/1 y sanea', () => {
+    expect(desdeServidor({ RestTimerEnabled: 1, RestTimerDefaultSec: 120, RestTimerAutoStart: 0 }))
+      .toEqual({ habilitado: true, duracionSeg: 120, autoIniciar: false });
+    expect(desdeServidor({})).toEqual({ habilitado: false, duracionSeg: 90, autoIniciar: true });
+    expect(desdeServidor({ RestTimerDefaultSec: 5000 }).duracionSeg).toBe(900);
+  });
+  it('haciaServidor usa los nombres de la API', () => {
+    expect(haciaServidor({ habilitado: true, duracionSeg: 75, autoIniciar: false })).toEqual({ enabled: true, defaultSec: 75, autoStart: false });
+  });
+  it('debeMigrarLocales: solo con servidor por defecto, local propio y sin migrar antes', () => {
+    const def = { habilitado: false, duracionSeg: 90, autoIniciar: true };
+    const propio = { habilitado: true, duracionSeg: 120, autoIniciar: true };
+    expect(debeMigrarLocales(def, propio, false)).toBe(true);
+    expect(debeMigrarLocales(def, propio, true)).toBe(false);
+    expect(debeMigrarLocales(def, null, false)).toBe(false);
+    expect(debeMigrarLocales(def, def, false)).toBe(false);
+    expect(debeMigrarLocales({ ...def, habilitado: true }, propio, false)).toBe(false);
+  });
+});
+
+describe('sincronizarAjustes', () => {
+  beforeEach(() => localStorage.clear());
+  const DEF = { RestTimerEnabled: 0, RestTimerDefaultSec: 90, RestTimerAutoStart: 1 };
+  const mk = (usuario: any) => {
+    const guardados: any[] = [];
+    const deps: DepsSync = {
+      leerUsuario: async () => usuario,
+      guardar: async (c) => {
+        guardados.push(c);
+        return {
+          RestTimerEnabled: c.enabled ?? usuario.RestTimerEnabled,
+          RestTimerDefaultSec: c.defaultSec ?? usuario.RestTimerDefaultSec,
+          RestTimerAutoStart: c.autoStart ?? usuario.RestTimerAutoStart,
+        };
+      },
+    };
+    return { deps, guardados };
+  };
+
+  it('adopta lo que dice el servidor', async () => {
+    localStorage.setItem('mypr_rest_timer_migrated', '1');
+    const { deps, guardados } = mk({ RestTimerEnabled: 1, RestTimerDefaultSec: 150, RestTimerAutoStart: 1 });
+    expect(await sincronizarAjustes(deps)).toEqual({ habilitado: true, duracionSeg: 150, autoIniciar: true });
+    expect(guardados).toEqual([]);
+  });
+
+  it('migración única: sube los ajustes locales antiguos si el servidor tiene los defectos', async () => {
+    localStorage.setItem('mypr_rest_timer_settings', JSON.stringify({ habilitado: true, duracionSeg: 120, autoIniciar: false }));
+    const { deps, guardados } = mk(DEF);
+    expect(await sincronizarAjustes(deps)).toEqual({ habilitado: true, duracionSeg: 120, autoIniciar: false });
+    expect(guardados).toEqual([{ enabled: true, defaultSec: 120, autoStart: false }]);
+    // Segunda vez: ya migrado, no vuelve a subir
+    const otra = mk(DEF);
+    expect(await sincronizarAjustes(otra.deps)).toEqual({ habilitado: false, duracionSeg: 90, autoIniciar: true });
+    expect(otra.guardados).toEqual([]);
+  });
+
+  it('no migra si el servidor ya tiene ajustes propios', async () => {
+    localStorage.setItem('mypr_rest_timer_settings', JSON.stringify({ habilitado: true, duracionSeg: 120, autoIniciar: true }));
+    const { deps, guardados } = mk({ RestTimerEnabled: 1, RestTimerDefaultSec: 60, RestTimerAutoStart: 1 });
+    expect((await sincronizarAjustes(deps)).duracionSeg).toBe(60);
+    expect(guardados).toEqual([]);
+  });
+
+  it('un cambio pendiente (sin conexión) se envía antes de leer', async () => {
+    localStorage.setItem('mypr_rest_timer_pending', JSON.stringify({ defaultSec: 45 }));
+    const { deps, guardados } = mk(DEF);
+    const r = await sincronizarAjustes(deps);
+    expect(guardados).toEqual([{ defaultSec: 45 }]);
+    expect(r.duracionSeg).toBe(45);
+    expect(localStorage.getItem('mypr_rest_timer_pending')).toBeNull();
+  });
+
+  it('si falla la red lanza el error y no toca la caché', async () => {
+    localStorage.setItem('mypr_rest_timer_settings', JSON.stringify({ habilitado: true, duracionSeg: 120, autoIniciar: true }));
+    const deps: DepsSync = { leerUsuario: async () => { throw new Error('offline'); }, guardar: async () => DEF };
+    await expect(sincronizarAjustes(deps)).rejects.toThrow('offline');
+    expect(leerAjustes().duracionSeg).toBe(120);
   });
 });

@@ -3,7 +3,7 @@ import { logger } from 'hono/logger'
 import { zValidator } from '@hono/zod-validator'
 import { HTTPException } from 'hono/http-exception'
 import { cors } from 'hono/cors'
-import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars, getExercici, getPesosHistorial, nouEntreno, editEntreno, getCargaHistorial, chatGPT, getUser, deleteEntreno, reorderSerie, garminCredentialsSave, garminCredentialsDelete, garminRecovery, garminActivity, toggleSerieCompletada, chatStatus, memoryList, memoryCreate, memoryUpdate, memoryDelete } from './schema'
+import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars, getExercici, getPesosHistorial, nouEntreno, editEntreno, getCargaHistorial, chatGPT, getUser, deleteEntreno, reorderSerie, garminCredentialsSave, garminCredentialsDelete, garminRecovery, garminActivity, toggleSerieCompletada, updateRestTimer, chatStatus, memoryList, memoryCreate, memoryUpdate, memoryDelete } from './schema'
 import { hashPassword, verifyPassword, generateJWT, verifyJWT } from './jwt'
 import { encrypt, decrypt } from './crypto'
 import { createProvider, formatUsage } from './llm'
@@ -72,7 +72,7 @@ app.use('/api/*', async (c, next) => {
 })
 
 // Función auxiliar para añadir series (Refactorizada para usar en API y en las herramientas del coach)
-async function addSerieToDb(c: any, userId: number, entrenoId: number, exerciciId: number, kg: number, reps: number) {
+async function addSerieToDb(c: any, userId: number, entrenoId: number, exerciciId: number, kg: number, reps: number, descansoSeg: number | null = null) {
   const data = Math.floor(Date.now() / 1000)
   const carga = kg * reps
 
@@ -90,8 +90,8 @@ async function addSerieToDb(c: any, userId: number, entrenoId: number, exerciciI
   const newOrden = Number((ordenResult.results?.[0] as any)?.newOrden || 1);
 
   const insertStmt = c.env.DB.prepare(
-    'INSERT INTO Series (UserId,EntrenoId,ExerciciId,Kg,Reps,Carga,PR,Completada,Data,Orden) VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING SerieId'
-  ).bind(userId, entrenoId, exerciciId, kg, reps, carga, prUpdated ? 1 : 0, 0, data, newOrden);
+    'INSERT INTO Series (UserId,EntrenoId,ExerciciId,Kg,Reps,Carga,PR,Completada,Data,Orden,DescansoSeg) VALUES (?,?,?,?,?,?,?,?,?,?,?) RETURNING SerieId'
+  ).bind(userId, entrenoId, exerciciId, kg, reps, carga, prUpdated ? 1 : 0, 0, data, newOrden, descansoSeg);
 
   const updateCargaStmt = c.env.DB.prepare(
     'UPDATE Entreno SET CargaTotal=CargaTotal+? WHERE UserId=? AND EntrenoId=? RETURNING CargaTotal'
@@ -122,13 +122,15 @@ app.post('/api/nouExercici', zValidator('json', nouExercici), async (c) => {
 })
 
 app.post('/api/editExercici', zValidator('json', editExercici), async (c) => {
-  const { exerciciId, nom, grupsMusculars } = await c.req.json()
+  const { exerciciId, nom, grupsMusculars, descansoSeg } = await c.req.json()
 
 
   const [GM1, GM2, GM3, GM4, GM5] = grupsMusculars
 
   try {
-    const result = await c.env.DB.prepare('UPDATE Exercici SET Nom=?, GrupMuscular1=?, GrupMuscular2=?, GrupMuscular3=?, GrupMuscular4=?, GrupMuscular5=? WHERE ExerciciId=? AND UserId=?').bind(nom, GM1 || null, GM2 || null, GM3 || null, GM4 || null, GM5 || null, exerciciId, await c.get('jwtPayload').UserId).run()
+    // descansoSeg: ausente = no tocar (clientes antiguos), null = borrar, número = fijar
+    const tocaDescanso = descansoSeg !== undefined ? 1 : 0
+    const result = await c.env.DB.prepare('UPDATE Exercici SET Nom=?, GrupMuscular1=?, GrupMuscular2=?, GrupMuscular3=?, GrupMuscular4=?, GrupMuscular5=?, DescansoSeg=CASE WHEN ?=1 THEN ? ELSE DescansoSeg END WHERE ExerciciId=? AND UserId=?').bind(nom, GM1 || null, GM2 || null, GM3 || null, GM4 || null, GM5 || null, tocaDescanso, descansoSeg ?? null, exerciciId, await c.get('jwtPayload').UserId).run()
     return c.json({ message: 'exercici actualitzat' })
   } catch (error) {
     throw new HTTPException(500, { message: 'error sql query' })
@@ -158,11 +160,11 @@ app.post('/api/nouEntreno', async (c) => {
 
 //crea nova serie i comprova si es un nou PR iactualitza la carga total
 app.post('/api/novaSerie', zValidator('json', novaSerie), async (c, next) => {
-  const { entrenoId, exerciciId, kg, reps } = await c.req.json()
+  const { entrenoId, exerciciId, kg, reps, descansoSeg } = await c.req.json()
   const userId = await c.get('jwtPayload').UserId
 
   try {
-    const result = await addSerieToDb(c, userId, entrenoId, exerciciId, kg, reps);
+    const result = await addSerieToDb(c, userId, entrenoId, exerciciId, kg, reps, descansoSeg ?? null);
     return c.json({
       message: 'Serie Guardada',
       serieId: result.serieId,
@@ -176,14 +178,16 @@ app.post('/api/novaSerie', zValidator('json', novaSerie), async (c, next) => {
 
 //edit serie nou pes i reps
 app.post('/api/editSerie', zValidator('json', editSerie), async (c) => {
-  const { exerciciId, kg, reps, serieId, entrenoId } = await c.req.json()
+  const { exerciciId, kg, reps, serieId, entrenoId, descansoSeg } = await c.req.json()
   const carga = kg * reps
   const userId = await c.get('jwtPayload').UserId
   let newPr = false
 
   try {
     //actualitzem la serie
-    const updateSerie = await c.env.DB.prepare('UPDATE Series SET ExerciciId=?,Kg=?,Reps=?,Carga=? WHERE UserID=? AND SerieId=?  RETURNING *').bind(exerciciId, kg, reps, carga, userId, serieId).run()
+    // descansoSeg: ausente = no tocar (clientes antiguos), null = borrar, número = fijar
+    const tocaDescanso = descansoSeg !== undefined ? 1 : 0
+    const updateSerie = await c.env.DB.prepare('UPDATE Series SET ExerciciId=?,Kg=?,Reps=?,Carga=?,DescansoSeg=CASE WHEN ?=1 THEN ? ELSE DescansoSeg END WHERE UserID=? AND SerieId=?  RETURNING *').bind(exerciciId, kg, reps, carga, tocaDescanso, descansoSeg ?? null, userId, serieId).run()
 
     //actualitzem el pr
     const updatePr = await checkPr(c, userId, exerciciId, kg)
@@ -581,13 +585,30 @@ app.post('/login', zValidator('json', login), async (c) => {
 app.post('/api/getUser', zValidator('json', getUser), async (c) => {
   const userId = await c.get('jwtPayload').UserId;
   try {
-    const user = await c.env.DB.prepare('SELECT Email, UserId FROM Users WHERE UserId = ?').bind(userId).first();
+    const user = await c.env.DB.prepare('SELECT Email, UserId, RestTimerEnabled, RestTimerDefaultSec, RestTimerAutoStart FROM Users WHERE UserId = ?').bind(userId).first();
     if (!user) {
       throw new HTTPException(404, { message: 'User not found' });
     }
     return c.json(user);
   } catch (error) {
     throw new HTTPException(500, { message: 'Error fetching user' });
+  }
+});
+
+// Ajustes del temporizador de descanso del usuario (actualización parcial)
+app.post('/api/updateRestTimer', zValidator('json', updateRestTimer), async (c) => {
+  const { enabled, defaultSec, autoStart } = await c.req.json()
+  const userId = await c.get('jwtPayload').UserId
+  try {
+    const row = await c.env.DB.prepare(
+      'UPDATE Users SET RestTimerEnabled = COALESCE(?, RestTimerEnabled), RestTimerDefaultSec = COALESCE(?, RestTimerDefaultSec), RestTimerAutoStart = COALESCE(?, RestTimerAutoStart) WHERE UserId = ? RETURNING RestTimerEnabled, RestTimerDefaultSec, RestTimerAutoStart'
+    ).bind(enabled === undefined ? null : (enabled ? 1 : 0), defaultSec ?? null, autoStart === undefined ? null : (autoStart ? 1 : 0), userId).first()
+    if (!row) throw new HTTPException(404, { message: 'User not found' })
+    return c.json(row)
+  } catch (error) {
+    if (error instanceof HTTPException) throw error
+    console.error('updateRestTimer error:', error)
+    throw new HTTPException(500, { message: 'error sql query' })
   }
 });
 
@@ -670,11 +691,12 @@ async function procesarChatJob(jobId: string, userId: number, message: string, c
     const provider = createProvider(c.env);
 
     const entrenoId = Number(currentTraining.entreno.EntrenoId);
-    const [entreno, coachData, seriesCurrentTraining, memories] = await Promise.all([
+    const [entreno, coachData, seriesCurrentTraining, memories, restSettings] = await Promise.all([
       c.env.DB.prepare('SELECT EntrenoId, Nom FROM Entreno WHERE EntrenoId = ? AND UserId = ?').bind(entrenoId, userId).first(),
       getCoachData(userId, entrenoId, c),
       getFullSeriesListFromTraining(entrenoId, userId, c),
       listActiveMemories(c.env.DB, userId),
+      c.env.DB.prepare('SELECT RestTimerEnabled, RestTimerDefaultSec, RestTimerAutoStart FROM Users WHERE UserId = ?').bind(userId).first(),
     ]);
     if (!entreno) throw new Error('Entreno no encontrado');
 
@@ -689,6 +711,11 @@ async function procesarChatJob(jobId: string, userId: number, message: string, c
       memories,
       muscleGroups: coachData.muscleGroups,
       analysisText: analysis.text,
+      restTimer: restSettings ? {
+        enabled: !!restSettings.RestTimerEnabled,
+        defaultSec: Number(restSettings.RestTimerDefaultSec) || 90,
+        autoStart: !!restSettings.RestTimerAutoStart,
+      } : undefined,
     });
 
     const toolCtx: ToolContext = {
@@ -699,7 +726,7 @@ async function procesarChatJob(jobId: string, userId: number, message: string, c
       validMuscleGroupIds: new Set(coachData.muscleGroups.map(g => g.GrupMuscularId)),
       state,
       deps: {
-        addSerie: (exerciciId, kg, reps) => addSerieToDb(c, userId, entrenoId, exerciciId, kg, reps),
+        addSerie: (exerciciId, kg, reps, restSec) => addSerieToDb(c, userId, entrenoId, exerciciId, kg, reps, restSec ?? null),
         checkPr: (exerciciId, kg) => checkPr(c, userId, exerciciId, kg),
         updateCargaTotal: (id) => updateCargaTotal(c, userId, id),
       },
@@ -994,7 +1021,7 @@ async function getCoachData(userId: number, currentEntrenoId: number, c: any) {
     ORDER BY E.Data DESC, S.Orden ASC, S.SerieId ASC
   `).bind(userId, currentEntrenoId);
   const exercisesStmt = c.env.DB.prepare(
-    'SELECT ExerciciId, Nom, PR, GrupMuscular1, GrupMuscular2, GrupMuscular3, GrupMuscular4, GrupMuscular5 FROM Exercici WHERE UserId = ? ORDER BY Nom ASC'
+    'SELECT ExerciciId, Nom, PR, DescansoSeg, GrupMuscular1, GrupMuscular2, GrupMuscular3, GrupMuscular4, GrupMuscular5 FROM Exercici WHERE UserId = ? ORDER BY Nom ASC'
   ).bind(userId);
   const groupsStmt = c.env.DB.prepare('SELECT GrupMuscularId, Nom FROM GrupMuscular');
 
@@ -1021,7 +1048,8 @@ Series.SerieId,
     Series.Data,
     Series.Carga,
     Series.PR,
-    Series.Completada
+    Series.Completada,
+    Series.DescansoSeg
 FROM
 Series
 JOIN 

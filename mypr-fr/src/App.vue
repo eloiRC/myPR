@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import Footer from './components/Footer.vue';
+import { useAuthStore } from './stores/auth';
+import { useRestTimer } from './composables/useRestTimer';
 
 const route = useRoute();
+const auth = useAuthStore();
+const restTimer = useRestTimer();
 
 function hideFooter() {
   return route.path === '/register' || route.path === '/login';
@@ -12,6 +16,9 @@ function hideFooter() {
 onMounted(() => {
   document.documentElement.classList.add('dark');
 });
+
+// Ajustes del temporizador de descanso: se leen del servidor al abrir la app y al iniciar sesión
+watch(() => auth.isAuthenticated, (ok) => { if (ok) restTimer.cargarDesdeServidor(); }, { immediate: true });
 </script>
 
 <template>

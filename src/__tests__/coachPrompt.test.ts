@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { renderMemoryBlock, type MemoryRow } from '../coachMemory';
+import { analyzeTraining } from '../coachAnalysis';
 import { COACH_PERSONA, buildVolatileContext } from '../coachPrompt';
 
 const NOW = Math.floor(Date.UTC(2026, 9, 23) / 1000);
@@ -57,5 +58,46 @@ describe('prompt estable vs volátil', () => {
     expect(v).toContain('ANALISIS');
     expect(v).not.toContain('INSTRUCCIONES PERSONALIZADAS');
     expect(v).toContain('Nombre automático: Sí');
+  });
+});
+
+describe('descansos en el prompt', () => {
+  it('COACH_PERSONA define las reglas de descanso', () => {
+    expect(COACH_PERSONA).toContain('set_exercise_rest');
+    expect(COACH_PERSONA).toContain('restSec');
+    expect(COACH_PERSONA).toMatch(/FUERZA ~150-240 s/);
+    expect(COACH_PERSONA).toMatch(/HIPERTROFIA ~60-120 s/);
+    expect(COACH_PERSONA).toMatch(/METABÓLICO ~30-60 s/);
+    expect(COACH_PERSONA).toContain('NUNCA cambies el ajuste global');
+  });
+
+  const base = {
+    dateLabel: '23/10/2026', nowSec: NOW, entreno: { EntrenoId: 5, Nom: 'Entreno #3' }, memories: [],
+    muscleGroups: [{ GrupMuscularId: 4, Nom: 'Pecho' }], analysisText: 'A',
+  };
+
+  it('el contexto volátil incluye el descanso global y el auto-inicio', () => {
+    const v = buildVolatileContext({ ...base, seriesToday: '[]', restTimer: { enabled: true, defaultSec: 120, autoStart: false } });
+    expect(v).toContain('Temporizador: activado');
+    expect(v).toContain('Descanso global por defecto: 120 s');
+    expect(v).toContain('Inicio automático al marcar una serie: no');
+  });
+
+  it('las series de hoy llevan su descanso (vienen en el JSON) y sin datos no rompe', () => {
+    const v = buildVolatileContext({ ...base, seriesToday: JSON.stringify([{ SerieId: 1, DescansoSeg: 150 }]) });
+    expect(v).toContain('"DescansoSeg":150');
+    expect(v).toContain('Sin datos');
+  });
+
+  it('el catálogo muestra el descanso por defecto del ejercicio', () => {
+    const a = analyzeTraining({
+      rows: [], muscleGroups: [{ GrupMuscularId: 1, Nom: 'Espalda' }], now: NOW,
+      exercises: [
+        { ExerciciId: 1, Nom: 'Peso Muerto', PR: 0, DescansoSeg: 180, GrupMuscular1: 1 },
+        { ExerciciId: 2, Nom: 'Remo', PR: 0, DescansoSeg: null, GrupMuscular1: 1 },
+      ],
+    });
+    expect(a.text).toMatch(/ID: 1 - Peso Muerto .*descanso 180 s/);
+    expect(a.text).not.toMatch(/ID: 2 - Remo .*descanso/);
   });
 });

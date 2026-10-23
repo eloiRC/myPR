@@ -18,9 +18,20 @@ Actúas sobre el entreno actual del usuario con herramientas. Úsalas en lugar d
 - edit_set: corrige ejercicio, kg o reps de una serie ya registrada (usa el serieId de "Series ya realizadas hoy").
 - delete_set: borra una serie. Es destructivo: pregunta antes al usuario en el chat y llámala solo tras un sí claro.
 - update_workout: cambia nombre, descripción o puntuación (1 a 5) del entreno. Si el nombre actual es automático (formato "Entreno #N", lo indica la situación actual) y el usuario te pide crear o modificar la rutina, ponle un nombre descriptivo breve (ej. "Pecho y Tríceps", "Full Body Fuerza"). Si el usuario ya personalizó el nombre, no lo cambies salvo que te lo pida.
+- set_exercise_rest: fija (o borra con null) el descanso por defecto de un ejercicio del catálogo. Solo para valores estables del ejercicio.
 - create_exercise: crea un ejercicio que no existe en el catálogo (usa los ids del catálogo de grupos musculares). Antes comprueba que no haya uno equivalente. Luego úsalo en add_sets con el exerciseId devuelto.
 - save_memory / update_memory / delete_memory: gestionan la memoria persistente (ver abajo).
 Usa exclusivamente exerciseId presentes en el catálogo (o devueltos por create_exercise). Kg con máximo 1 decimal. Si una herramienta devuelve un error, corrige la llamada o explica el problema al usuario; nunca afirmes que algo se hizo si la herramienta falló. Tras actuar, resume brevemente lo que hiciste.
+
+DESCANSOS
+
+El temporizador del usuario resuelve el descanso al marcar una serie como hecha: 1) el descanso de la propia serie (restSec), 2) si no tiene, el del ejercicio (set_exercise_rest), 3) si no, el global del usuario. Tú gestionas los dos primeros niveles:
+- Al proponer o añadir series, indica restSec en cada serie según el enfoque de la sesión: FUERZA ~150-240 s, HIPERTROFIA ~60-120 s, METABÓLICO ~30-60 s. Los básicos multiarticulares llevan más descanso que el trabajo de aislamiento.
+- Usa set_exercise_rest para descansos estables de un ejercicio (ej. peso muerto pesado 180 s), no para una sesión concreta.
+- Respeta la memoria y las preferencias del usuario (si pide descansos cortos o largos, o tiene una limitación, aplícalo).
+- En las propuestas menciona los descansos de forma breve (ej. "4×6 con 150 s").
+- NUNCA cambies el ajuste global del usuario: no tienes herramienta para ello y no lo sugieras como acción tuya; solo puedes explicarle dónde cambiarlo (Ajustes).
+- El contexto indica si el usuario tiene el temporizador activado; si está desactivado, los descansos que fijes se guardan igualmente.
 
 MEMORIA PERSISTENTE
 
@@ -68,6 +79,16 @@ export interface VolatileInput {
   memories: MemoryRow[];
   muscleGroups: { GrupMuscularId: number; Nom: string }[];
   analysisText: string;
+  /** Ajustes globales del temporizador de descanso del usuario (solo lectura para el coach) */
+  restTimer?: { enabled: boolean; defaultSec: number; autoStart: boolean };
+}
+
+export function renderRestTimerBlock(r?: VolatileInput['restTimer']): string {
+  if (!r) return 'TEMPORIZADOR DE DESCANSO DEL USUARIO\n- Sin datos.';
+  return `TEMPORIZADOR DE DESCANSO DEL USUARIO (ajuste global, solo lectura)
+- Temporizador: ${r.enabled ? 'activado' : 'desactivado'}
+- Descanso global por defecto: ${r.defaultSec} s
+- Inicio automático al marcar una serie: ${r.autoStart ? 'sí' : 'no'}`;
 }
 
 export function renderMuscleGroupCatalog(groups: { GrupMuscularId: number; Nom: string }[]): string {
@@ -83,6 +104,8 @@ export function buildVolatileContext(v: VolatileInput): string {
 - Series ya realizadas hoy: ${v.seriesToday}
 
 ${renderMemoryBlock(v.memories, v.nowSec)}
+
+${renderRestTimerBlock(v.restTimer)}
 
 ${renderMuscleGroupCatalog(v.muscleGroups)}
 
