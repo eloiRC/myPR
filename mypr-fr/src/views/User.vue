@@ -34,73 +34,6 @@ const isLoading = ref(false);
 const error = ref('');
 const userInfo = ref(authStore.userInfo);
 
-// --- Garmin state ---
-const garminEmail = ref('');
-const garminPassword = ref('');
-const garminConfigured = ref(false);
-const garminSavedEmail = ref('');
-const garminLastSync = ref('');
-const isSavingGarmin = ref(false);
-const isDeletingGarmin = ref(false);
-
-// Cargar estado de Garmin
-const loadGarminStatus = async () => {
-  try {
-    const data = await apiFetch<any>('/api/garmin/status', {});
-    garminConfigured.value = data.configured;
-    garminSavedEmail.value = data.garminEmail || '';
-    garminLastSync.value = data.lastSync
-      ? new Date(data.lastSync * 1000).toLocaleString('es-ES')
-      : 'Nunca';
-  } catch (err) {
-    console.error('Error loading Garmin status', err);
-  }
-};
-
-// Guardar credenciales Garmin
-const saveGarmin = async () => {
-  if (!garminEmail.value || !garminPassword.value) {
-    alert('Completa email y contraseña de Garmin');
-    return;
-  }
-  try {
-    isSavingGarmin.value = true;
-    await apiFetch('/api/garmin/credentials', {
-      garminEmail: garminEmail.value,
-      garminPassword: garminPassword.value
-    });
-    garminConfigured.value = true;
-    garminSavedEmail.value = garminEmail.value;
-    garminPassword.value = '';
-    alert('Credenciales Garmin guardadas correctamente');
-    loadGarminStatus();
-  } catch (err) {
-    console.error('Error saving Garmin', err);
-    alert('Error al guardar credenciales Garmin');
-  } finally {
-    isSavingGarmin.value = false;
-  }
-};
-
-// Eliminar credenciales Garmin
-const deleteGarmin = async () => {
-  if (!confirm('¿Eliminar credenciales Garmin? Dejarás de recibir datos automáticos.')) return;
-  try {
-    isDeletingGarmin.value = true;
-    await apiFetch('/api/garmin/credentials/delete', {});
-    garminConfigured.value = false;
-    garminSavedEmail.value = '';
-    garminLastSync.value = '';
-    garminEmail.value = '';
-    alert('Credenciales Garmin eliminadas');
-  } catch (err) {
-    console.error('Error deleting Garmin', err);
-    alert('Error al eliminar credenciales');
-  } finally {
-    isDeletingGarmin.value = false;
-  }
-};
-
 // --- Memoria del entrenador ---
 interface CoachMemory {
   MemoryId: number;
@@ -253,7 +186,6 @@ onMounted(() => {
     router.push('/login');
   }
   userInfo.value = authStore.userInfo;
-  loadGarminStatus();
   loadMemories();
 });
 </script>
@@ -289,47 +221,6 @@ onMounted(() => {
           Descarga un archivo JSON con todo tu historial de entrenos, incluyendo todas las series y ejercicios realizados.
         </p>
        
-      </div>
-
-      <div class="card">
-        <h2>🔗 Conectar Garmin</h2>
-        <p class="description" style="margin-bottom: 1rem;">
-          Introduce tus credenciales de Garmin Connect para importar automáticamente datos de recuperación (sueño, HRV, estrés) y actividades cardio (ciclismo, running). Los datos se sincronizarán una vez al día.
-        </p>
-
-        <div v-if="garminConfigured" class="garmin-status">
-          <div class="status-row">
-            <span class="label">Estado:</span>
-            <span class="value status-ok">✅ Conectado</span>
-          </div>
-          <div class="status-row">
-            <span class="label">Cuenta:</span>
-            <span class="value">{{ garminSavedEmail }}</span>
-          </div>
-          <div class="status-row">
-            <span class="label">Última sincronización:</span>
-            <span class="value">{{ garminLastSync }}</span>
-          </div>
-          <button @click="deleteGarmin" class="btn btn-danger" :disabled="isDeletingGarmin" style="margin-top: 0.75rem;">
-            <span v-if="isDeletingGarmin">Eliminando...</span>
-            <span v-else>Desconectar Garmin</span>
-          </button>
-        </div>
-
-        <div v-else class="garmin-form">
-          <div class="form-group">
-            <label for="garminEmail">Email Garmin</label>
-            <input id="garminEmail" v-model="garminEmail" type="email" placeholder="tu@email.com" class="input" />
-          </div>
-          <div class="form-group">
-            <label for="garminPassword">Contraseña Garmin</label>
-            <input id="garminPassword" v-model="garminPassword" type="password" placeholder="••••••••" class="input" />
-          </div>
-          <button @click="saveGarmin" class="btn btn-primary" :disabled="isSavingGarmin">
-            <span v-if="isSavingGarmin">Guardando...</span>
-            <span v-else>💾 Guardar credenciales</span>
-          </button>
-        </div>
       </div>
 
       <div class="card">
@@ -567,60 +458,6 @@ textarea.memory-text:focus {
 }
 
 .btn-download,
-.btn-save {
-  width: 100%;
-  margin-bottom: 0.75rem;
-}
-
-.garmin-form .form-group {
-  margin-bottom: 0.75rem;
-}
-
-.garmin-form .form-group label {
-  display: block;
-  font-size: 0.85rem;
-  font-weight: 600;
-  margin-bottom: 0.3rem;
-  color: var(--text-secondary, #666);
-}
-
-.garmin-form .input {
-  width: 100%;
-  padding: 0.6rem 0.75rem;
-  border: 1px solid var(--border-color, #ddd);
-  border-radius: 8px;
-  font-size: 0.9rem;
-  background: var(--bg-secondary, #fafafa);
-  box-sizing: border-box;
-}
-
-.garmin-status .status-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.4rem 0;
-  font-size: 0.9rem;
-}
-
-.garmin-status .status-ok {
-  color: #22c55e;
-  font-weight: 600;
-}
-
-.btn-danger {
-  background: #ef4444;
-  color: white;
-  border: none;
-  padding: 0.6rem 1rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  width: 100%;
-}
-
-.btn-danger:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
 </style>
 
 

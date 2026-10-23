@@ -11,8 +11,6 @@ declare namespace Cloudflare {
 		jwt_bcrypt: string;
 		OPENAI_API_KEY: string;
 		GEMINI_API_KEY: string;
-		GARMIN_API_KEY: string;
-		GARMIN_ENCRYPTION_KEY: string;
 		DB: D1Database;
 	}
 }
