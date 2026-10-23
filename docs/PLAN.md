@@ -17,18 +17,61 @@ Estado a 2026-10-23 (actualizado). Se actualiza al cerrar cada bloque.
 - Chat: generación en Cloudflare Queues, fases en vivo, retomar tras bloqueo, respuestas rápidas, contexto compacto y menos llamadas al modelo (`LLM_THINKING=off`).
 - Eliminada la integración con Garmin: código, workflow, scripts, tablas de D1 (migración 0006) y secretos.
 
+## Próxima sesión
+
+Orden recomendado: **A → B → C**. A y B se pueden hacer en paralelo, porque tocan zonas distintas. C (RAG) es independiente.
+
+### A · UI/UX de la página de entreno y del chat
+Primero una crítica de diseño (`/impeccable critique`) de la página de entreno y del chat, con medidas reales en el móvil. Después, mejoras por prioridad. Candidatas:
+
+**Página de entreno**
+- **Agrupar series por ejercicio**: una cabecera por ejercicio, filas compactas `80×8 · 80×8 · 82,5×6`, número de serie y check de hecha.
+- **"Repetir serie"** en un toque, en la última serie de cada ejercicio.
+- **Cabecera de progreso**: "5 de 12 series", tiempo de sesión y ejercicio actual.
+- **Terminar entreno**: resumen final con volumen, PRs conseguidos y comparación con la sesión anterior.
+- **Deshacer** al borrar (aviso con "Deshacer" 5 s) en lugar de `confirm()`.
+- **Reordenar en móvil** (arrastrar no funciona en táctil).
+- **Navegación inferior**: Entrenos / Ejercicios / Perfil.
+
+**Chat**
+- Pantalla completa en móvil, con el campo de texto siempre visible sobre el teclado.
+- **Tarjetas de cambios aplicados**: cuando la IA añade o edita series, mostrar una tarjeta "Añadidas 4 series de Sentadilla" con "Deshacer".
+- Revisar cómo se ven los estados (Pensando…, Añadiendo…) y las respuestas rápidas en producción.
+- Tablas legibles en el markdown (los planes de entreno).
+- Opcional: dictado por voz (Web Speech API) para usarlo entre series.
+
+### B · Entrevista inicial con el entrenador IA
+- **Dónde**: botón en Ajustes, "Entrevista con tu entrenador". También se ofrece al primer uso si la memoria está vacía.
+- **Formato** (propuesta): chat guiado con **una pregunta a la vez** y **respuestas rápidas** (botones) cuando haya opciones típicas.
+- **Temas**: objetivo principal, experiencia, días y tiempo disponibles, material o gimnasio, lesiones y molestias, ejercicios preferidos y a evitar, estilo de entreno.
+- **Cierre**: resumen final para que el usuario lo confirme o corrija. Al confirmar, la IA guarda o actualiza la memoria con sus herramientas.
+- **Técnico**: modo "entrevista" del coach (otro prompt de sistema, sin entreno asociado). Reutiliza las colas, las fases, las respuestas rápidas y las herramientas de memoria.
+- **Por decidir**: si se repite cada cierto tiempo (revisión trimestral) y qué hacer con la memoria existente (revisar, actualizar o añadir).
+
+### C · "Cerebro" de conocimiento de entrenamiento (RAG)
+Objetivo: respuestas mejor fundamentadas (programación, volumen, progresión, técnica, ejercicios por objetivo, adaptaciones ante molestias) **sin añadir latencia** ni consultas a la web.
+
+1. **Base de conocimiento propia** en el repo (`knowledge/*.md`): fichas cortas escritas o resumidas por nosotros (no texto copiado). Cada ficha lleva etiquetas: objetivo, grupo muscular, nivel, tipo de sesión, lesión.
+   - Temas iniciales: volumen semanal por grupo, rangos de reps y descansos por objetivo, progresión (doble progresión, RIR/RPE), periodización y descargas, selección de ejercicios por músculo, sustituciones ante molestias (hombro, rodilla, lumbar), calentamiento y aproximaciones.
+2. **Precompilado**: un script genera `knowledge.json` con los fragmentos y sus etiquetas, empaquetado con el Worker, sin servicios externos.
+3. **Recuperación en dos fases**:
+   - **Fase 1, sin latencia**: selección por etiquetas según el enfoque de la sesión, los músculos más descansados y las lesiones activas de la memoria. Se añaden 2–4 fragmentos al contexto volátil.
+   - **Fase 2, solo si hace falta**: búsqueda semántica con embeddings de Workers AI y Vectorize para preguntas abiertas ("¿cómo mejoro mi press banca?"). Unos 50–150 ms y coste casi nulo.
+4. **Control de tamaño**: tope de unos 800 tokens de conocimiento por mensaje. Medir con `[coach-usage]`.
+5. **Por decidir**: quién redacta las fichas. Propuesta: borrador con IA a partir de fuentes reconocidas y revisión tuya.
+
+### Mantenimiento pendiente
+- Borrar la base de datos antigua `mypr` (WNAM) cuando se confirme que `mypr-eu` va bien.
+- Medir los tiempos del chat tras las últimas optimizaciones (`[coach-timing]`) y decidir si `LLM_THINKING` sigue en `off`.
+- Borrar el secreto `GEMINI_API_KEY`, que ya no se usa.
+- Limpiar los worktrees de agentes en `.claude/worktrees/` y el archivo suelto `0` de la raíz.
+
 ## Pendiente
-### Entrevista inicial con el entrenador IA (por definir)
-Botón en Ajustes, del tipo "Hacer entrevista con mi entrenador". La IA hace una entrevista como la de un entrenador personal y, con las respuestas, rellena y ajusta su memoria: objetivos, lesiones, experiencia, disponibilidad, material y preferencias.
+### Entrevista inicial
+Ver "Próxima sesión · B".
 
-Ideas a decidir:
-- formato: chat guiado con preguntas una a una, o formulario corto más preguntas de seguimiento;
-- qué hacer con la memoria existente: revisarla con el usuario, actualizar o añadir;
-- repetirla cada cierto tiempo, por ejemplo una revisión trimestral de objetivos;
-- resumen final para confirmar antes de guardar.
-
-### 7 · "Cerebro" con información fiable (RAG)
-Base de conocimiento curada (programación, volumen, progresión, ejercicios por objetivo), con Vectorize y embeddings de Workers AI. Decidir antes las fuentes.
+### RAG
+Ver "Próxima sesión · C".
 
 ### 8 · Biblioteca de ejercicios con imágenes (aparcado)
 Recomendado: free-exercise-db (dominio público). Ver `docs/research/biblioteca-ejercicios.md`. Incluye corregir los nombres de los grupos musculares en producción.
