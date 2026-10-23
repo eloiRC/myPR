@@ -108,24 +108,31 @@ const onBlur = () => {
 .custom-select-container {
   position: relative;
   width: 100%;
-  flex: 1; /* Para que ocupe espacio si está en flex */
+  flex: 1;
   min-width: 0;
 }
 
 .search-input {
   width: 100%;
   box-sizing: border-box;
-  /* Hereda estilos de tu .form-control global, pero aseguramos estos: */
-  padding: 0.5rem;
-  border-radius: 4px;
-  border: 1px solid var(--border, #ccc);
-  background-color: var(--bg-primary, #fff);
-  color: var(--text-primary, #333);
+  min-height: var(--touch-min);
+  padding: 0 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--n4);
+  background-color: var(--n1);
+  color: var(--n8);
+  font-family: var(--font-sans);
+  font-size: 1rem;
 }
 
 .search-input:focus {
   outline: none;
-  border-color: var(--color-cobalt-blue, #0047AB);
+  border-color: var(--led-amber);
+}
+
+.search-input:focus-visible {
+  outline: 2px solid var(--led-amber);
+  outline-offset: 1px;
 }
 
 .search-dropdown {
@@ -133,14 +140,14 @@ const onBlur = () => {
   top: 100%;
   left: 0;
   right: 0;
-  background-color: var(--bg-primary, #fff);
-  border: 1px solid var(--border, #ccc);
+  background-color: var(--n1);
+  border: 1px solid var(--n4);
   border-top: none;
-  border-radius: 0 0 4px 4px;
-  max-height: 200px;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  max-height: 240px;
   overflow-y: auto;
   z-index: 100;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  box-shadow: var(--shadow-lg);
 }
 
 .search-dropdown ul {
@@ -150,11 +157,13 @@ const onBlur = () => {
 }
 
 .search-dropdown li {
-  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  min-height: var(--touch-min);
+  padding: 0 0.85rem;
   cursor: pointer;
-  border-bottom: 1px solid var(--border, #eee);
-  color: var(--text-primary, #333);
-  transition: background-color 0.1s;
+  border-bottom: 1px solid var(--n3);
+  color: var(--n8);
 }
 
 .search-dropdown li:last-child {
@@ -162,20 +171,18 @@ const onBlur = () => {
 }
 
 .search-dropdown li:hover {
-  background-color: var(--color-cobalt-blue, #0047AB);
-  color: white;
+  background-color: var(--n3);
 }
 
 .search-dropdown li.selected {
-  background-color: rgba(25, 86, 200, 0.1);
+  background-color: var(--led-amber-dim);
   font-weight: 600;
-  color: var(--color-cobalt-blue, #0047AB);
+  color: var(--led-amber);
 }
 
 .no-results {
   padding: 1rem;
-  color: var(--text-secondary, #888);
+  color: var(--n6);
   text-align: center;
-  font-style: italic;
 }
 </style>

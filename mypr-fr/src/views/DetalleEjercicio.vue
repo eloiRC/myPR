@@ -8,8 +8,14 @@ import { useAuthStore } from '../stores/auth';
 import { apiFetch } from '../services/api';
 import { DURACION_MIN_SEG, DURACION_MAX_SEG, descansoAceptable, textoDescanso } from '../composables/useRestTimer';
 
-const authStore = useAuthStore();
+import { ArrowLeft, Pencil, Timer, ChevronRight } from 'lucide-vue-next';
+import SegDisplay from '../components/SegDisplay.vue';
+import JudgeLights from '../components/JudgeLights.vue';
+import BottomSheet from '../components/BottomSheet.vue';
+import GrupoChips from '../components/listas/GrupoChips.vue';
+import { kgDisplay } from '../utils/segmentos';
 
+const authStore = useAuthStore();
 
 // Registrar los componentes necesarios de Chart.js
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
@@ -90,9 +96,34 @@ const iniciarEdicion = () => {
   ];
   editando.value = true;
   errorEdicion.value = '';
+  instantaneaInicial.value = instantanea();
 };
 
 const cancelarEdicion = () => { editando.value = false; };
+
+// Foto del formulario al abrirlo, para saber si hay cambios sin guardar
+const instantanea = () => JSON.stringify([
+  ejercicioEditado.value.Nom,
+  descansoEditado.value,
+  [...gruposSeleccionados.value].filter(g => g !== null).sort(),
+]);
+const instantaneaInicial = ref('');
+const hayCambios = () => editando.value && instantanea() !== instantaneaInicial.value;
+
+// Cerrar la hoja de edición (X, fondo, Escape o Cancelar), avisando si hay cambios
+const cerrarEdicion = () => {
+  if (hayCambios() && !confirm('Hay cambios sin guardar. ¿Salir de todas formas?')) return;
+  cancelarEdicion();
+};
+
+// Nombres de los grupos musculares del ejercicio actual
+const gruposActuales = computed<string[]>(() => {
+  const e = ejercicio.value;
+  if (!e) return [];
+  return [e.GrupMuscular1, e.GrupMuscular2, e.GrupMuscular3, e.GrupMuscular4, e.GrupMuscular5]
+    .filter((g): g is number => !!g)
+    .map(getNombreGrupoMuscular);
+});
 
 const guardarEdicionEjercicio = async () => {
   if (!ejercicio.value) return;
@@ -238,7 +269,7 @@ const getNombreGrupoMuscular = (id: number | null): string => {
 
 // Volver a la lista de ejercicios
 const volverAEjercicios = () => {
-  if (editando.value && !confirm('Hay cambios sin guardar. ¿Salir de todas formas?')) return;
+  if (hayCambios() && !confirm('Hay cambios sin guardar. ¿Salir de todas formas?')) return;
   router.push('/ejercicios');
 };
 // Formatear la fecha para mostrarla en formato legible
@@ -260,95 +291,67 @@ onMounted(loadEjercicio);
 </script>
 
 <template>
-  <div class="page">
-    <header class="page-header">
-      <h1 class="page-title">
-        <span v-if="!editando">{{ ejercicio?.Nom }}</span>
-        <input v-else v-model="ejercicioEditado.Nom" class="form-control edit-name-input" />
-      </h1>
-      <div class="page-header-actions">
-        <button v-if="!editando" :disabled="!cargadoCompleto" @click="iniciarEdicion" class="btn btn-secondary">Editar</button>
-        <template v-else>
-          <button @click="cancelarEdicion" class="btn btn-secondary">Cancelar</button>
-          <button @click="guardarEdicionEjercicio" class="btn btn-primary">Guardar</button>
-        </template>
-        <button @click="volverAEjercicios" class="btn btn-secondary">&larr; Volver</button>
-      </div>
+  <div class="page detalle">
+    <header class="cab">
+      <button type="button" class="icono" @click="volverAEjercicios" aria-label="Volver a ejercicios"><ArrowLeft :size="22" /></button>
+      <h1 class="cab-titulo">{{ ejercicio?.Nom }}</h1>
+      <button type="button" class="icono" :disabled="!cargadoCompleto" @click="iniciarEdicion" aria-label="Editar ejercicio"><Pencil :size="20" /></button>
     </header>
-    
-    <div v-if="isLoading" class="state-box">
-      <p>Cargando datos del ejercicio...</p>
+
+    <div v-if="isLoading" class="cargando" role="status" aria-live="polite">
+      <div class="sk sk-hero"></div>
+      <div class="sk sk-fila"></div>
+      <div class="sk sk-chart"></div>
+      <span class="sr-only">Cargando datos del ejercicio...</span>
     </div>
-    
-    <div v-else-if="error" class="state-box error">
+
+    <div v-else-if="error" class="state-box error" role="alert">
       <p>{{ error }}</p>
       <button @click="loadEjercicio" class="btn">Reintentar</button>
     </div>
-    
+
     <div v-else-if="ejercicio" class="ejercicio-content">
-      <!-- Información del ejercicio -->
-      <div v-if="!editando" class="card card-elevated">
-        <div class="pr-display">
-          <h2>PR actual</h2>
-          <p class="pr-valor">{{ ejercicio.PR }} kg</p>
+      <!-- Marcador del récord -->
+      <section class="hero" aria-label="Récord personal">
+        <div class="hero-top">
+          <span class="hero-rotulo">Récord personal</span>
+          <JudgeLights :lit="ejercicio.PR > 0 ? 3 : 0" size="md" :label="ejercicio.PR > 0 ? 'Récord registrado' : 'Sin récord'" />
         </div>
-        <div class="grupos-musculares">
-          <h3>Grupos Musculares</h3>
-          <div class="grupos-tags">
-            <span v-if="ejercicio.GrupMuscular1" class="chip">{{ getNombreGrupoMuscular(ejercicio.GrupMuscular1) }}</span>
-            <span v-if="ejercicio.GrupMuscular2" class="chip">{{ getNombreGrupoMuscular(ejercicio.GrupMuscular2) }}</span>
-            <span v-if="ejercicio.GrupMuscular3" class="chip">{{ getNombreGrupoMuscular(ejercicio.GrupMuscular3) }}</span>
-            <span v-if="ejercicio.GrupMuscular4" class="chip">{{ getNombreGrupoMuscular(ejercicio.GrupMuscular4) }}</span>
-            <span v-if="ejercicio.GrupMuscular5" class="chip">{{ getNombreGrupoMuscular(ejercicio.GrupMuscular5) }}</span>
-          </div>
+        <div v-if="ejercicio.PR > 0" class="hero-valor">
+          <SegDisplay :value="kgDisplay(ejercicio.PR)" tone="white" :label="`${kgDisplay(ejercicio.PR).replace('.', ',')} kg`" class="hero-seg" />
+          <span class="hero-unidad">kg</span>
         </div>
-        <p v-if="ejercicio.DescansoSeg != null" class="descanso-ayuda">⏱ Descanso por defecto: {{ textoDescanso(ejercicio.DescansoSeg) }}</p>
-      </div>
-      <form v-else @submit.prevent="guardarEdicionEjercicio" class="card card-elevated">
-        <h2>Editar {{ ejercicioEditado.Nom || 'ejercicio' }}</h2>
-        <div class="form-group">
-          <label>Grupos musculares (1-5):</label>
-          <div class="grupos-seleccion">
-            <div v-for="grupo in gruposMusculares" :key="grupo.GrupMuscularId" class="grupo-checkbox">
-              <input
-                type="checkbox"
-                :id="'edit-grp-' + grupo.GrupMuscularId"
-                :value="grupo.GrupMuscularId"
-                v-model="gruposSeleccionados"
-                :disabled="gruposSeleccionados.filter(g => g !== null).length >= 5 && !gruposSeleccionados.includes(grupo.GrupMuscularId)"
-              />
-              <label :for="'edit-grp-' + grupo.GrupMuscularId">{{ grupo.Nom }}</label>
-            </div>
-          </div>
+        <div v-else class="hero-valor">
+          <SegDisplay value="--" tone="muted" label="Sin récord" class="hero-seg" />
+          <span class="hero-unidad">kg</span>
         </div>
-        <div class="form-group descanso-ejercicio">
-          <label for="edit-descanso">Descanso por defecto (s), opcional</label>
-          <input id="edit-descanso" type="number" inputmode="numeric" class="form-control" min="0" :max="DURACION_MAX_SEG" step="5" :value="descansoEditado ?? ''" placeholder="Global (0 = sin descanso)" @input="onDescansoInput" />
-          <p class="descanso-ayuda">Vacío = el descanso global de Ajustes. Cada serie puede tener el suyo.</p>
+        <div class="hero-grupos" v-if="gruposActuales.length">
+          <span v-for="(g, i) in gruposActuales" :key="i" class="grupo">{{ g }}</span>
         </div>
-        <div v-if="errorEdicion" class="error-message">{{ errorEdicion }}</div>
-        <div class="form-actions" style="margin-top:1rem;">
-          <button type="button" @click="cancelarEdicion" class="btn btn-secondary">Cancelar</button>
-          <button type="submit" class="btn btn-primary">Guardar</button>
-        </div>
-      </form>
-      <div v-if="ejercicio.entrenoPr" class="entrenos-list">
-        <h2 class="section-title">Entreno del PR</h2>
-        <br>
-        <div
-        class="list-card"
-        @click="verDetalleEntreno(ejercicio.entrenoPr.EntrenoId)">
+        <p class="hero-descanso">
+          <Timer :size="16" aria-hidden="true" />
+          Descanso
+          <strong>{{ ejercicio.DescansoSeg != null ? textoDescanso(ejercicio.DescansoSeg) : 'global' }}</strong>
+        </p>
+      </section>
 
-          <div class="list-card-body">
-            <h3>{{ ejercicio.entrenoPr.Nom }}</h3>
-            <p class="list-card-meta">{{ formatDate(ejercicio.entrenoPr.Data) }}</p>
-            <p class="carga">Peso total: <strong class="list-card-highlight">{{ ejercicio.entrenoPr.CargaTotal }} kg</strong></p>
-          </div>
+      <!-- Entreno del PR -->
+      <section v-if="ejercicio.entrenoPr" aria-labelledby="pr-entreno-t">
+        <h2 id="pr-entreno-t" class="section-title">Entreno del PR</h2>
+        <button type="button" class="fila-pr" @click="verDetalleEntreno(ejercicio.entrenoPr.EntrenoId)">
+          <span class="fila-pr-texto">
+            <span class="fila-pr-nombre">{{ ejercicio.entrenoPr.Nom }}</span>
+            <span class="fila-pr-fecha">{{ formatDate(ejercicio.entrenoPr.Data) }}</span>
+          </span>
+          <span class="fila-pr-carga">
+            <SegDisplay :value="kgDisplay(ejercicio.entrenoPr.CargaTotal)" tone="muted" :label="`Carga total ${kgDisplay(ejercicio.entrenoPr.CargaTotal).replace('.', ',')} kg`" class="fila-pr-seg" />
+            <span class="fila-pr-unidad">kg</span>
+          </span>
+          <ChevronRight :size="18" class="fila-pr-chev" aria-hidden="true" />
+        </button>
+      </section>
+      <p v-else class="sin-pr">Este ejercicio aún no tiene un PR registrado.</p>
 
-        </div>
-      </div>
-      <p v-else class="state-box" style="margin-top:1rem;">Este ejercicio aún no tiene un PR registrado.</p>
-      
       <!-- Gráfica de evolución -->
       <div class="chart-panel">
         <h2>Evolución del peso máximo</h2>
@@ -371,57 +374,183 @@ onMounted(loadEjercicio);
         </div>
       </div>
     </div>
+
+    <!-- Editar ejercicio -->
+    <BottomSheet :open="editando" title="Editar ejercicio" @close="cerrarEdicion">
+      <form @submit.prevent="guardarEdicionEjercicio" class="hoja-form">
+        <div class="form-group">
+          <label for="edit-nombre">Nombre</label>
+          <input id="edit-nombre" v-model="ejercicioEditado.Nom" class="form-control" autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label>Grupos musculares</label>
+          <GrupoChips v-model="gruposSeleccionados" :grupos="gruposMusculares" />
+        </div>
+        <div class="form-group descanso-ejercicio">
+          <label for="edit-descanso">Descanso por defecto (s), opcional</label>
+          <input id="edit-descanso" type="number" inputmode="numeric" class="form-control" min="0" :max="DURACION_MAX_SEG" step="5" :value="descansoEditado ?? ''" placeholder="Global (0 = sin descanso)" @input="onDescansoInput" />
+          <p class="descanso-ayuda">Vacío = el descanso global de Ajustes. Cada serie puede tener el suyo.</p>
+        </div>
+        <div v-if="errorEdicion" class="error-message" role="alert">{{ errorEdicion }}</div>
+        <div class="form-actions">
+          <button type="button" @click="cerrarEdicion" class="btn btn-secondary">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </BottomSheet>
   </div>
 </template>
 
 <style scoped>
-.descanso-ejercicio input { max-width: 10rem; }
-.descanso-ayuda { margin: 0.5rem 0 0; font-size: 0.8rem; color: var(--text-muted); }
-.ejercicio-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
+.detalle { padding-bottom: calc(var(--bottom-nav-h) + 1.5rem); }
 
-.grupos-musculares h3 {
-  margin: 0 0 0.75rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
-}
-
-.grupos-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.no-datos {
-  text-align: center;
-  padding: 2rem;
-  color: var(--text-muted);
-  font-size: 0.9rem;
-}
-
-.edit-name-input {
-  font-size: 1.4rem;
+.cab { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
+.cab-titulo {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 6vw, 1.9rem);
   font-weight: 700;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  border: 1px solid var(--accent-primary);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+.icono {
+  width: var(--touch-min);
+  height: var(--touch-min);
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background: var(--n1);
+  border: 1px solid var(--n4);
   border-radius: var(--radius-sm);
-  padding: 0.25rem 0.5rem;
-  outline: none;
+  box-shadow: var(--bevel);
+  color: var(--n7);
+  cursor: pointer;
+}
+.icono:hover:not(:disabled) { background: var(--n2); color: var(--n8); }
+.icono:disabled { opacity: 0.35; cursor: not-allowed; }
+.icono:focus-visible { outline: 2px solid var(--judge-white); outline-offset: 2px; }
+
+.ejercicio-content { display: flex; flex-direction: column; gap: 1.25rem; }
+
+.hero {
+  background: var(--n1);
+  border: 1px solid var(--n3);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--bevel);
+  padding: 1rem 1rem 1.1rem;
+}
+.hero-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.9rem; }
+.hero-rotulo {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--n6);
+}
+.hero-valor { display: flex; align-items: flex-end; gap: 0.6rem; margin-bottom: 1rem; }
+.hero-seg { font-size: clamp(4.5rem, 24vw, 6.5rem); }
+.hero-unidad {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--n6);
+  line-height: 1;
+  padding-bottom: 0.15rem;
+}
+.hero-grupos { display: flex; flex-wrap: wrap; gap: 0.35rem 0.45rem; margin-bottom: 0.9rem; }
+.grupo {
+  padding: 0.15rem 0.5rem;
+  border: 1px solid var(--n4);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--n7);
+}
+.hero-descanso {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--n3);
+  font-size: 0.85rem;
+  color: var(--n6);
+}
+.hero-descanso strong { color: var(--n8); font-variant-numeric: tabular-nums; }
+
+.fila-pr {
   width: 100%;
-  box-sizing: border-box;
+  min-height: 4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.75rem 0.7rem 1rem;
+  background: var(--n1);
+  border: 1px solid var(--n3);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--bevel);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
-
-.carga {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  margin: 0.35rem 0 0;
+.fila-pr:hover { background: var(--n2); border-color: var(--n4); }
+.fila-pr:focus-visible { outline: 2px solid var(--judge-white); outline-offset: 2px; }
+.fila-pr-texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.fila-pr-nombre {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 1.1;
 }
+.fila-pr-fecha { font-size: 0.8rem; color: var(--n6); font-variant-numeric: tabular-nums; }
+.fila-pr-carga { display: flex; align-items: flex-end; gap: 0.3rem; flex-shrink: 0; }
+.fila-pr-seg { font-size: 1.4rem; }
+.fila-pr-unidad { font-family: var(--font-display); font-size: 0.9rem; font-weight: 700; color: var(--n6); text-transform: uppercase; line-height: 1; }
+.fila-pr-chev { color: var(--n5); flex-shrink: 0; }
 
+.sin-pr {
+  margin: 0;
+  padding: 1rem;
+  border: 1px dashed var(--n4);
+  border-radius: var(--radius-lg);
+  color: var(--n6);
+  text-align: center;
+}
+.chart-panel { margin-bottom: 0; }
+.no-datos { text-align: center; padding: 2rem; color: var(--n6); font-size: 0.9rem; }
+.no-datos p { margin: 0; }
+
+.descanso-ejercicio input { max-width: 12rem; }
+.descanso-ayuda { margin: 0.5rem 0 0; font-size: 0.8rem; color: var(--n6); }
+.hoja-form .form-actions { margin-top: 1.25rem; }
+
+.sk {
+  background: var(--n1);
+  border: 1px solid var(--n3);
+  border-radius: var(--radius-lg);
+  margin-bottom: 1rem;
+  animation: pulso 1.4s ease-in-out infinite;
+}
+.sk-hero { height: 12rem; }
+.sk-fila { height: 4rem; }
+.sk-chart { height: 14rem; }
+@keyframes pulso { 50% { opacity: 0.5; } }
+@media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
 </style>
