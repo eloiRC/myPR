@@ -271,11 +271,17 @@ const cargarCompletadas = () => {
 const toggleCompletadoCard = async (serieId: number) => {
   const currentState = completadasMap.value[serieId] ?? false;
   const newState = !currentState;
-  completadasMap.value = { ...completadasMap.value, [serieId]: newState };
+  // Mantenemos serie.Completada al día para que reconstruir el mapa no pierda cambios
+  const setLocal = (state: boolean) => {
+    completadasMap.value = { ...completadasMap.value, [serieId]: state };
+    const serie = series.value.find(s => s.SerieId === serieId) as any;
+    if (serie) serie.Completada = state ? 1 : 0;
+  };
+  setLocal(newState);
   try {
     await apiFetch('/api/toggleSerieCompletada', { serieId, completada: newState });
   } catch {
-    completadasMap.value = { ...completadasMap.value, [serieId]: currentState };
+    setLocal(currentState);
     alertWindow('Error al guardar el estado de la serie');
   }
 };
@@ -320,7 +326,6 @@ const primerIdxNoCompletado = () => {
 const cambiarModoTarjetas = () => {
   modoVisualizacion.value = 'tarjetas';
   direction.value = 'next';
-  cargarCompletadas();
   serieActualIdx.value = primerIdxNoCompletado();
   editandoCard.value = false;
 };
