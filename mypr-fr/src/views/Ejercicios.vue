@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { Plus, Search, X } from 'lucide-vue-next';
 import { useAuthStore } from '../stores/auth';
 import { formatearTexto, guardarNuevoEjercicio } from '../utils/ejercicioUtils';
 import { apiFetch } from '../services/api';
+import BottomSheet from '../components/BottomSheet.vue';
+import FilaEjercicio from '../components/listas/FilaEjercicio.vue';
+import GrupoChips from '../components/listas/GrupoChips.vue';
 
 const authStore = useAuthStore();
 
@@ -27,15 +31,15 @@ interface GrupoMuscular {
 }
 
 const showEjercicioAlert = ref(false);
-const showAlert = ref(false);
-const alertMessage = ref('');
 const ejercicioAlertMessage = ref('');
 const router = useRouter();
 const route = useRoute();
 const ejercicios = ref<Ejercicio[]>([]);
 const gruposMusculares = ref<GrupoMuscular[]>([]);
 const isLoading = ref(true);
+const guardando = ref(false);
 const error = ref('');
+const formError = ref('');
 const showForm = ref(false);
 const busquedaNombre = ref('');
 const filtroGrupoMuscular = ref<number | null>(null);
@@ -53,18 +57,15 @@ const ejercicioEditado = ref({
   gruposMusculares: [] as (number | null)[]
 });
 
+const gruposDe = (e: Ejercicio): (number | null)[] =>
+  [e.GrupMuscular1, e.GrupMuscular2, e.GrupMuscular3, e.GrupMuscular4, e.GrupMuscular5];
+
 // Ejercicios filtrados por grupo muscular
 const ejerciciosFiltrados = computed(() => {
   let resultado = ejercicios.value;
 
   if (filtroGrupoMuscular.value !== null) {
-    resultado = resultado.filter(ejercicio =>
-      ejercicio.GrupMuscular1 === filtroGrupoMuscular.value ||
-      ejercicio.GrupMuscular2 === filtroGrupoMuscular.value ||
-      ejercicio.GrupMuscular3 === filtroGrupoMuscular.value ||
-      ejercicio.GrupMuscular4 === filtroGrupoMuscular.value ||
-      ejercicio.GrupMuscular5 === filtroGrupoMuscular.value
-    );
+    resultado = resultado.filter(ejercicio => gruposDe(ejercicio).includes(filtroGrupoMuscular.value));
   }
 
   const term = busquedaNombre.value.trim().toLowerCase();
@@ -91,7 +92,8 @@ const loadEjercicios = async () => {
 
   try {
     isLoading.value = true;
-    
+    error.value = '';
+
     const data = await apiFetch<any[]>('/api/getExercicis', {});
 
     if (Array.isArray(data)) {
@@ -119,50 +121,44 @@ const loadGruposMusculares = async () => {
   }
 };
 
-// Mostrar/ocultar el formulario
-const toggleForm = () => {
-  showForm.value = !showForm.value;
-  
-  // Resetear el formulario si se cierra
-  if (!showForm.value) {
-    resetForm();
-  }
-};
-
 // Resetear el formulario
 const resetForm = () => {
   nuevoEjercicio.value = {
     nombre: '',
     gruposMusculares: []
   };
+  formError.value = '';
 };
-function capitalize(s:string){
-  return s.replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
 
+// Abrir/cerrar la hoja de nuevo ejercicio
+const abrirForm = () => {
+  resetForm();
+  showForm.value = true;
+};
+const cerrarForm = () => {
+  showForm.value = false;
+  resetForm();
+};
+
+function capitalize(s: string) {
+  return s.replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
 }
+
 const newExercici = async () => {
-  
-  const newName= capitalize(nuevoEjercicio.value.nombre)
-  var duplicated = false
-  console.log(newName)
-ejercicios.value.forEach(value => {
-  const nom = value.Nom
-  if(nom==newName){
-    console.log(true)
-    alertWindow('Este nombre de ejercicio ya existe')
-    duplicated=true
+  const newName = capitalize(nuevoEjercicio.value.nombre);
+  const duplicated = ejercicios.value.some(value => value.Nom === newName);
+  if (duplicated) {
+    formError.value = 'Este nombre de ejercicio ya existe';
+    return;
   }
-});
-if(!duplicated){
-  guardarEjercicio()
-}
-}
+  guardarEjercicio();
+};
 
 // Función para guardar el nuevo ejercicio
 const guardarEjercicio = async () => {
-  isLoading.value = true;
-  error.value = '';
-  
+  guardando.value = true;
+  formError.value = '';
+
   await guardarNuevoEjercicio(
     {
       Nom: nuevoEjercicio.value.nombre,
@@ -171,12 +167,10 @@ const guardarEjercicio = async () => {
     async () => {
       // Recargar la lista de ejercicios
       await loadEjercicios();
-      
+
       // Resetear el formulario y ocultar
-      resetForm();
-      showForm.value = false;
-      
-      // Mostrar mensaje de éxito
+      cerrarForm();
+
       // Mostrar mensaje de éxito
       ejercicioAlertMessage.value = '¡Ejercicio creado correctamente!';
       showEjercicioAlert.value = true;
@@ -185,16 +179,11 @@ const guardarEjercicio = async () => {
       }, 3000);
     },
     (errorMessage) => {
-      error.value = errorMessage;
+      formError.value = errorMessage;
     }
   );
-  
-  isLoading.value = false;
-};
 
-// Volver a la lista de entrenos
-const volverAEntrenos = () => {
-  router.push('/entrenos');
+  guardando.value = false;
 };
 
 // Obtener el nombre del grupo muscular
@@ -204,25 +193,23 @@ const getNombreGrupoMuscular = (id: number | null): string => {
   return grupo ? grupo.Nom : `ID: ${id}`;
 };
 
+const nombresGrupos = (e: Ejercicio): string[] =>
+  gruposDe(e).filter((g): g is number => !!g).map(getNombreGrupoMuscular);
+
 // Iniciar edición de ejercicio
 const iniciarEdicionEjercicio = (ejercicio: Ejercicio) => {
   editandoEjercicio.value = ejercicio;
-  
+  formError.value = '';
+
   // Preparar el estado de edición
   ejercicioEditado.value.nombre = ejercicio.Nom;
-  ejercicioEditado.value.gruposMusculares = [];
-  
-  // Añadir los grupos musculares existentes
-  if (ejercicio.GrupMuscular1) ejercicioEditado.value.gruposMusculares.push(ejercicio.GrupMuscular1);
-  if (ejercicio.GrupMuscular2) ejercicioEditado.value.gruposMusculares.push(ejercicio.GrupMuscular2);
-  if (ejercicio.GrupMuscular3) ejercicioEditado.value.gruposMusculares.push(ejercicio.GrupMuscular3);
-  if (ejercicio.GrupMuscular4) ejercicioEditado.value.gruposMusculares.push(ejercicio.GrupMuscular4);
-  if (ejercicio.GrupMuscular5) ejercicioEditado.value.gruposMusculares.push(ejercicio.GrupMuscular5);
+  ejercicioEditado.value.gruposMusculares = gruposDe(ejercicio).filter((g): g is number => !!g);
 };
 
 // Cancelar edición de ejercicio
 const cancelarEdicionEjercicio = () => {
   editandoEjercicio.value = null;
+  formError.value = '';
   ejercicioEditado.value = {
     nombre: '',
     gruposMusculares: []
@@ -232,20 +219,20 @@ const cancelarEdicionEjercicio = () => {
 // Guardar edición de ejercicio
 const guardarEdicionEjercicio = async () => {
   if (!editandoEjercicio.value) return;
-  
+
   if (!ejercicioEditado.value.nombre.trim()) {
-    error.value = 'Por favor, introduce un nombre para el ejercicio';
+    formError.value = 'Por favor, introduce un nombre para el ejercicio';
     return;
   }
-  
+
   if (ejercicioEditado.value.gruposMusculares.length === 0) {
-    error.value = 'Por favor, selecciona al menos un grupo muscular';
+    formError.value = 'Por favor, selecciona al menos un grupo muscular';
     return;
   }
-  
+
   try {
-    isLoading.value = true;
-    
+    guardando.value = true;
+
     await apiFetch('/api/editExercici', {
       exerciciId: editandoEjercicio.value.ExerciciId,
       nom: formatearTexto(ejercicioEditado.value.nombre),
@@ -255,10 +242,10 @@ const guardarEdicionEjercicio = async () => {
     cancelarEdicionEjercicio();
     await loadEjercicios();
   } catch (err: any) {
-    error.value = err.message || 'Error al editar el ejercicio';
+    formError.value = err.message || 'Error al editar el ejercicio';
     console.error('Error al editar ejercicio:', err);
   } finally {
-    isLoading.value = false;
+    guardando.value = false;
   }
 };
 
@@ -270,337 +257,230 @@ const verDetalleEjercicio = (ejercicioId: number) => {
 // Cargar los ejercicios al montar el componente
 onMounted(() => {
   loadEjercicios();
-  
+
   // Si hay un parámetro 'nuevo' en la URL, mostrar el formulario
   if (route.query.nuevo === 'true') {
     showForm.value = true;
   }
 });
-
-function alertWindow(message:string){
-  alertMessage.value = message
-  showAlert.value = true;
-
-  setTimeout(() => {
-        showAlert.value = false;
-      }, 5000);
-}
-
 </script>
 
 <template>
-  <div class="page">
-    <header class="page-header">
+  <div class="page ejercicios">
+    <header class="marcador">
       <h1>Mis ejercicios</h1>
-
-      <div class="page-header-actions">
-      <button @click="volverAEntrenos" class="btn btn-secondary">
-        &larr; Volver
+      <button type="button" @click="abrirForm" class="btn btn-primary btn-sm">
+        <Plus :size="18" aria-hidden="true" /> Nuevo ejercicio
       </button>
-      <button @click="toggleForm" class="btn btn-primary">
-        {{ showForm ? 'Cancelar' : '+ Nuevo ejercicio' }}
-      </button>
-      </div>
     </header>
 
-    <div v-if="showEjercicioAlert" class="toast toast-success">
+    <div v-if="showEjercicioAlert" class="toast toast-success" role="status">
       {{ ejercicioAlertMessage }}
     </div>
 
-    <div v-if="showAlert" class="toast toast-warning">
-      {{ alertMessage }}
-    </div>
- 
- 
-    
-    <!-- Filtro por grupo muscular -->
-    <div class="panel">
-      <h3 id="filtro-grupos-titulo">Filtrar por grupo muscular</h3>
-      <div class="filtro-grupos" role="group" aria-labelledby="filtro-grupos-titulo">
-        <button 
-          class="chip-filter" 
-          :class="{ 'active': filtroGrupoMuscular === null }"
+    <!-- Barra pegajosa: búsqueda + filtro por grupo muscular -->
+    <div class="barra">
+      <div class="busqueda">
+        <Search :size="18" class="busqueda-ico" aria-hidden="true" />
+        <input type="search" v-model="busquedaNombre" class="busqueda-input" placeholder="Buscar ejercicio" aria-label="Buscar ejercicio por nombre" />
+        <button v-if="busquedaNombre" type="button" class="busqueda-x" aria-label="Borrar búsqueda" @click="busquedaNombre = ''"><X :size="18" /></button>
+      </div>
+      <div class="filtro-grupos" role="group" aria-label="Filtrar por grupo muscular">
+        <button
+          type="button"
+          class="filtro"
+          :class="{ active: filtroGrupoMuscular === null }"
           :aria-pressed="filtroGrupoMuscular === null"
           @click="limpiarFiltro"
-        >
-          Todos
-        </button>
-        <button 
-          v-for="grupo in gruposMusculares" 
+        >Todos</button>
+        <button
+          v-for="grupo in gruposMusculares"
           :key="grupo.GrupMuscularId"
-          class="chip-filter"
-          :class="{ 'active': filtroGrupoMuscular === grupo.GrupMuscularId }"
+          type="button"
+          class="filtro"
+          :class="{ active: filtroGrupoMuscular === grupo.GrupMuscularId }"
           :aria-pressed="filtroGrupoMuscular === grupo.GrupMuscularId"
           @click="filtroGrupoMuscular = grupo.GrupMuscularId"
-        >
-          {{ grupo.Nom }}
-        </button>
+        >{{ grupo.Nom }}</button>
       </div>
     </div>
-    
-    <!-- Formulario para añadir nuevo ejercicio -->
-    <div v-if="showForm" class="card card-elevated">
-      <h2>Nuevo ejercicio</h2>
-      <form @submit.prevent="newExercici" class="ejercicio-form">
-        <div class="form-group">
-          <label for="nombre">Nombre del ejercicio:</label>
-          <input 
-            type="text" 
-            id="nombre" 
-            v-model="nuevoEjercicio.nombre" 
-            class="form-control" 
-            required
-            placeholder="Ej: Press de banca"
-          >
-        </div>
-        
-        <div class="form-group">
-          <label for="grupos-musculares">Grupos musculares (selecciona entre 1 y 5):</label>
-          <div class="grupos-seleccion">
-            <div 
-              v-for="grupo in gruposMusculares" 
-              :key="grupo.GrupMuscularId" 
-              class="grupo-checkbox"
-            >
-              <input 
-                type="checkbox" 
-                :id="'grupo-' + grupo.GrupMuscularId" 
-                :value="grupo.GrupMuscularId" 
-                v-model="nuevoEjercicio.gruposMusculares"
-                class="checkbox-input"
-                :disabled="nuevoEjercicio.gruposMusculares.length >= 5 && !nuevoEjercicio.gruposMusculares.includes(grupo.GrupMuscularId)"
-              >
-              <label :for="'grupo-' + grupo.GrupMuscularId" class="checkbox-label">{{ grupo.Nom }}</label>
-            </div>
-          </div>
-          <small class="select-help" v-if="nuevoEjercicio.gruposMusculares.length === 0">
-            Debes seleccionar al menos un grupo muscular
-          </small>
-          <small class="select-help" v-else-if="nuevoEjercicio.gruposMusculares.length === 5">
-            Has alcanzado el máximo de 5 grupos musculares
-          </small>
-          <small class="select-help" v-else>
-            Has seleccionado {{ nuevoEjercicio.gruposMusculares.length }} de 5 grupos musculares posibles
-          </small>
-        </div>
-        
-        <div class="form-actions">
-          <button type="button" @click="toggleForm" class="btn btn-secondary">Cancelar</button>
-          <button type="submit" class="btn btn-primary" :disabled="isLoading">
-            {{ isLoading ? 'Guardando...' : 'Guardar Ejercicio' }}
-          </button>
-        </div>
-      </form>
+
+    <div v-if="isLoading" class="cargando" role="status" aria-live="polite">
+      <div class="sk" v-for="n in 5" :key="n"></div>
+      <span class="sr-only">Cargando ejercicios...</span>
     </div>
-    
-    <div v-if="isLoading" class="state-box">
-      <p>Cargando ejercicios...</p>
-    </div>
-    
-    <div v-else-if="error" class="state-box error">
+
+    <div v-else-if="error" class="state-box error" role="alert">
       <p>{{ error }}</p>
       <button @click="loadEjercicios" class="btn">Reintentar</button>
     </div>
-    
+
     <div v-else-if="ejercicios.length === 0" class="state-box">
-      <p class="no-ejercicios-text">No tienes ejercicios registrados.</p>
-      <button @click="toggleForm" class="btn btn-primary btn-lg">Crear tu primer ejercicio</button>
+      <p>No tienes ejercicios registrados.</p>
+      <button @click="abrirForm" class="btn btn-primary btn-lg">Crear tu primer ejercicio</button>
     </div>
-    
+
     <div v-else>
-      <h2 class="section-title">Lista de ejercicios</h2>
-      
-      <div class="search-row">
-        <input type="text" v-model="busquedaNombre" class="form-control" placeholder="🔍 Buscar por nombre..." />
-        <button v-if="busquedaNombre" @click="busquedaNombre = ''" class="btn btn-secondary btn-sm">×</button>
-      </div>
-      
-      <div class="resultados-filtro">
-        <p>
-          Mostrando {{ ejerciciosFiltrados.length }} 
-          {{ ejerciciosFiltrados.length === 1 ? 'ejercicio' : 'ejercicios' }}
-          {{ filtroGrupoMuscular !== null ? 'para el grupo muscular: ' + getNombreGrupoMuscular(filtroGrupoMuscular) : '' }}
-        </p>
-      </div>
-      
-      <div class="ejercicios-list">
-        <div 
-          v-for="ejercicio in ejerciciosFiltrados" 
-          :key="ejercicio.ExerciciId" 
-          class="list-card"
-          
-          
-        >
-          <!-- Modo visualización -->
-          <div v-if="editandoEjercicio?.ExerciciId !== ejercicio.ExerciciId" class="list-card-body" @click="verDetalleEjercicio(ejercicio.ExerciciId)">
-            <h3  >{{ ejercicio.Nom }}</h3>
-            <p v-if="ejercicio.PR > 0" class="list-card-meta">
-              PR: <strong>{{ ejercicio.PR }} kg</strong>
-            </p>
-            <div class="grupos-musculares">
-              <span v-if="ejercicio.GrupMuscular1" class="chip">
-                {{ getNombreGrupoMuscular(ejercicio.GrupMuscular1) }}
-              </span>
-              <span v-if="ejercicio.GrupMuscular2" class="chip">
-                {{ getNombreGrupoMuscular(ejercicio.GrupMuscular2) }}
-              </span>
-              <span v-if="ejercicio.GrupMuscular3" class="chip">
-                {{ getNombreGrupoMuscular(ejercicio.GrupMuscular3) }}
-              </span>
-              <span v-if="ejercicio.GrupMuscular4" class="chip">
-                {{ getNombreGrupoMuscular(ejercicio.GrupMuscular4) }}
-              </span>
-              <span v-if="ejercicio.GrupMuscular5" class="chip">
-                {{ getNombreGrupoMuscular(ejercicio.GrupMuscular5) }}
-              </span>
-            </div>
-          </div>
-          
-          <!-- Modo edición -->
-          <div v-else class="ejercicio-info edit-mode">
-            <div class="form-group">
-              <label for="edit-nombre">Nombre del ejercicio:</label>
-              <input 
-                type="text" 
-                id="edit-nombre" 
-                v-model="ejercicioEditado.nombre" 
-                class="form-control" 
-                required
-                placeholder="Nombre del ejercicio"
-              >
-            </div>
-            
-            <div class="form-group">
-              <label>Grupos musculares (selecciona entre 1 y 5):</label>
-              <div class="grupos-seleccion">
-                <div 
-                  v-for="grupo in gruposMusculares" 
-                  :key="grupo.GrupMuscularId" 
-                  class="grupo-checkbox"
-                >
-                  <input 
-                    type="checkbox" 
-                    :id="'edit-grupo-' + grupo.GrupMuscularId" 
-                    :value="grupo.GrupMuscularId" 
-                    v-model="ejercicioEditado.gruposMusculares"
-                    class="checkbox-input"
-                    :disabled="ejercicioEditado.gruposMusculares.length >= 5 && !ejercicioEditado.gruposMusculares.includes(grupo.GrupMuscularId)"
-                  >
-                  <label :for="'edit-grupo-' + grupo.GrupMuscularId" class="checkbox-label">{{ grupo.Nom }}</label>
-                </div>
-              </div>
-              <small class="select-help" v-if="ejercicioEditado.gruposMusculares.length === 0">
-                Debes seleccionar al menos un grupo muscular
-              </small>
-              <small class="select-help" v-else-if="ejercicioEditado.gruposMusculares.length === 5">
-                Has alcanzado el máximo de 5 grupos musculares
-              </small>
-              <small class="select-help" v-else>
-                Has seleccionado {{ ejercicioEditado.gruposMusculares.length }} de 5 grupos musculares posibles
-              </small>
-            </div>
-          </div>
-          
-          <div class="ejercicio-actions">
-            <template v-if="editandoEjercicio?.ExerciciId !== ejercicio.ExerciciId">
-              <button class="btn btn-secondary btn-sm" @click="iniciarEdicionEjercicio(ejercicio)">Editar</button>
-            </template>
-            <template v-else>
-              <button class="btn btn-primary btn-sm" @click="guardarEdicionEjercicio">Guardar</button>
-              <button class="btn btn-secondary btn-sm" @click="cancelarEdicionEjercicio">Cancelar</button>
-            </template>
-          </div>
-        </div>
-      </div>
+      <h2 class="section-title" aria-live="polite">
+        {{ ejerciciosFiltrados.length }} {{ ejerciciosFiltrados.length === 1 ? 'ejercicio' : 'ejercicios' }}
+        <template v-if="filtroGrupoMuscular !== null"> · {{ getNombreGrupoMuscular(filtroGrupoMuscular) }}</template>
+      </h2>
+
+      <p v-if="ejerciciosFiltrados.length === 0" class="sin-resultados">Ningún ejercicio coincide con la búsqueda.</p>
+
+      <FilaEjercicio
+        v-for="ejercicio in ejerciciosFiltrados"
+        :key="ejercicio.ExerciciId"
+        :nombre="ejercicio.Nom"
+        :pr="ejercicio.PR"
+        :grupos="nombresGrupos(ejercicio)"
+        @abrir="verDetalleEjercicio(ejercicio.ExerciciId)"
+        @editar="iniciarEdicionEjercicio(ejercicio)"
+      />
     </div>
+
+    <!-- Nuevo ejercicio -->
+    <BottomSheet :open="showForm" title="Nuevo ejercicio" @close="cerrarForm">
+      <form @submit.prevent="newExercici" class="hoja-form">
+        <div class="form-group">
+          <label for="nombre">Nombre</label>
+          <input type="text" id="nombre" v-model="nuevoEjercicio.nombre" class="form-control" required placeholder="Ej: Press de banca" autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label>Grupos musculares</label>
+          <GrupoChips v-model="nuevoEjercicio.gruposMusculares" :grupos="gruposMusculares" />
+        </div>
+        <div v-if="formError" class="error-message" role="alert">{{ formError }}</div>
+        <div class="form-actions">
+          <button type="button" @click="cerrarForm" class="btn btn-secondary">Cancelar</button>
+          <button type="submit" class="btn btn-primary" :disabled="guardando">{{ guardando ? 'Guardando...' : 'Guardar ejercicio' }}</button>
+        </div>
+      </form>
+    </BottomSheet>
+
+    <!-- Editar ejercicio -->
+    <BottomSheet :open="editandoEjercicio !== null" title="Editar ejercicio" @close="cancelarEdicionEjercicio">
+      <form @submit.prevent="guardarEdicionEjercicio" class="hoja-form">
+        <div class="form-group">
+          <label for="edit-nombre">Nombre</label>
+          <input type="text" id="edit-nombre" v-model="ejercicioEditado.nombre" class="form-control" required placeholder="Nombre del ejercicio" autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label>Grupos musculares</label>
+          <GrupoChips v-model="ejercicioEditado.gruposMusculares" :grupos="gruposMusculares" />
+        </div>
+        <div v-if="formError" class="error-message" role="alert">{{ formError }}</div>
+        <div class="form-actions">
+          <button type="button" @click="cancelarEdicionEjercicio" class="btn btn-secondary">Cancelar</button>
+          <button type="submit" class="btn btn-primary" :disabled="guardando">{{ guardando ? 'Guardando...' : 'Guardar' }}</button>
+        </div>
+      </form>
+    </BottomSheet>
   </div>
 </template>
 
 <style scoped>
-.list-card-body h3 {
-  margin: 0 0 0.35rem;
-  font-size: 1.05rem;
-  font-weight: 700;
-}
-
-.grupos-musculares {
+.marcador {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-}
-
-.ejercicio-actions {
-  display: flex;
-  gap: 0.5rem;
-  flex-shrink: 0;
-}
-
-.resultados-filtro {
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
   margin-bottom: 1rem;
-  color: var(--text-muted);
-  font-size: 0.875rem;
+}
+.marcador h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 7vw, 2.2rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
 }
 
-.edit-mode {
+.barra {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  margin: 0 calc(-1 * var(--space-page-x)) 1rem;
+  padding: 0.5rem var(--space-page-x) 0.6rem;
+  background: var(--n0);
+  border-bottom: 1px solid var(--n3);
+}
+
+.busqueda { position: relative; display: flex; align-items: center; margin-bottom: 0.6rem; }
+.busqueda-ico { position: absolute; left: 0.8rem; color: var(--n6); pointer-events: none; }
+.busqueda-input {
   width: 100%;
+  min-height: var(--touch-min);
+  padding: 0 2.9rem 0 2.5rem;
+  background: var(--n1);
+  border: 1px solid var(--n4);
+  border-radius: var(--radius-md);
+  color: var(--n8);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  box-sizing: border-box;
 }
-
-.list-card:has(.edit-mode) {
-  flex-direction: column;
-  align-items: stretch;
-  cursor: default;
-}
-
-.list-card:has(.edit-mode) .ejercicio-actions {
-  align-self: flex-end;
-  margin-top: 0.75rem;
-}
-
-.list-card-body:not(.edit-mode) {
+.busqueda-input::placeholder { color: var(--n6); }
+.busqueda-input:focus-visible { outline: 2px solid var(--led-amber); outline-offset: 1px; }
+.busqueda-x {
+  position: absolute;
+  right: 0;
+  width: var(--touch-min);
+  height: var(--touch-min);
+  display: grid;
+  place-items: center;
+  background: none;
+  border: none;
+  color: var(--n7);
   cursor: pointer;
 }
+.busqueda-x:focus-visible { outline: 2px solid var(--judge-white); outline-offset: -4px; }
 
-.edit-mode .grupos-seleccion {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 0.5rem;
-}
-
+/* Una sola fila desplazable */
 .filtro-grupos {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 calc(-1 * var(--space-page-x));
+  padding: 0 var(--space-page-x);
+}
+.filtro-grupos::-webkit-scrollbar { display: none; }
+.filtro {
+  flex-shrink: 0;
+  min-height: var(--touch-min);
+  padding: 0 0.9rem;
+  background: var(--n1);
+  border: 1px solid var(--n4);
+  border-radius: var(--radius-sm);
+  color: var(--n7);
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.filtro:hover:not(.active) { background: var(--n2); color: var(--n8); }
+.filtro.active { background: var(--led-amber); border-color: var(--led-amber); color: var(--on-amber); }
+.filtro:focus-visible { outline: 2px solid var(--judge-white); outline-offset: 2px; }
+
+.sk {
+  height: 4rem;
+  margin-bottom: 0.5rem;
+  background: var(--n1);
+  border: 1px solid var(--n3);
+  border-radius: var(--radius-lg);
+  animation: pulso 1.4s ease-in-out infinite;
+}
+@keyframes pulso { 50% { opacity: 0.5; } }
+@media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
 }
 
-/* En móvil, una sola fila desplazable: la lista de ejercicios queda en la primera pantalla */
-@media (max-width: 640px) {
-  .filtro-grupos {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
-    margin: 0 calc(-1 * var(--space-page-x));
-    padding: 0 var(--space-page-x) 0.25rem;
-    mask-image: linear-gradient(90deg, #000 85%, transparent);
-  }
-
-  .filtro-grupos::-webkit-scrollbar {
-    display: none;
-  }
-
-  .filtro-grupos .chip-filter {
-    flex-shrink: 0;
-  }
-}
-
-.search-row {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  align-items: center;
-}
-
-.search-row .form-control {
-  flex: 1;
-}
+.sin-resultados { color: var(--n6); text-align: center; padding: 1.5rem 0; margin: 0; }
+.hoja-form .form-actions { margin-top: 1.25rem; }
 </style>

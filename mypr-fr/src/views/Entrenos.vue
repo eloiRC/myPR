@@ -8,6 +8,11 @@ import { apiFetch } from '../services/api';
 import { eliminarConDeshacer } from '../composables/useDeshacer';
 import { applyChartTheme, roundedBarDataset, roundedChartOptions } from '../utils/chartTheme';
 
+import { ChevronLeft, ChevronRight, Plus, Dumbbell, ExternalLink, Trash2 } from 'lucide-vue-next';
+import SegDisplay from '../components/SegDisplay.vue';
+import BottomSheet from '../components/BottomSheet.vue';
+import FilaEntreno from '../components/listas/FilaEntreno.vue';
+
 const authStore = useAuthStore();
 
 // Registrar los componentes necesarios de Chart.js
@@ -199,6 +204,19 @@ const eliminarEntreno = (entrenoId: number) => {
   });
 };
 
+// Menú de acciones de un entreno (hoja inferior)
+const menuEntreno = ref<Entreno | null>(null);
+const abrirDesdeMenu = () => {
+  const e = menuEntreno.value;
+  menuEntreno.value = null;
+  if (e) verDetalleEntreno(e.EntrenoId);
+};
+const eliminarDesdeMenu = () => {
+  const e = menuEntreno.value;
+  menuEntreno.value = null;
+  if (e) eliminarEntreno(e.EntrenoId);
+};
+
 // Inicializar el rango de fechas al montar el componente
 onMounted(() => {
   actualizarRangoFechas('30d');
@@ -206,88 +224,223 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page">
-    <header class="page-header">
-      <h1>Mis entrenos</h1>
-      <div class="page-header-actions">
-        <button @click="irAEjercicios" class="btn btn-secondary" :disabled="isLoading">
-          Mis ejercicios
-        </button>
-        <button @click="crearNuevoEntreno" class="btn btn-primary" :disabled="isLoading">
-          + Nuevo entreno
+  <div class="page entrenos">
+    <header class="marcador">
+      <div class="marcador-top">
+        <h1>Mis entrenos</h1>
+        <button type="button" @click="irAEjercicios" class="btn btn-secondary btn-sm" :disabled="isLoading">
+          <Dumbbell :size="16" aria-hidden="true" /> Ejercicios
         </button>
       </div>
+
+      <div class="switch" role="group" aria-label="Período">
+        <button type="button" class="switch-nav" @click="navegarTiempo('anterior')" :disabled="isLoading" aria-label="Período anterior"><ChevronLeft :size="20" /></button>
+        <button type="button" class="switch-btn" :class="{ active: rangoSeleccionado === '7d' }" :aria-pressed="rangoSeleccionado === '7d'" @click="actualizarRangoFechas('7d', diasDesplazamiento)">7 días</button>
+        <button type="button" class="switch-btn" :class="{ active: rangoSeleccionado === '30d' }" :aria-pressed="rangoSeleccionado === '30d'" @click="actualizarRangoFechas('30d', diasDesplazamiento)">30 días</button>
+        <button type="button" class="switch-btn" :class="{ active: rangoSeleccionado === '90d' }" :aria-pressed="rangoSeleccionado === '90d'" @click="actualizarRangoFechas('90d', diasDesplazamiento)">90 días</button>
+        <button type="button" class="switch-nav" @click="navegarTiempo('siguiente')" :disabled="isLoading || diasDesplazamiento >= 0" aria-label="Período siguiente"><ChevronRight :size="20" /></button>
+      </div>
+
+      <p class="rango" v-if="fechaInicio > 0 && fechaFin > 0">
+        {{ formatDate(fechaInicio) }} <span aria-hidden="true">—</span><span class="sr-only">hasta</span> {{ formatDate(fechaFin) }}
+      </p>
     </header>
-    
-    <div class="segment">
-      <button type="button" class="segment-nav" @click="navegarTiempo('anterior')" :disabled="isLoading" aria-label="Anterior">←</button>
-      <button type="button" class="segment-btn" :class="{ active: rangoSeleccionado === '7d' }" @click="actualizarRangoFechas('7d', diasDesplazamiento)">7 días</button>
-      <button type="button" class="segment-btn" :class="{ active: rangoSeleccionado === '30d' }" @click="actualizarRangoFechas('30d', diasDesplazamiento)">30 días</button>
-      <button type="button" class="segment-btn" :class="{ active: rangoSeleccionado === '90d' }" @click="actualizarRangoFechas('90d', diasDesplazamiento)">90 días</button>
-      <button type="button" class="segment-nav" @click="navegarTiempo('siguiente')" :disabled="isLoading || diasDesplazamiento >= 0" aria-label="Siguiente">→</button>
+
+    <div v-if="isLoading" class="cargando" role="status" aria-live="polite">
+      <div class="sk sk-chart"></div>
+      <div class="sk sk-fila" v-for="n in 3" :key="n"></div>
+      <span class="sr-only">Cargando entrenos...</span>
     </div>
 
-    <p class="caption" v-if="fechaInicio > 0 && fechaFin > 0">
-      Desde: {{ formatDate(fechaInicio) }} - Hasta: {{ formatDate(fechaFin) }}
-    </p>
-    
-    
-    
-    <div v-if="isLoading" class="state-box">
-      <p>Cargando entrenos...</p>
-    </div>
-    
-    <div v-else-if="error" class="state-box error">
+    <div v-else-if="error" class="state-box error" role="alert">
       <p>{{ error }}</p>
       <button @click="loadEntrenos" class="btn">Reintentar</button>
     </div>
-    
-    <div v-else-if="entrenos.length === 0" class="state-box">
-      <p class="no-entrenos-text">
-        No tienes entrenos en el período seleccionado.
-      </p>
+
+    <div v-else-if="entrenos.length === 0" class="vacio">
+      <SegDisplay value="0.0" tone="muted" label="Sin carga en el período" class="vacio-seg" />
+      <p class="vacio-texto">Sin entrenos en este período.</p>
       <button @click="crearNuevoEntreno" class="btn btn-primary btn-lg">Crear tu primer entreno</button>
     </div>
-    
+
     <div v-else>
-      <!-- Gráfica de carga de entrenamiento -->
       <div class="chart-panel">
-        <h2>Carga de entrenamiento</h2>
+        <h2>Carga de entrenamiento · t</h2>
         <div class="chart-wrap">
           <Bar :data="chartData" :options="chartOptions" />
         </div>
       </div>
-      
+
+      <h2 class="section-title">{{ entrenosOrdenados.length }} {{ entrenosOrdenados.length === 1 ? 'entreno' : 'entrenos' }}</h2>
       <div class="entrenos-list">
-        <div 
-          v-for="entreno in entrenosOrdenados" 
-          :key="entreno.EntrenoId" 
-          class="list-card"
-          @click="verDetalleEntreno(entreno.EntrenoId)"
-        >
-          <div class="list-card-body">
-            <h3>{{ entreno.Nom }}</h3>
-            <p class="list-card-meta">{{ formatDate(entreno.Data) }}</p>
-            <p class="carga">Peso total: <strong class="list-card-highlight">{{ entreno.CargaTotal }} t</strong></p>
-          </div>
-          <div class="entreno-actions">
-            <button class="btn btn-quiet-danger btn-sm" @click.stop="eliminarEntreno(entreno.EntrenoId)" :disabled="isLoading" :aria-label="`Eliminar ${entreno.Nom}`">Eliminar</button>
-          </div>
-          
-        </div>
+        <FilaEntreno
+          v-for="entreno in entrenosOrdenados"
+          :key="entreno.EntrenoId"
+          :nombre="entreno.Nom"
+          :fecha="formatDate(entreno.Data)"
+          :carga-t="entreno.CargaTotal"
+          @abrir="verDetalleEntreno(entreno.EntrenoId)"
+          @menu="menuEntreno = entreno"
+        />
       </div>
     </div>
+
+    <!-- Acción principal al alcance del pulgar, sobre la barra inferior -->
+    <button
+      v-if="!isLoading && entrenos.length > 0"
+      type="button"
+      class="btn btn-primary btn-lg fab"
+      :disabled="isLoading"
+      @click="crearNuevoEntreno"
+    >
+      <Plus :size="20" aria-hidden="true" /> Nuevo entreno
+    </button>
+
+    <BottomSheet :open="menuEntreno !== null" :title="menuEntreno?.Nom" @close="menuEntreno = null">
+      <div class="acciones" v-if="menuEntreno">
+        <button type="button" class="accion" @click="abrirDesdeMenu">
+          <ExternalLink :size="20" aria-hidden="true" /> Abrir entreno
+        </button>
+        <button type="button" class="accion accion-peligro" @click="eliminarDesdeMenu">
+          <Trash2 :size="20" aria-hidden="true" /> Eliminar entreno
+        </button>
+      </div>
+    </BottomSheet>
   </div>
 </template>
 
 <style scoped>
-.entreno-actions {
-  flex-shrink: 0;
+.entrenos { padding-bottom: calc(var(--bottom-nav-h) + 5.5rem); }
+
+.marcador {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--n3);
+}
+.marcador-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.marcador h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 7vw, 2.2rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
 }
 
-.carga {
-  font-size: 0.9rem;
-  margin: 0.35rem 0 0;
-  color: var(--text-secondary);
+/* Interruptor de hardware: carriles ranurados, la posición activa se enciende */
+.switch {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  padding: 3px;
+  background: var(--n0);
+  border: 1px solid var(--n4);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
 }
+.switch-btn, .switch-nav {
+  min-height: var(--touch-min);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--n6);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.switch-btn { flex: 1; white-space: nowrap; }
+.switch-nav { width: var(--touch-min); display: grid; place-items: center; flex-shrink: 0; }
+.switch-btn:hover:not(.active), .switch-nav:hover:not(:disabled) { color: var(--n8); background: var(--n2); }
+.switch-btn.active {
+  background: var(--n3);
+  border-color: var(--led-amber);
+  color: var(--led-amber);
+  box-shadow: var(--bevel);
+}
+.switch-nav:disabled { opacity: 0.3; cursor: not-allowed; }
+.switch-btn:focus-visible, .switch-nav:focus-visible { outline: 2px solid var(--judge-white); outline-offset: 1px; }
+
+.rango {
+  margin: 0.6rem 0 0;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--n6);
+  font-variant-numeric: tabular-nums;
+}
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+.fab {
+  position: fixed;
+  right: var(--space-page-x);
+  bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + 0.75rem);
+  z-index: 40;
+  box-shadow: var(--shadow-lg);
+}
+@media (min-width: 700px) {
+  .fab { right: calc(50% - var(--max-content) / 2 + var(--space-page-x)); }
+}
+
+/* Carga: esqueletos con la forma de lo que viene */
+.sk {
+  background: var(--n1);
+  border: 1px solid var(--n3);
+  border-radius: var(--radius-lg);
+  animation: pulso 1.4s ease-in-out infinite;
+}
+.sk-chart { height: 200px; margin-bottom: 1.25rem; }
+.sk-fila { height: 4rem; margin-bottom: 0.5rem; }
+@keyframes pulso { 50% { opacity: 0.5; } }
+@media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
+
+.vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2.5rem 1rem;
+  background: var(--n1);
+  border: 1px solid var(--n3);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+.vacio-seg { font-size: 3.5rem; }
+.vacio-texto { margin: 0; color: var(--n7); }
+
+.acciones { display: flex; flex-direction: column; gap: 0.5rem; }
+.accion {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 52px;
+  padding: 0 1rem;
+  background: var(--n2);
+  border: 1px solid var(--n3);
+  border-radius: var(--radius-md);
+  color: var(--n8);
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.accion:hover { background: var(--n3); }
+.accion-peligro { color: var(--led-red); }
+.accion:focus-visible { outline: 2px solid var(--judge-white); outline-offset: 2px; }
 </style>
