@@ -90,7 +90,7 @@ export async function updateJobText(db: D1Database, id: string, fullText: string
 }
 
 export async function finishJob(db: D1Database, id: string, workoutUpdated: boolean, finalText?: string) {
-  // Texto final sin bloques internos (json_plan, TITULO_AUTO)
+  // Texto final de la respuesta (el job acumula el texto de todos los turnos del bucle de herramientas)
   if (finalText !== undefined) {
     await db.prepare(`UPDATE ChatJobs SET Status = 'done', WorkoutUpdated = ?, FullText = ? WHERE id = ?`)
       .bind(workoutUpdated ? 1 : 0, finalText, id).run();

@@ -127,6 +127,85 @@ const saveChatbotPrompt = async () => {
   }
 };
 
+// --- Memoria del entrenador ---
+interface CoachMemory {
+  MemoryId: number;
+  Kind: 'lesion' | 'objetivo' | 'preferencia' | 'nota';
+  Text: string;
+  Status: 'activa' | 'resuelta';
+  CreatedAt: number;
+}
+const KIND_LABEL: Record<CoachMemory['Kind'], string> = {
+  lesion: 'Lesión', objetivo: 'Objetivo', preferencia: 'Preferencia', nota: 'Nota'
+};
+const memories = ref<CoachMemory[]>([]);
+const memoriesLoading = ref(true);
+const memoryError = ref('');
+const memoryBusyId = ref<number | null>(null);
+const editingMemoryId = ref<number | null>(null);
+const editingText = ref('');
+
+const activeMemories = computed(() => memories.value.filter(m => m.Status === 'activa'));
+const resolvedMemories = computed(() => memories.value.filter(m => m.Status === 'resuelta'));
+const formatMemoryDate = (ts: number) => new Date(ts * 1000).toLocaleDateString('es-ES');
+
+const loadMemories = async () => {
+  try {
+    memories.value = await apiFetch<CoachMemory[]>('/api/memory/list', {});
+    memoryError.value = '';
+  } catch (err) {
+    console.error('Error loading memories', err);
+    memoryError.value = 'No se pudo cargar la memoria del entrenador.';
+  } finally {
+    memoriesLoading.value = false;
+  }
+};
+
+const startEditMemory = (m: CoachMemory) => {
+  editingMemoryId.value = m.MemoryId;
+  editingText.value = m.Text;
+};
+const cancelEditMemory = () => {
+  editingMemoryId.value = null;
+  editingText.value = '';
+};
+
+const updateMemory = async (m: CoachMemory, patch: { text?: string; status?: CoachMemory['Status'] }) => {
+  try {
+    memoryBusyId.value = m.MemoryId;
+    await apiFetch('/api/memory/update', { memoryId: m.MemoryId, ...patch });
+    if (patch.text !== undefined) m.Text = patch.text;
+    if (patch.status !== undefined) m.Status = patch.status;
+    cancelEditMemory();
+  } catch (err) {
+    console.error('Error updating memory', err);
+    alert('No se pudo actualizar la memoria');
+  } finally {
+    memoryBusyId.value = null;
+  }
+};
+
+const saveMemoryText = (m: CoachMemory) => {
+  const text = editingText.value.trim();
+  if (text.length < 3) return;
+  if (text === m.Text) return cancelEditMemory();
+  updateMemory(m, { text });
+};
+
+const deleteMemory = async (m: CoachMemory) => {
+  if (!confirm('¿Borrar esta memoria? El entrenador dejará de recordarla.')) return;
+  try {
+    memoryBusyId.value = m.MemoryId;
+    await apiFetch('/api/memory/delete', { memoryId: m.MemoryId });
+    memories.value = memories.value.filter(x => x.MemoryId !== m.MemoryId);
+  } catch (err) {
+    console.error('Error deleting memory', err);
+    alert('No se pudo borrar la memoria');
+  } finally {
+    memoryBusyId.value = null;
+  }
+};
+
 // Descargar historial completo de entrenos
 const descargarHistorial = async () => {
   if (!authStore.isAuthenticated) {
@@ -166,6 +245,7 @@ onMounted(() => {
   userInfo.value = authStore.userInfo;
   loadUserPrompt();
   loadGarminStatus();
+  loadMemories();
 });
 </script>
 
@@ -290,6 +370,57 @@ onMounted(() => {
         </button>
       </div>
 
+      <div class="card">
+        <h2>Memoria del entrenador</h2>
+        <p class="description memory-intro">
+          Lo que tu entrenador IA recuerda de ti entre conversaciones. Puedes editarlo, marcarlo como resuelto o borrarlo.
+        </p>
+
+        <p v-if="memoriesLoading" class="description">Cargando...</p>
+        <p v-else-if="memoryError" class="memory-error" role="alert">{{ memoryError }}</p>
+        <p v-else-if="memories.length === 0" class="memory-empty">
+          Aún no hay nada guardado. Cuando le cuentes a tu entrenador una lesión, un objetivo o una preferencia importante, lo recordará aquí.
+        </p>
+
+        <template v-else>
+          <template v-for="grupo in [
+            { titulo: 'Activas', items: activeMemories },
+            { titulo: 'Resueltas', items: resolvedMemories }
+          ]" :key="grupo.titulo">
+            <section v-if="grupo.items.length" class="memory-group">
+              <h3 class="memory-group-title">{{ grupo.titulo }} ({{ grupo.items.length }})</h3>
+              <ul class="memory-list">
+                <li v-for="m in grupo.items" :key="m.MemoryId" class="memory-item" :class="{ resolved: m.Status === 'resuelta' }">
+                  <div class="memory-meta">
+                    <span class="chip">{{ KIND_LABEL[m.Kind] }}</span>
+                    <span class="memory-date">{{ formatMemoryDate(m.CreatedAt) }}</span>
+                  </div>
+
+                  <div v-if="editingMemoryId === m.MemoryId" class="memory-edit">
+                    <label class="sr-only" :for="'mem-' + m.MemoryId">Texto de la memoria</label>
+                    <textarea :id="'mem-' + m.MemoryId" v-model="editingText" class="prompt-input" rows="3" maxlength="500"></textarea>
+                    <div class="memory-actions">
+                      <button class="btn btn-primary btn-sm" :disabled="memoryBusyId === m.MemoryId || editingText.trim().length < 3" @click="saveMemoryText(m)">Guardar</button>
+                      <button class="btn btn-secondary btn-sm" @click="cancelEditMemory">Cancelar</button>
+                    </div>
+                  </div>
+                  <template v-else>
+                    <p class="memory-text">{{ m.Text }}</p>
+                    <div class="memory-actions">
+                      <button class="btn btn-secondary btn-sm" :disabled="memoryBusyId === m.MemoryId" @click="startEditMemory(m)">Editar</button>
+                      <button class="btn btn-secondary btn-sm" :disabled="memoryBusyId === m.MemoryId" @click="updateMemory(m, { status: m.Status === 'activa' ? 'resuelta' : 'activa' })">
+                        {{ m.Status === 'activa' ? 'Marcar resuelta' : 'Reactivar' }}
+                      </button>
+                      <button class="btn btn-quiet-danger btn-sm" :disabled="memoryBusyId === m.MemoryId" @click="deleteMemory(m)">Borrar</button>
+                    </div>
+                  </template>
+                </li>
+              </ul>
+            </section>
+          </template>
+        </template>
+      </div>
+
       <div v-if="error" class="state-box error">
         <p>{{ error }}</p>
       </div>
@@ -298,6 +429,47 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.memory-intro { margin: 0 0 1rem; }
+.memory-empty,
+.memory-error {
+  margin: 0;
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+.memory-error { color: var(--error); }
+.memory-group + .memory-group { margin-top: 1.25rem; }
+.memory-group-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.memory-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.75rem; }
+.memory-item {
+  padding: 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+}
+.memory-item.resolved .memory-text { color: var(--text-muted); }
+.memory-meta { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+.memory-date { font-size: 0.75rem; color: var(--text-muted); }
+.memory-text { margin: 0 0 0.75rem; font-size: 0.9rem; line-height: 1.4; overflow-wrap: anywhere; }
+.memory-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.memory-edit .prompt-input { width: 100%; margin-bottom: 0.5rem; }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
 .rest-row {
   display: flex;
   align-items: center;

@@ -238,5 +238,22 @@ export const chatGPT = z.object({
       GrupMuscular5: z.number().nullable(),
     })).nullish()
   })).nullish(),
-  chatId: z.string().nullish()
+  chatId: z.string().nullish(),
+  // Historial: formato nuevo { role, content } o antiguo de Gemini { role: 'user'|'model', parts: [{ text }] }
+  history: z.array(z.union([
+    z.object({ role: z.enum(['user', 'assistant']), content: z.string() }),
+    z.object({ role: z.enum(['user', 'model']), parts: z.array(z.object({ text: z.string().optional() }).passthrough()) }),
+  ])).nullish()
+})
+
+export const memoryList = z.object({})
+
+export const memoryUpdate = z.object({
+  memoryId: z.number().int().min(1),
+  text: z.string().trim().min(3).max(500).optional(),
+  status: z.enum(['activa', 'resuelta']).optional()
+}).refine(d => d.text !== undefined || d.status !== undefined, { message: 'Indica texto o estado' })
+
+export const memoryDelete = z.object({
+  memoryId: z.number().int().min(1)
 })

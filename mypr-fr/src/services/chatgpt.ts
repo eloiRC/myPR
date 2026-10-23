@@ -6,7 +6,7 @@ interface ChatMessage {
 }
 
 // El historial se guarda por entreno: si fuera global, en un entreno nuevo
-// Gemini vería su propuesta anterior y tendería a repetirla.
+// el coach IA vería su propuesta anterior y tendería a repetirla.
 function keys(scope: string | number = 'global') {
     return {
         history: `chatHistory:${scope}`,
