@@ -13,6 +13,8 @@ Estado a 2026-10-23 (actualizado). Se actualiza al cerrar cada bloque.
 - **Descansos** en 3 niveles, por orden de prioridad: serie → ejercicio → global. En serie y ejercicio, `null` hereda del nivel siguiente y `0` = sin descanso (el temporizador no arranca). Los pone sobre todo la IA, y solo por serie cuando aporta algo. Los ajustes del temporizador se guardan en la cuenta.
 - **Deshacer al borrar** (series, entrenos y memorias): sale al instante y se confirma a los 6 s; sustituye a `confirm()`.
 - **Reordenar series arrastrando en el móvil** (asa ⠿) y **navegación inferior** (Entrenos / Ejercicios / Perfil; «Cerrar sesión» pasó a Perfil).
+- Base de datos movida a Europa: `mypr-eu` (WEUR) en lugar de `mypr` (WNAM, EE. UU.). La antigua se conserva unos días como respaldo antes de borrarla.
+- Chat: generación en Cloudflare Queues, fases en vivo, retomar tras bloqueo, respuestas rápidas, contexto compacto y menos llamadas al modelo (`LLM_THINKING=off`).
 - Eliminada la integración con Garmin: código, workflow, scripts, tablas de D1 (migración 0006) y secretos.
 
 ## Pendiente

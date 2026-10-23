@@ -20,8 +20,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "mypr",
-      "database_id": "63087dd2-d370-47cc-9702-5bde7da4a4c1"
+      "database_name": "mypr-eu",
+      "database_id": "c16a5065-ac2f-4986-a08b-be4de83810aa"
     }
   ],
   // Cola de generación del coach IA: /api/coach encola el job y el consumidor (este mismo Worker) lo ejecuta,
