@@ -95,10 +95,6 @@ export const reorderSerie = z.object({
   newIndex: z.number().min(0)
 })
 
-export const updateUser = z.object({
-  chatbotPrompt: z.string().max(1000).optional()
-})
-
 export const getUser = z.object({})
 
 export const garminCredentialsSave = z.object({
@@ -248,11 +244,19 @@ export const chatGPT = z.object({
 
 export const memoryList = z.object({})
 
+const memoryKind = z.enum(['lesion', 'objetivo', 'preferencia', 'nota'])
+
+export const memoryCreate = z.object({
+  kind: memoryKind,
+  text: z.string().trim().min(3).max(500)
+})
+
 export const memoryUpdate = z.object({
   memoryId: z.number().int().min(1),
+  kind: memoryKind.optional(),
   text: z.string().trim().min(3).max(500).optional(),
   status: z.enum(['activa', 'resuelta']).optional()
-}).refine(d => d.text !== undefined || d.status !== undefined, { message: 'Indica texto o estado' })
+}).refine(d => d.text !== undefined || d.status !== undefined || d.kind !== undefined, { message: 'Indica texto, tipo o estado' })
 
 export const memoryDelete = z.object({
   memoryId: z.number().int().min(1)

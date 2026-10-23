@@ -33,8 +33,6 @@ const onCambiarPersonalizada = (e: Event) => {
 const isLoading = ref(false);
 const error = ref('');
 const userInfo = ref(authStore.userInfo);
-const chatbotPrompt = ref('');
-const isSavingPrompt = ref(false);
 
 // --- Garmin state ---
 const garminEmail = ref('');
@@ -44,16 +42,6 @@ const garminSavedEmail = ref('');
 const garminLastSync = ref('');
 const isSavingGarmin = ref(false);
 const isDeletingGarmin = ref(false);
-
-// Cargar prompt del usuario
-const loadUserPrompt = async () => {
-  try {
-    const data = await apiFetch<{ ChatbotPrompt?: string }>('/api/getUser', {});
-    chatbotPrompt.value = data.ChatbotPrompt || '';
-  } catch (err) {
-    console.error('Error loading user prompt', err);
-  }
-};
 
 // Cargar estado de Garmin
 const loadGarminStatus = async () => {
@@ -113,20 +101,6 @@ const deleteGarmin = async () => {
   }
 };
 
-// Guardar prompt del usuario
-const saveChatbotPrompt = async () => {
-  try {
-    isSavingPrompt.value = true;
-    await apiFetch('/api/updateUser', { chatbotPrompt: chatbotPrompt.value });
-    alert('Preferencias del chatbot guardadas correctamente');
-  } catch (err) {
-    console.error('Error saving prompt', err);
-    alert('Error al guardar las preferencias');
-  } finally {
-    isSavingPrompt.value = false;
-  }
-};
-
 // --- Memoria del entrenador ---
 interface CoachMemory {
   MemoryId: number;
@@ -142,8 +116,12 @@ const memories = ref<CoachMemory[]>([]);
 const memoriesLoading = ref(true);
 const memoryError = ref('');
 const memoryBusyId = ref<number | null>(null);
-const editingMemoryId = ref<number | null>(null);
-const editingText = ref('');
+const KINDS = Object.keys(KIND_LABEL) as CoachMemory['Kind'][];
+
+// Alta manual
+const newKind = ref<CoachMemory['Kind']>('preferencia');
+const newText = ref('');
+const isAddingMemory = ref(false);
 
 const activeMemories = computed(() => memories.value.filter(m => m.Status === 'activa'));
 const resolvedMemories = computed(() => memories.value.filter(m => m.Status === 'resuelta'));
@@ -161,35 +139,61 @@ const loadMemories = async () => {
   }
 };
 
-const startEditMemory = (m: CoachMemory) => {
-  editingMemoryId.value = m.MemoryId;
-  editingText.value = m.Text;
-};
-const cancelEditMemory = () => {
-  editingMemoryId.value = null;
-  editingText.value = '';
-};
+type MemoryPatch = { text?: string; status?: CoachMemory['Status']; kind?: CoachMemory['Kind'] };
 
-const updateMemory = async (m: CoachMemory, patch: { text?: string; status?: CoachMemory['Status'] }) => {
+const updateMemory = async (m: CoachMemory, patch: MemoryPatch) => {
+  const previo = { Text: m.Text, Status: m.Status, Kind: m.Kind };
+  // Optimista: el cambio se ve al instante y se deshace si falla
+  if (patch.text !== undefined) m.Text = patch.text;
+  if (patch.status !== undefined) m.Status = patch.status;
+  if (patch.kind !== undefined) m.Kind = patch.kind;
   try {
     memoryBusyId.value = m.MemoryId;
     await apiFetch('/api/memory/update', { memoryId: m.MemoryId, ...patch });
-    if (patch.text !== undefined) m.Text = patch.text;
-    if (patch.status !== undefined) m.Status = patch.status;
-    cancelEditMemory();
+    memoryError.value = '';
   } catch (err) {
     console.error('Error updating memory', err);
-    alert('No se pudo actualizar la memoria');
+    Object.assign(m, previo);
+    memoryError.value = 'No se pudo guardar el cambio. Inténtalo de nuevo.';
   } finally {
     memoryBusyId.value = null;
   }
 };
 
-const saveMemoryText = (m: CoachMemory) => {
-  const text = editingText.value.trim();
-  if (text.length < 3) return;
-  if (text === m.Text) return cancelEditMemory();
+// El texto se edita directamente: se guarda al salir del campo si ha cambiado
+const onMemoryTextBlur = (m: CoachMemory, ev: Event) => {
+  const el = ev.target as HTMLTextAreaElement;
+  const text = el.value.trim();
+  if (text === m.Text) return;
+  if (text.length < 3) {
+    el.value = m.Text; // demasiado corto: se restaura
+    return;
+  }
   updateMemory(m, { text });
+};
+
+const autoGrow = (ev: Event) => {
+  const el = ev.target as HTMLTextAreaElement;
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+};
+
+const addMemory = async () => {
+  const text = newText.value.trim();
+  if (text.length < 3) return;
+  try {
+    isAddingMemory.value = true;
+    const { memoryId } = await apiFetch<{ memoryId: number }>('/api/memory/create', { kind: newKind.value, text });
+    const now = Math.floor(Date.now() / 1000);
+    memories.value = [{ MemoryId: memoryId, Kind: newKind.value, Text: text, Status: 'activa', CreatedAt: now }, ...memories.value];
+    newText.value = '';
+    memoryError.value = '';
+  } catch (err) {
+    console.error('Error creating memory', err);
+    memoryError.value = 'No se pudo añadir. Inténtalo de nuevo.';
+  } finally {
+    isAddingMemory.value = false;
+  }
 };
 
 const deleteMemory = async (m: CoachMemory) => {
@@ -243,7 +247,6 @@ onMounted(() => {
     router.push('/login');
   }
   userInfo.value = authStore.userInfo;
-  loadUserPrompt();
   loadGarminStatus();
   loadMemories();
 });
@@ -350,36 +353,28 @@ onMounted(() => {
       </div>
 
       <div class="card">
-        <h2>Personalizar el entrenador IA</h2>
-        <p class="description" style="margin-bottom: 1rem;">
-          Define instrucciones específicas para tu entrenador AI (ej: "Tengo una lesión en la espalda", "Quiero priorizar fuerza", "Soy principiante").
-        </p>
-        <textarea 
-          v-model="chatbotPrompt" 
-          class="prompt-input" 
-          placeholder="Escribe aquí tus objetivos, limitaciones o preferencias..."
-          rows="4"
-        ></textarea>
-        <button 
-          @click="saveChatbotPrompt" 
-          class="btn btn-primary btn-save" 
-          :disabled="isSavingPrompt"
-        >
-          <span v-if="isSavingPrompt">Guardando...</span>
-          <span v-else>💾 Guardar preferencias</span>
-        </button>
-      </div>
-
-      <div class="card">
         <h2>Memoria del entrenador</h2>
         <p class="description memory-intro">
-          Lo que tu entrenador IA recuerda de ti entre conversaciones. Puedes editarlo, marcarlo como resuelto o borrarlo.
+          Lo que tu entrenador IA sabe de ti: lesiones, objetivos y preferencias. Él la va actualizando al hablar contigo, y tú puedes cambiar cualquier cosa directamente.
         </p>
 
+        <form class="memory-add" @submit.prevent="addMemory">
+          <label class="sr-only" for="mem-new-kind">Tipo</label>
+          <select id="mem-new-kind" v-model="newKind" class="memory-kind-select">
+            <option v-for="k in KINDS" :key="k" :value="k">{{ KIND_LABEL[k] }}</option>
+          </select>
+          <label class="sr-only" for="mem-new-text">Nuevo recuerdo</label>
+          <textarea id="mem-new-text" v-model="newText" class="prompt-input memory-textarea" rows="2" maxlength="500"
+            placeholder="Ej.: Entreno en casa con mancuernas hasta 24 kg" @input="autoGrow"></textarea>
+          <button type="submit" class="btn btn-primary btn-sm" :disabled="isAddingMemory || newText.trim().length < 3">
+            {{ isAddingMemory ? 'Añadiendo…' : 'Añadir' }}
+          </button>
+        </form>
+
+        <p v-if="memoryError" class="memory-error" role="alert">{{ memoryError }}</p>
         <p v-if="memoriesLoading" class="description">Cargando...</p>
-        <p v-else-if="memoryError" class="memory-error" role="alert">{{ memoryError }}</p>
         <p v-else-if="memories.length === 0" class="memory-empty">
-          Aún no hay nada guardado. Cuando le cuentes a tu entrenador una lesión, un objetivo o una preferencia importante, lo recordará aquí.
+          Aún no hay nada guardado. Añádelo arriba o cuéntaselo al entrenador en el chat.
         </p>
 
         <template v-else>
@@ -392,28 +387,26 @@ onMounted(() => {
               <ul class="memory-list">
                 <li v-for="m in grupo.items" :key="m.MemoryId" class="memory-item" :class="{ resolved: m.Status === 'resuelta' }">
                   <div class="memory-meta">
-                    <span class="chip">{{ KIND_LABEL[m.Kind] }}</span>
+                    <label class="sr-only" :for="'mem-kind-' + m.MemoryId">Tipo</label>
+                    <select :id="'mem-kind-' + m.MemoryId" class="memory-kind-select chip" :value="m.Kind"
+                      :disabled="memoryBusyId === m.MemoryId"
+                      @change="updateMemory(m, { kind: ($event.target as HTMLSelectElement).value as CoachMemory['Kind'] })">
+                      <option v-for="k in KINDS" :key="k" :value="k">{{ KIND_LABEL[k] }}</option>
+                    </select>
                     <span class="memory-date">{{ formatMemoryDate(m.CreatedAt) }}</span>
+                    <span v-if="memoryBusyId === m.MemoryId" class="memory-saving" aria-live="polite">Guardando…</span>
                   </div>
 
-                  <div v-if="editingMemoryId === m.MemoryId" class="memory-edit">
-                    <label class="sr-only" :for="'mem-' + m.MemoryId">Texto de la memoria</label>
-                    <textarea :id="'mem-' + m.MemoryId" v-model="editingText" class="prompt-input" rows="3" maxlength="500"></textarea>
-                    <div class="memory-actions">
-                      <button class="btn btn-primary btn-sm" :disabled="memoryBusyId === m.MemoryId || editingText.trim().length < 3" @click="saveMemoryText(m)">Guardar</button>
-                      <button class="btn btn-secondary btn-sm" @click="cancelEditMemory">Cancelar</button>
-                    </div>
+                  <label class="sr-only" :for="'mem-' + m.MemoryId">Texto de la memoria</label>
+                  <textarea :id="'mem-' + m.MemoryId" class="memory-text memory-textarea" rows="1" maxlength="500"
+                    :value="m.Text" @focus="autoGrow" @input="autoGrow" @blur="onMemoryTextBlur(m, $event)"></textarea>
+
+                  <div class="memory-actions">
+                    <button class="btn btn-secondary btn-sm" :disabled="memoryBusyId === m.MemoryId" @click="updateMemory(m, { status: m.Status === 'activa' ? 'resuelta' : 'activa' })">
+                      {{ m.Status === 'activa' ? 'Marcar resuelta' : 'Reactivar' }}
+                    </button>
+                    <button class="btn btn-quiet-danger btn-sm" :disabled="memoryBusyId === m.MemoryId" @click="deleteMemory(m)">Borrar</button>
                   </div>
-                  <template v-else>
-                    <p class="memory-text">{{ m.Text }}</p>
-                    <div class="memory-actions">
-                      <button class="btn btn-secondary btn-sm" :disabled="memoryBusyId === m.MemoryId" @click="startEditMemory(m)">Editar</button>
-                      <button class="btn btn-secondary btn-sm" :disabled="memoryBusyId === m.MemoryId" @click="updateMemory(m, { status: m.Status === 'activa' ? 'resuelta' : 'activa' })">
-                        {{ m.Status === 'activa' ? 'Marcar resuelta' : 'Reactivar' }}
-                      </button>
-                      <button class="btn btn-quiet-danger btn-sm" :disabled="memoryBusyId === m.MemoryId" @click="deleteMemory(m)">Borrar</button>
-                    </div>
-                  </template>
                 </li>
               </ul>
             </section>
@@ -461,7 +454,55 @@ onMounted(() => {
 .memory-date { font-size: 0.75rem; color: var(--text-muted); }
 .memory-text { margin: 0 0 0.75rem; font-size: 0.9rem; line-height: 1.4; overflow-wrap: anywhere; }
 .memory-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.memory-edit .prompt-input { width: 100%; margin-bottom: 0.5rem; }
+.memory-add {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.memory-add .memory-textarea { grid-column: 1 / -1; }
+.memory-add .btn { grid-column: 1 / -1; justify-self: end; }
+.memory-kind-select {
+  min-height: 32px;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+select.memory-kind-select.chip { color: var(--accent-primary); }
+.memory-saving { font-size: 0.75rem; color: var(--text-muted); margin-left: auto; }
+/* El texto de cada memoria es un campo editable que parece texto hasta que lo tocas */
+textarea.memory-text {
+  display: block;
+  width: 100%;
+  resize: none;
+  overflow: hidden;
+  padding: 0.5rem 0.625rem;
+  margin: 0 0 0.75rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  transition: border-color 0.2s, background 0.2s;
+}
+textarea.memory-text:hover { border-color: var(--border); }
+textarea.memory-text:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  background: var(--bg-primary);
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.2);
+}
+@media (max-width: 640px) {
+  textarea.memory-text, .memory-add .memory-textarea { font-size: 16px; }
+}
 .sr-only {
   position: absolute;
   width: 1px;

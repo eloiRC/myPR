@@ -68,7 +68,6 @@ export interface VolatileInput {
   memories: MemoryRow[];
   muscleGroups: { GrupMuscularId: number; Nom: string }[];
   analysisText: string;
-  userPrompt?: string | null;
 }
 
 export function renderMuscleGroupCatalog(groups: { GrupMuscularId: number; Nom: string }[]): string {
@@ -77,8 +76,7 @@ export function renderMuscleGroupCatalog(groups: { GrupMuscularId: number; Nom: 
 
 /** Contexto variable por petición (va DESPUÉS del breakpoint de caché). */
 export function buildVolatileContext(v: VolatileInput): string {
-  const custom = v.userPrompt?.trim() ? `INSTRUCCIONES PERSONALIZADAS DEL USUARIO:\n${v.userPrompt.trim()}\n\n` : '';
-  return `${custom}SITUACIÓN ACTUAL:
+  return `SITUACIÓN ACTUAL:
 - Fecha de hoy: ${v.dateLabel}
 - Entrenando: ${v.entreno.Nom} (ID: ${v.entreno.EntrenoId})
 - Nombre automático: ${AUTO_NAME_REGEX.test(v.entreno.Nom) ? 'Sí (el usuario no lo ha personalizado)' : 'No (el usuario ya lo personalizó)'}

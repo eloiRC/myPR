@@ -3,7 +3,7 @@ import { logger } from 'hono/logger'
 import { zValidator } from '@hono/zod-validator'
 import { HTTPException } from 'hono/http-exception'
 import { cors } from 'hono/cors'
-import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars, getExercici, getPesosHistorial, nouEntreno, editEntreno, getCargaHistorial, chatGPT, updateUser, getUser, deleteEntreno, reorderSerie, garminCredentialsSave, garminCredentialsDelete, garminRecovery, garminActivity, toggleSerieCompletada, chatStatus, memoryList, memoryUpdate, memoryDelete } from './schema'
+import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars, getExercici, getPesosHistorial, nouEntreno, editEntreno, getCargaHistorial, chatGPT, getUser, deleteEntreno, reorderSerie, garminCredentialsSave, garminCredentialsDelete, garminRecovery, garminActivity, toggleSerieCompletada, chatStatus, memoryList, memoryCreate, memoryUpdate, memoryDelete } from './schema'
 import { hashPassword, verifyPassword, generateJWT, verifyJWT } from './jwt'
 import { encrypt, decrypt } from './crypto'
 import { createProvider, formatUsage } from './llm'
@@ -11,7 +11,7 @@ import { runToolLoop } from './llm/loop'
 import { convertHistory } from './llm/history'
 import { executeTool, TOOL_DEFS, type ToolContext } from './coachTools'
 import { COACH_PERSONA, buildVolatileContext } from './coachPrompt'
-import { listActiveMemories, listAllMemories, updateMemory as updateCoachMemory, deleteMemory as deleteCoachMemory } from './coachMemory'
+import { listActiveMemories, listAllMemories, insertMemory, updateMemory as updateCoachMemory, deleteMemory as deleteCoachMemory } from './coachMemory'
 import { createOrGetJob, getJob, updateJobText, finishJob, failJob, normalizeRequestId, shouldFlush } from './chatJobs'
 import { analyzeTraining, type HistoryRow, type ExerciseRow } from './coachAnalysis'
 
@@ -581,7 +581,7 @@ app.post('/login', zValidator('json', login), async (c) => {
 app.post('/api/getUser', zValidator('json', getUser), async (c) => {
   const userId = await c.get('jwtPayload').UserId;
   try {
-    const user = await c.env.DB.prepare('SELECT Email, UserId, ChatbotPrompt FROM Users WHERE UserId = ?').bind(userId).first();
+    const user = await c.env.DB.prepare('SELECT Email, UserId FROM Users WHERE UserId = ?').bind(userId).first();
     if (!user) {
       throw new HTTPException(404, { message: 'User not found' });
     }
@@ -591,17 +591,6 @@ app.post('/api/getUser', zValidator('json', getUser), async (c) => {
   }
 });
 
-app.post('/api/updateUser', zValidator('json', updateUser), async (c) => {
-  const { chatbotPrompt } = await c.req.json();
-  const userId = await c.get('jwtPayload').UserId;
-
-  try {
-    await c.env.DB.prepare('UPDATE Users SET ChatbotPrompt = ? WHERE UserId = ?').bind(chatbotPrompt, userId).run();
-    return c.json({ message: 'User updated successfully' });
-  } catch (error) {
-    throw new HTTPException(500, { message: 'Error updating user' });
-  }
-});
 
 
 // ---- Memoria del entrenador IA (JWT, siempre filtrada por usuario) ----
@@ -616,11 +605,24 @@ app.post('/api/memory/list', zValidator('json', memoryList), async (c) => {
   }
 });
 
-app.post('/api/memory/update', zValidator('json', memoryUpdate), async (c) => {
-  const { memoryId, text, status } = await c.req.json();
+// Alta manual desde Ajustes (la IA usa la herramienta save_memory)
+app.post('/api/memory/create', zValidator('json', memoryCreate), async (c) => {
+  const { kind, text } = await c.req.json();
   const userId = await c.get('jwtPayload').UserId;
   try {
-    const done = await updateCoachMemory(c.env.DB, userId, memoryId, { text, status });
+    const memoryId = await insertMemory(c.env.DB, userId, kind, text);
+    return c.json({ memoryId });
+  } catch (error) {
+    console.error('memory/create error:', error);
+    throw new HTTPException(500, { message: 'error sql query' });
+  }
+});
+
+app.post('/api/memory/update', zValidator('json', memoryUpdate), async (c) => {
+  const { memoryId, kind, text, status } = await c.req.json();
+  const userId = await c.get('jwtPayload').UserId;
+  try {
+    const done = await updateCoachMemory(c.env.DB, userId, memoryId, { text, status, kind });
     if (!done) throw new HTTPException(404, { message: 'Memoria no encontrada' });
     return c.json({ message: 'Memoria actualizada' });
   } catch (error) {
@@ -668,11 +670,10 @@ async function procesarChatJob(jobId: string, userId: number, message: string, c
     const provider = createProvider(c.env);
 
     const entrenoId = Number(currentTraining.entreno.EntrenoId);
-    const [entreno, coachData, seriesCurrentTraining, user, memories] = await Promise.all([
+    const [entreno, coachData, seriesCurrentTraining, memories] = await Promise.all([
       c.env.DB.prepare('SELECT EntrenoId, Nom FROM Entreno WHERE EntrenoId = ? AND UserId = ?').bind(entrenoId, userId).first(),
       getCoachData(userId, entrenoId, c),
       getFullSeriesListFromTraining(entrenoId, userId, c),
-      c.env.DB.prepare('SELECT ChatbotPrompt FROM Users WHERE UserId = ?').bind(userId).first(),
       listActiveMemories(c.env.DB, userId),
     ]);
     if (!entreno) throw new Error('Entreno no encontrado');
@@ -688,7 +689,6 @@ async function procesarChatJob(jobId: string, userId: number, message: string, c
       memories,
       muscleGroups: coachData.muscleGroups,
       analysisText: analysis.text,
-      userPrompt: user?.ChatbotPrompt,
     });
 
     const toolCtx: ToolContext = {

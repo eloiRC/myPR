@@ -49,13 +49,13 @@ describe('prompt estable vs volátil', () => {
     const v = buildVolatileContext({
       dateLabel: '23/10/2026', nowSec: NOW, entreno: { EntrenoId: 5, Nom: 'Entreno #3' }, seriesToday: '[]',
       memories: [mem({ MemoryId: 2, Kind: 'lesion', Text: 'Rodilla' })],
-      muscleGroups: [{ GrupMuscularId: 4, Nom: 'Pecho' }], analysisText: 'ANALISIS', userPrompt: 'Háblame de tú',
+      muscleGroups: [{ GrupMuscularId: 4, Nom: 'Pecho' }], analysisText: 'ANALISIS',
     });
     expect(v).toContain('23/10/2026');
     expect(v).toContain('MEMORIA DEL USUARIO');
     expect(v).toContain('- 4: Pecho');
     expect(v).toContain('ANALISIS');
-    expect(v).toContain('INSTRUCCIONES PERSONALIZADAS DEL USUARIO');
+    expect(v).not.toContain('INSTRUCCIONES PERSONALIZADAS');
     expect(v).toContain('Nombre automático: Sí');
   });
 });

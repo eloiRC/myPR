@@ -61,11 +61,11 @@ export async function insertMemory(db: D1Database, userId: number, kind: MemoryK
 }
 
 /** Actualiza texto y/o estado. Devuelve false si la memoria no existe o no es del usuario. */
-export async function updateMemory(db: D1Database, userId: number, id: number, patch: { text?: string; status?: MemoryStatus }): Promise<boolean> {
+export async function updateMemory(db: D1Database, userId: number, id: number, patch: { text?: string; status?: MemoryStatus; kind?: MemoryKind }): Promise<boolean> {
   const now = Math.floor(Date.now() / 1000);
   const res = await db.prepare(
-    `UPDATE CoachMemory SET Text = COALESCE(?, Text), Status = COALESCE(?, Status), UpdatedAt = ? WHERE MemoryId = ? AND UserId = ?`
-  ).bind(patch.text ?? null, patch.status ?? null, now, id, userId).run();
+    `UPDATE CoachMemory SET Text = COALESCE(?, Text), Status = COALESCE(?, Status), Kind = COALESCE(?, Kind), UpdatedAt = ? WHERE MemoryId = ? AND UserId = ?`
+  ).bind(patch.text ?? null, patch.status ?? null, patch.kind ?? null, now, id, userId).run();
   return (res.meta.changes ?? 0) > 0;
 }
 
