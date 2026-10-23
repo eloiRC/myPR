@@ -5,6 +5,7 @@ import { useAuthStore } from '../stores/auth';
 import { Bar } from 'vue-chartjs';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { apiFetch } from '../services/api';
+import { eliminarConDeshacer } from '../composables/useDeshacer';
 import { applyChartTheme, roundedBarDataset, roundedChartOptions } from '../utils/chartTheme';
 
 const authStore = useAuthStore();
@@ -173,21 +174,30 @@ const crearNuevoEntreno = async () => {
   }
 };
 
-// Eliminar un entreno completo (con confirmación)
-const eliminarEntreno = async (entrenoId: number) => {
-  if (!confirm('¿Estás seguro de eliminar este entreno? Se borrarán todas sus series.')) return;
-  try {
-    isLoading.value = true;
-    await apiFetch('/api/deleteEntreno', { entrenoId });
-    // Eliminar de la lista local sin recargar
-    entrenos.value = entrenos.value.filter(e => e.EntrenoId !== entrenoId);
-  } catch (err: any) {
-    error.value = err.message || 'Error al eliminar entreno';
-    console.error('Error al eliminar entreno:', err);
-  } finally {
-    isLoading.value = false;
-  }
-}
+// Eliminar un entreno completo (con opción de deshacer unos segundos)
+const eliminarEntreno = (entrenoId: number) => {
+  const idx = entrenos.value.findIndex(e => e.EntrenoId === entrenoId);
+  const entreno = entrenos.value[idx];
+  if (!entreno) return;
+  eliminarConDeshacer({
+    mensaje: 'Entreno eliminado',
+    aplicar: () => { entrenos.value = entrenos.value.filter(e => e.EntrenoId !== entrenoId); },
+    revertir: () => {
+      if (entrenos.value.some(e => e.EntrenoId === entrenoId)) return;
+      const copia = [...entrenos.value];
+      copia.splice(Math.min(idx, copia.length), 0, entreno);
+      entrenos.value = copia;
+    },
+    confirmar: async () => {
+      try {
+        await apiFetch('/api/deleteEntreno', { entrenoId });
+      } catch (err: any) {
+        error.value = err.message || 'Error al eliminar entreno';
+        throw err;
+      }
+    },
+  });
+};
 
 // Inicializar el rango de fechas al montar el componente
 onMounted(() => {

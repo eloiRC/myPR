@@ -9,6 +9,7 @@ import Chatbot from '../components/Chatbot.vue';
 import SerieForm from '../components/SerieForm.vue';
 import SerieItem from '../components/SerieItem.vue';
 import RestTimer from '../components/RestTimer.vue';
+import { eliminarConDeshacer } from '../composables/useDeshacer';
 import { useRestTimer, textoDescanso } from '../composables/useRestTimer';
 
 const authStore = useAuthStore();
@@ -409,20 +410,11 @@ const guardarEdicionCard = async (valores: { ejercicioId: number; kg: number; re
   }
 };
 
-const eliminarCard = async () => {
+const eliminarCard = () => {
   if (!serieActual.value) return;
-  if (!confirm('¿Eliminar esta serie?')) return;
-  try {
-    const data = await apiFetch<any>('/api/deleteSerie', { serieId: serieActual.value.SerieId });
-    const deletedId = serieActual.value.SerieId;
-    onSerieDeleted({ data, serieId: deletedId, entrenoId: serieActual.value.EntrenoId, exerciciId: serieActual.value.ExerciciId, carga: serieActual.value.Carga });
-    completadasMap.value = { ...completadasMap.value };
-    delete completadasMap.value[deletedId];
-    if (serieActualIdx.value >= seriesCardOrder.value.length - 1 && serieActualIdx.value > 0) {
-      serieActualIdx.value--;
-    }
-  } catch {
-    alertWindow('Error al eliminar');
+  eliminarSerie(serieActual.value);
+  if (serieActualIdx.value >= seriesCardOrder.value.length && serieActualIdx.value > 0) {
+    serieActualIdx.value--;
   }
 };
 
@@ -578,28 +570,33 @@ const onSerieUpdated = (payload: any) => {
   if (data?.newPr) celebrarPr(exerciciId, kg, reps);
 };
 
-const onSerieDeleted = (payload: any) => {
-  // Eliminar localmente y actualizar totales/PRs sin recargar
-  const { data, serieId, carga } = payload;
-  alertWindow('¡Serie eliminada!');
-
-  // Actualizar total del entreno (usar valor del servidor si está, si no, restar localmente)
-  if (entreno.value) {
-    if (data?.cargaTotal !== undefined) {
-      entreno.value.CargaTotal = parseFloat((data.cargaTotal / 1000).toFixed(2));
-    } else if (typeof carga === 'number') {
-      const nuevaCargaKg = Math.max(0, (entreno.value.CargaTotal * 1000) - carga);
-      entreno.value.CargaTotal = parseFloat((nuevaCargaKg / 1000).toFixed(2));
-    }
-  }
-
-  // Quitar serie
+// Borra una serie con opción de deshacer: sale ya de la pantalla y el borrado real se confirma tras unos segundos
+const eliminarSerie = (serie: Serie) => {
+  const serieId = serie.SerieId;
   const idx = series.value.findIndex(s => s.SerieId === serieId);
-  if (idx !== -1) {
-    series.value.splice(idx, 1);
-  }
-
-
+  if (idx === -1) return;
+  const ajustarTotal = (deltaKg: number) => {
+    if (!entreno.value) return;
+    entreno.value.CargaTotal = parseFloat(Math.max(0, entreno.value.CargaTotal + deltaKg / 1000).toFixed(2));
+  };
+  eliminarConDeshacer({
+    mensaje: 'Serie eliminada',
+    aplicar: () => {
+      series.value.splice(idx, 1);
+      ajustarTotal(-(serie.Carga || 0));
+    },
+    revertir: () => {
+      if (series.value.some(s => s.SerieId === serieId)) return;
+      series.value.splice(Math.min(idx, series.value.length), 0, serie);
+      ajustarTotal((serie.Carga || 0));
+    },
+    confirmar: async () => {
+      const data = await apiFetch<any>('/api/deleteSerie', { serieId });
+      if (entreno.value && data?.cargaTotal !== undefined) {
+        entreno.value.CargaTotal = parseFloat((data.cargaTotal / 1000).toFixed(2));
+      }
+    },
+  });
 };
 
 // Entreno Header lógica
@@ -695,7 +692,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown));
 
 // Drag-and-drop reordenado
 const dragSerieId = ref<number | null>(null);
-const onDragStart = (id: number) => { dragSerieId.value = id; };
+const onDragStart = (id: number | null) => { dragSerieId.value = id; };
 const onDrop = async (targetId: number) => {
   if (dragSerieId.value === null) return;
   const fromIdx = series.value.findIndex(s => s.SerieId === dragSerieId.value);
@@ -847,7 +844,7 @@ const onDrop = async (targetId: number) => {
           :grupo-muscular-nombre="ejercicioGrupoMap.get(serie.ExerciciId)"
           :completada="isCompletada(serie.SerieId)"
           @serieUpdated="onSerieUpdated"
-          @serieDeleted="onSerieDeleted"
+          @serieDeleteRequested="eliminarSerie"
           @serieCompletadaToggled="toggleCompletadoCard"
           @openModalEjercicio="abrirModalEjercicio"
           @editingChange="onEditingChange"

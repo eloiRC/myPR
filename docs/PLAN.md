@@ -11,6 +11,8 @@ Estado a 2026-10-23 (actualizado). Se actualiza al cerrar cada bloque.
 - **5** La IA actúa con herramientas: series, entreno, ejercicios.
 - **6** Memoria del entrenador: la IA la mantiene y el usuario la edita directamente en Ajustes. "Personalizar el entrenador IA" eliminado (su texto pasó a la memoria).
 - **Descansos** en 3 niveles, por orden de prioridad: serie → ejercicio → global. En serie y ejercicio, `null` hereda del nivel siguiente y `0` = sin descanso (el temporizador no arranca). Los pone sobre todo la IA, y solo por serie cuando aporta algo. Los ajustes del temporizador se guardan en la cuenta.
+- **Deshacer al borrar** (series, entrenos y memorias): sale al instante y se confirma a los 6 s; sustituye a `confirm()`.
+- **Reordenar series arrastrando en el móvil** (asa ⠿) y **navegación inferior** (Entrenos / Ejercicios / Perfil; «Cerrar sesión» pasó a Perfil).
 - Eliminada la integración con Garmin: código, workflow, scripts, tablas de D1 (migración 0006) y secretos.
 
 ## Pendiente
@@ -30,7 +32,4 @@ Base de conocimiento curada (programación, volumen, progresión, ejercicios por
 Recomendado: free-exercise-db (dominio público). Ver `docs/research/biblioteca-ejercicios.md`. Incluye corregir los nombres de los grupos musculares en producción.
 
 ### Otros
-- Navegación inferior (Entrenos / Ejercicios / Perfil).
 - Agrupar series por ejercicio en entrenos largos.
-- Deshacer al borrar, en lugar de `confirm()`.
-- Reordenar series arrastrando en el móvil.

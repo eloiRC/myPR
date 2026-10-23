@@ -171,7 +171,7 @@ const alternarPausa = () => {
   position: fixed;
   left: max(0.75rem, env(safe-area-inset-left));
   right: calc(max(1rem, env(safe-area-inset-right)) + 56px + 0.5rem);
-  bottom: max(1rem, env(safe-area-inset-bottom));
+  bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + 0.75rem);
   z-index: 999;
   background: var(--bg-secondary);
   border: 1px solid var(--border-strong);

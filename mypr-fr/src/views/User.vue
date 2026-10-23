@@ -3,6 +3,7 @@ import { ref, onMounted, computed, nextTick, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { apiFetch } from '../services/api';
+import { eliminarConDeshacer } from '../composables/useDeshacer';
 import { useRestTimer, DURACIONES_PRESET, DURACION_MIN_SEG, DURACION_MAX_SEG } from '../composables/useRestTimer';
 
 const router = useRouter();
@@ -135,18 +136,24 @@ const addMemory = async () => {
   }
 };
 
-const deleteMemory = async (m: CoachMemory) => {
-  if (!confirm('¿Borrar esta memoria? El entrenador dejará de recordarla.')) return;
-  try {
-    memoryBusyId.value = m.MemoryId;
-    await apiFetch('/api/memory/delete', { memoryId: m.MemoryId });
-    memories.value = memories.value.filter(x => x.MemoryId !== m.MemoryId);
-  } catch (err) {
-    console.error('Error deleting memory', err);
-    alert('No se pudo borrar la memoria');
-  } finally {
-    memoryBusyId.value = null;
-  }
+const deleteMemory = (m: CoachMemory) => {
+  const idx = memories.value.findIndex(x => x.MemoryId === m.MemoryId);
+  eliminarConDeshacer({
+    mensaje: 'Memoria borrada',
+    aplicar: () => { memories.value = memories.value.filter(x => x.MemoryId !== m.MemoryId); },
+    revertir: () => {
+      if (memories.value.some(x => x.MemoryId === m.MemoryId)) return;
+      const copia = [...memories.value];
+      copia.splice(Math.min(Math.max(idx, 0), copia.length), 0, m);
+      memories.value = copia;
+    },
+    confirmar: async () => { await apiFetch('/api/memory/delete', { memoryId: m.MemoryId }); },
+  });
+};
+
+const cerrarSesion = () => {
+  authStore.logout();
+  router.push('/login');
 };
 
 // Descargar historial completo de entrenos
@@ -313,6 +320,11 @@ onMounted(async () => {
             </section>
           </template>
         </template>
+      </div>
+
+      <div class="card">
+        <h2>Sesión</h2>
+        <button type="button" class="btn btn-secondary" @click="cerrarSesion">Cerrar sesión</button>
       </div>
 
       <div v-if="error" class="state-box error">

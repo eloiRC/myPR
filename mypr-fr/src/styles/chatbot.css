@@ -3,7 +3,7 @@
 .chatbot-container {
   position: fixed;
   right: max(1rem, env(safe-area-inset-right));
-  bottom: max(1rem, env(safe-area-inset-bottom));
+  bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + 0.75rem);
   z-index: 1000;
 }
 
@@ -47,7 +47,7 @@
 .chatbot-window {
   position: fixed;
   right: max(1rem, env(safe-area-inset-right));
-  bottom: calc(max(1rem, env(safe-area-inset-bottom)) + 68px);
+  bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + 0.75rem + 68px);
   width: 400px;
   height: 600px;
   max-height: calc(100dvh - 110px);
@@ -363,7 +363,7 @@
   .chatbot-window {
     left: 0.5rem;
     right: 0.5rem;
-    bottom: calc(max(0.5rem, env(safe-area-inset-bottom)) + 64px);
+    bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + 0.5rem + 64px);
     width: auto;
     height: auto;
     top: max(0.5rem, env(safe-area-inset-top));

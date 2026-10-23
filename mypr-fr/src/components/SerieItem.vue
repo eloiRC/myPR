@@ -15,7 +15,7 @@ interface Props {
 const props = defineProps<Props>();
 
 // Emits
-const emit = defineEmits(['serieUpdated', 'serieDeleted', 'serieCompletadaToggled', 'openModalEjercicio', 'goToEjercicio', 'dragStart', 'drop', 'editingChange']);
+const emit = defineEmits(['serieUpdated', 'serieDeleteRequested', 'serieCompletadaToggled', 'openModalEjercicio', 'goToEjercicio', 'dragStart', 'drop', 'editingChange']);
 
 // Estado local
 const isEditing = ref(false);
@@ -52,6 +52,33 @@ const onDragStart = (e: DragEvent) => {
 const onDrop = (e: DragEvent) => {
   e.preventDefault();
   emit('drop', props.serie.SerieId);
+};
+
+// Reordenar con el dedo: se arrastra desde el asa y se suelta sobre otra serie
+const arrastrandoTactil = ref(false);
+const onHandleDown = (e: PointerEvent) => {
+  if (e.pointerType === 'mouse' || isEditing.value || isLoading.value) return;
+  e.preventDefault();
+  (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  arrastrandoTactil.value = true;
+  emit('dragStart', props.serie.SerieId);
+};
+const marcarDestino = (e: PointerEvent) => {
+  document.querySelectorAll('.serie-drop-target').forEach(el => el.classList.remove('serie-drop-target'));
+  const destino = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-serie-id]');
+  if (destino && destino !== (e.currentTarget as HTMLElement).closest('[data-serie-id]')) destino.classList.add('serie-drop-target');
+};
+const onHandleMove = (e: PointerEvent) => {
+  if (arrastrandoTactil.value) marcarDestino(e);
+};
+const onHandleUp = (e: PointerEvent) => {
+  if (!arrastrandoTactil.value) return;
+  arrastrandoTactil.value = false;
+  document.querySelectorAll('.serie-drop-target').forEach(el => el.classList.remove('serie-drop-target'));
+  const destino = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-serie-id]') as HTMLElement | null;
+  const id = destino ? Number(destino.dataset.serieId) : NaN;
+  if (!Number.isNaN(id) && id !== props.serie.SerieId) emit('drop', id);
+  else emit('dragStart', null);
 };
 
 // Edición y lógica estándar...
@@ -105,25 +132,7 @@ const saveEdit = async (valores: { ejercicioId: number; kg: number; reps: number
   }
 };
 
-const deleteSerie = async () => {
-  if(!confirm('¿Estás seguro de que quieres eliminar esta serie?')) return;
-  try {
-    isLoading.value = true;
-    const data = await apiFetch<any>('/api/deleteSerie', { serieId: props.serie.SerieId });
-    emit('serieDeleted', {
-      data,
-      serieId: props.serie.SerieId,
-      entrenoId: props.serie.EntrenoId,
-      exerciciId: props.serie.ExerciciId,
-      carga: props.serie.Carga
-    });
-  } catch (error) {
-    console.error(error);
-    alert('Error al eliminar la serie');
-  } finally {
-    isLoading.value = false;
-  }
-};
+const deleteSerie = () => emit('serieDeleteRequested', props.serie);
 </script>
 
 <template>
@@ -135,6 +144,7 @@ const deleteSerie = async () => {
       'serie-pending': !isCompleted,
     }"
     draggable="true"
+    :data-serie-id="serie.SerieId"
     @dragstart="onDragStart"
     @dragover.prevent
     @drop.prevent="onDrop"
@@ -164,6 +174,18 @@ const deleteSerie = async () => {
   <span v-for="(nom, i) in grupoMuscularNombre" :key="i" class="grupo-muscular">{{ nom }}</span>
 </div>
         <div class="serie-actions">
+          <button
+            type="button"
+            class="drag-handle"
+            :class="{ dragging: arrastrandoTactil }"
+            aria-label="Arrastrar para reordenar"
+            title="Arrastra para reordenar"
+            @click.stop
+            @pointerdown="onHandleDown"
+            @pointermove="onHandleMove"
+            @pointerup="onHandleUp"
+            @pointercancel="onHandleUp"
+          >⠿</button>
           <button class="btn btn-secondary btn-sm" @click.stop="startEdit" :disabled="isLoading">Editar</button>
           <button class="btn btn-quiet-danger btn-sm" @click.stop="deleteSerie" :disabled="isLoading">Eliminar</button>
         </div>
@@ -194,6 +216,22 @@ const deleteSerie = async () => {
 <style src="../styles/detalle-entreno.css"></style>
 
 <style scoped>
+.drag-handle {
+  min-width: var(--touch-min);
+  min-height: var(--touch-min);
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: grab;
+  touch-action: none; /* el gesto sobre el asa reordena, no hace scroll */
+  user-select: none;
+}
+.drag-handle.dragging { color: var(--accent-primary-hover); background: var(--bg-tertiary); }
+@media (hover: hover) and (pointer: fine) { .drag-handle { display: none; } }
+.serie-card.serie-drop-target { outline: 2px dashed var(--accent-primary); outline-offset: 2px; }
 .serie-card {
   position: relative;
   background-color: var(--bg-secondary);

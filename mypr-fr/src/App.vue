@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import Footer from './components/Footer.vue';
+import BottomNav from './components/BottomNav.vue';
+import DeshacerToast from './components/DeshacerToast.vue';
 import { useAuthStore } from './stores/auth';
 import { useRestTimer } from './composables/useRestTimer';
 
@@ -9,7 +10,7 @@ const route = useRoute();
 const auth = useAuthStore();
 const restTimer = useRestTimer();
 
-function hideFooter() {
+function hideNav() {
   return route.path === '/register' || route.path === '/login';
 }
 
@@ -26,7 +27,8 @@ watch(() => auth.isAuthenticated, (ok) => { if (ok) restTimer.cargarDesdeServido
     <main class="app-main">
       <router-view />
     </main>
-    <Footer v-if="!hideFooter()" />
+    <BottomNav v-if="!hideNav()" />
+    <DeshacerToast />
   </div>
 </template>
 
@@ -44,6 +46,7 @@ watch(() => auth.isAuthenticated, (ok) => { if (ok) restTimer.cargarDesdeServido
 
 .app-main {
   flex: 1 0 auto;
+  padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom));
 }
 
 ::-webkit-scrollbar {
