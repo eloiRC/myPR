@@ -19,26 +19,36 @@ Estado a 2026-10-23 (actualizado). Se actualiza al cerrar cada bloque.
 
 ## Próxima sesión
 
-Orden recomendado: **A → B → C**. A y B se pueden hacer en paralelo, porque tocan zonas distintas. C (RAG) es independiente.
+Orden recomendado: **A (rediseño) → B → C**. B (entrevista) conviene hacerlo ya con el diseño nuevo del chat. C (RAG) es independiente y puede ir en paralelo.
 
-### A · UI/UX de la página de entreno y del chat
-Primero una crítica de diseño (`/impeccable critique`) de la página de entreno y del chat, con medidas reales en el móvil. Después, mejoras por prioridad. Candidatas:
+### A · Rediseño UX/UI completo, mobile-first
+No son retoques: rediseño de toda la app pensado primero para el móvil en el gimnasio (una mano, sudado, entre series, a veces con mala cobertura). El aspecto actual sirve solo como referencia de lo que funciona y de lo que no.
 
-**Página de entreno**
-- **Agrupar series por ejercicio**: una cabecera por ejercicio, filas compactas `80×8 · 80×8 · 82,5×6`, número de serie y check de hecha.
-- **"Repetir serie"** en un toque, en la última serie de cada ejercicio.
-- **Cabecera de progreso**: "5 de 12 series", tiempo de sesión y ejercicio actual.
-- **Terminar entreno**: resumen final con volumen, PRs conseguidos y comparación con la sesión anterior.
-- **Deshacer** al borrar (aviso con "Deshacer" 5 s) en lugar de `confirm()`.
-- **Reordenar en móvil** (arrastrar no funciona en táctil).
-- **Navegación inferior**: Entrenos / Ejercicios / Perfil.
+**Proceso** (skill de diseño `impeccable`):
+1. **Contexto de producto** (`PRODUCT.md`): entrevista corta sobre quién la usa, cuándo, objetivos, tono y referencias que te gustan o no.
+2. **Dirección visual**: 2–3 propuestas de estilo (tipografía, color, densidad, iconos y movimiento) con maquetas de la pantalla de entreno. Eliges una.
+3. **Sistema de diseño** (`DESIGN.md` y tokens): colores, tipografía, espaciado, componentes (botones, tarjetas, formularios, chips, hojas inferiores) y estados.
+4. **Estructura y navegación**: navegación inferior (Entrenos / Ejercicios / Perfil), hojas inferiores en lugar de modales y gestos donde aporten.
+5. **Pantallas, por prioridad**:
+   1. Entreno: registrar series, tarjetas, progreso de la sesión, temporizador y terminar con resumen.
+   2. Chat del entrenador.
+   3. Lista de entrenos.
+   4. Ejercicios y detalle.
+   5. Ajustes y memoria.
+   6. Login y registro.
+6. **Verificación** en el móvil real y simulado: velocidad, accesibilidad (contraste, objetivos táctiles de 44 px), modo claro u oscuro según el uso real, y pruebas.
 
-**Chat**
-- Pantalla completa en móvil, con el campo de texto siempre visible sobre el teclado.
-- **Tarjetas de cambios aplicados**: cuando la IA añade o edita series, mostrar una tarjeta "Añadidas 4 series de Sentadilla" con "Deshacer".
-- Revisar cómo se ven los estados (Pensando…, Añadiendo…) y las respuestas rápidas en producción.
-- Tablas legibles en el markdown (los planes de entreno).
-- Opcional: dictado por voz (Web Speech API) para usarlo entre series.
+**Ideas que ya sabemos que entran** (de la revisión anterior):
+- Series agrupadas por ejercicio.
+- "Repetir serie" en un toque.
+- Cabecera de progreso.
+- Resumen al terminar con PRs.
+- Deshacer al borrar.
+- Chat a pantalla completa.
+- Tarjetas de "cambios aplicados" con deshacer.
+- Iconos de verdad en lugar de emojis.
+
+**Reparto**: dirección y sistema de diseño en la sesión principal (decisiones contigo). Las pantallas, por agentes en paralelo una vez fijado el sistema, revisadas y probadas antes de publicar.
 
 ### B · Entrevista inicial con el entrenador IA
 - **Dónde**: botón en Ajustes, "Entrevista con tu entrenador". También se ofrece al primer uso si la memoria está vacía.
