@@ -768,9 +768,9 @@ const irAEjercicio = (id: number) => router.push(`/ejercicio/${id}`);
         @editar="abrirEdicion"
         @ir-ejercicio="irAEjercicio"
       />
-      <div v-else-if="modoVisualizacion === 'tarjetas'" class="estado"><p>No hay series registradas.</p></div>
+      <div v-else-if="modoVisualizacion === 'tarjetas'" class="estado"><p>Este entreno aún no tiene series.</p></div>
 
-      <div v-if="series.length > 0" class="anadir">
+      <div class="anadir">
         <button type="button" class="btn btn-secondary anadir-btn" @click="abrirFormularioSerie"><Plus :size="20" :stroke-width="2.5" aria-hidden="true" />Añadir serie</button>
       </div>
     </template>
