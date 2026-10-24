@@ -76,15 +76,13 @@ const autoResize = () => {
   el.style.height = Math.min(el.scrollHeight, 120) + 'px';
 };
 
-// Al abrir: bienvenida si no hay conversación, scroll al final y foco en el campo de texto
+// Al abrir: bienvenida si no hay conversación y scroll al final (sin foco en el campo: no se abre el teclado)
 const onOpened = () => {
   if (messages.value.length === 0) {
     messages.value.push({ id: Date.now(), text: welcomeMessage.value, isUser: false, timestamp: new Date() });
   }
-  // BottomSheet enfoca su panel tras el nextTick; el foco al campo va después
   nextTick(() => {
     scrollToBottom();
-    setTimeout(() => inputRef.value?.focus(), 60);
   });
 };
 
