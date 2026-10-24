@@ -15,7 +15,6 @@ import SerieForm from '../components/SerieForm.vue';
 import SerieItem from '../components/SerieItem.vue';
 import RestTimer from '../components/RestTimer.vue';
 import MarcadorSesion from '../components/entreno/MarcadorSesion.vue';
-import SerieActual from '../components/entreno/SerieActual.vue';
 import ModoTarjetas from '../components/entreno/ModoTarjetas.vue';
 import PrToast from '../components/entreno/PrToast.vue';
 import ResumenSesion from '../components/entreno/ResumenSesion.vue';
@@ -112,7 +111,7 @@ const nuevaSerie = ref({ ejercicioId: 0, kg: 0, reps: 0 });
 const nuevaSerieError = ref('');
 
 // Modo de vista y tarjetas
-const modoVisualizacion = ref<'lista' | 'tarjetas'>('lista');
+const modoVisualizacion = ref<'lista' | 'tarjetas'>('tarjetas');
 const serieActualIdx = ref(0);
 // Posición recordada: SerieId de la última tarjeta vista (solo se actualiza en modo tarjetas)
 const serieIdVista = ref<number | null>(null);
@@ -153,16 +152,6 @@ const nombreEjercicio = (serie: { ExerciciId: number }) => nombreEjercicioId(ser
 const grupos = computed(() => agruparPorEjercicio(series.value, isCompletada));
 const pendiente = computed(() => siguientePendiente(series.value, isCompletada));
 const hechasCount = computed(() => series.value.filter(s => isCompletada(s.SerieId)).length);
-const todoHecho = computed(() => series.value.length > 0 && !pendiente.value);
-
-// Posición de la serie pendiente dentro de su ejercicio
-const infoPendiente = computed(() => {
-  const p = pendiente.value;
-  if (!p) return { n: 1, total: 1 };
-  const fila = grupos.value.flatMap(g => g.filas).find(f => f.serie.SerieId === p.SerieId);
-  return { n: fila?.n ?? 1, total: series.value.filter(s => s.ExerciciId === p.ExerciciId).length || 1 };
-});
-
 const celdasMarcador = computed(() =>
   series.value.map(s => (isCompletada(s.SerieId) ? 'hecha' : s.SerieId === pendiente.value?.SerieId ? 'actual' : 'pendiente') as 'hecha' | 'actual' | 'pendiente'));
 
@@ -228,7 +217,7 @@ const toggleCompletadoCard = async (serieId: number) => {
   }
 };
 
-const marcarActualHecha = () => { if (pendiente.value) toggleCompletadoCard(pendiente.value.SerieId); };
+
 
 // ---------- Modo tarjetas ----------
 const primerIdxNoCompletado = () => {
@@ -250,7 +239,11 @@ const restaurarVista = () => {
   if (vistaRestaurada.value) return;
   vistaRestaurada.value = true;
   const guardada = leerVista(entrenoId.value);
-  if (!guardada) return;
+  if (!guardada) {
+    // Sin vista guardada: tarjetas, en la primera serie sin hacer
+    if (seriesCardOrder.value.length > 0) serieActualIdx.value = primerIdxNoCompletado();
+    return;
+  }
   serieIdVista.value = guardada.serieId;
   if (guardada.modo === 'tarjetas' && seriesCardOrder.value.length > 0) {
     modoVisualizacion.value = 'tarjetas';
@@ -343,7 +336,7 @@ const resetearEstado = () => {
   entreno.value = null;
   series.value = [];
   completadasMap.value = {};
-  modoVisualizacion.value = 'lista';
+  modoVisualizacion.value = 'tarjetas';
   serieActualIdx.value = 0;
   serieIdVista.value = null;
   vistaRestaurada.value = false;
@@ -440,15 +433,6 @@ const guardarSerie = async (valores: ValoresSerie) => {
   // Mantenemos ejercicio, peso y reps como valores de partida de la siguiente serie (el descanso no se arrastra)
   nuevaSerie.value = { ejercicioId: valores.ejercicioId, kg: valores.kg, reps: valores.reps };
   if (await crearSerie(valores)) showForm.value = false;
-};
-
-// Repetir: duplica kg, reps y descanso de la serie actual por el mismo camino que «añadir serie»
-const repetirSerie = async () => {
-  const s = pendiente.value;
-  if (!s || isSaving.value) return;
-  const ok = await crearSerie({ ejercicioId: s.ExerciciId, kg: s.Kg, reps: s.Reps, descansoSeg: s.DescansoSeg ?? null });
-  if (ok) avisoExito('Serie repetida');
-  else alertWindow(nuevaSerieError.value || 'No se pudo repetir la serie');
 };
 
 // ---------- Editar / borrar ----------
@@ -733,24 +717,6 @@ const irAEjercicio = (id: number) => router.push(`/ejercicio/${id}`);
       >
         <template #descanso><RestTimer /></template>
       </MarcadorSesion>
-
-      <!-- Ahora: la siguiente serie pendiente (solo en lista; las tarjetas ya muestran una serie por pantalla) -->
-      <SerieActual
-        v-if="modoVisualizacion === 'lista'"
-        :serie="pendiente"
-        :nombre-ejercicio="pendiente ? nombreEjercicio(pendiente) : ''"
-        :grupos="pendiente ? gruposMuscularesDeSerie(pendiente) : []"
-        :n="infoPendiente.n"
-        :total-ejercicio="infoPendiente.total"
-        :completo="todoHecho"
-        :ocupado="isSaving"
-        @hecha="marcarActualHecha"
-        @repetir="repetirSerie"
-        @editar="pendiente && abrirEdicion(pendiente)"
-        @anadir="abrirFormularioSerie"
-        @terminar="showTerminar = true"
-        @ir-ejercicio="pendiente && irAEjercicio(pendiente.ExerciciId)"
-      />
 
       <!-- Barra de herramientas -->
       <div v-if="series.length > 0" class="herramientas">
