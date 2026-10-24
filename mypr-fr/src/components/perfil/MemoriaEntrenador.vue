@@ -143,9 +143,9 @@ onMounted(loadMemories);
       <label class="sr-only" for="mem-new-text">Nuevo recuerdo</label>
       <input id="mem-new-text" v-model="newText" class="input mem-new-text" type="text" maxlength="500"
         autocomplete="off" placeholder="Ej.: entreno en casa, mancuernas hasta 24 kg" />
-      <button type="submit" class="btn btn-primary mem-add-btn" aria-label="Añadir recuerdo"
+      <button type="submit" class="btn btn-primary mem-add-btn"
         :disabled="isAddingMemory || newText.trim().length < 3">
-        <Plus :size="20" :stroke-width="2.25" aria-hidden="true" />
+        <Plus :size="20" :stroke-width="2.25" aria-hidden="true" /> Añadir
       </button>
     </form>
 
@@ -230,9 +230,10 @@ onMounted(loadMemories);
 }
 .mem-error { background: var(--led-red-dim); color: var(--led-red); }
 
-.mem-add { display: flex; gap: 0.5rem; align-items: stretch; }
-.mem-new-text { flex: 1; min-width: 0; min-height: var(--touch-min); font-size: 16px; }
-.mem-add-btn { padding: 0; width: var(--touch-min); flex-shrink: 0; }
+.mem-add { display: flex; flex-direction: column; gap: 0.5rem; align-items: stretch; }
+.mem-add .mem-kind { align-self: flex-start; }
+.mem-new-text { width: 100%; min-width: 0; min-height: var(--touch-min); font-size: 16px; }
+.mem-add-btn { align-self: stretch; min-height: var(--touch-min); padding: 0 1rem; gap: 0.4rem; }
 
 /* Chip de tipo: neutro; la lesión es la única que usa rojo (alarma) */
 .mem-kind {
@@ -246,8 +247,8 @@ onMounted(loadMemories);
 .mem-kind.k-lesion { background: var(--led-red-dim); border-color: transparent; color: var(--led-red); }
 .mem-kind:disabled { opacity: 0.6; cursor: default; }
 
-.mem-list { list-style: none; margin: 0.875rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
-.mem-item { padding: 0.625rem 0.75rem 0.5rem; border: 1px solid var(--n3); border-radius: var(--radius-md); background: var(--n0); }
+.mem-list { list-style: none; margin: 0.875rem 0 0; padding: 0; display: flex; flex-direction: column; border-top: 1px solid var(--n3); }
+.mem-item { padding: 0.75rem 0 0.5rem; border-bottom: 1px solid var(--n3); }
 .mem-item.resolved { opacity: 0.6; }
 .mem-meta { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem; }
 .mem-date { font-family: var(--font-display); font-size: 0.8rem; letter-spacing: 0.08em; color: var(--n6); }

@@ -8,17 +8,47 @@ interface Props {
   secuencia?: boolean;
   size?: 'sm' | 'md' | 'lg';
   label?: string;
+  /** Rótulo corto bajo las luces; si se indica, se dibujan alojadas en una caja hundida */
+  rotulo?: string;
 }
-withDefaults(defineProps<Props>(), { lit: 0, secuencia: false, size: 'md', label: undefined });
+withDefaults(defineProps<Props>(), { lit: 0, secuencia: false, size: 'md', label: undefined, rotulo: undefined });
 </script>
 
 <template>
-  <span class="judges" :class="[`judges--${size}`, { 'judges--seq': secuencia }]" role="img" :aria-label="label ?? `${lit} de 3 luces blancas`">
+  <span v-if="rotulo" class="caja" :class="{ 'caja--on': lit > 0 }" role="img" :aria-label="label ?? `${rotulo}: ${lit} de 3 luces blancas`">
+    <span class="judges" :class="[`judges--${size}`, { 'judges--seq': secuencia }]" aria-hidden="true">
+      <span v-for="i in 3" :key="i" class="judge" :class="{ on: i <= lit }" :style="{ '--i': i - 1 }"></span>
+    </span>
+    <span class="caja-rotulo" aria-hidden="true">{{ rotulo }}</span>
+  </span>
+  <span v-else class="judges" :class="[`judges--${size}`, { 'judges--seq': secuencia }]" role="img" :aria-label="label ?? `${lit} de 3 luces blancas`">
     <span v-for="i in 3" :key="i" class="judge" :class="{ on: i <= lit }" :style="{ '--i': i - 1 }"></span>
   </span>
 </template>
 
 <style scoped>
+/* Alojamiento hundido con rótulo: se lee como piloto de marcador, no como menú */
+.caja {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.5rem 0.65rem 0.35rem;
+  background: var(--n0);
+  border: 1px solid var(--n3);
+  border-radius: var(--radius-sm);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+.caja-rotulo {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--n5);
+}
+.caja--on .caja-rotulo { color: var(--n7); }
 .judges { display: inline-flex; gap: 0.35em; align-items: center; }
 .judge {
   width: 0.7em;

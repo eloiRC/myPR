@@ -67,8 +67,8 @@ onMounted(() => {
     <section class="panel cuenta" aria-label="Cuenta">
       <div class="cuenta-mono" aria-hidden="true">{{ inicial }}</div>
       <div class="cuenta-datos">
-        <span class="cuenta-rotulo">Cuenta</span>
-        <span class="cuenta-email">{{ email }}</span>
+
+        <h2 class="cuenta-email">{{ email }}</h2>
       </div>
       <button type="button" class="cuenta-salir" @click="cerrarSesion">
         <LogOut :size="18" :stroke-width="2" aria-hidden="true" />
@@ -113,6 +113,7 @@ onMounted(() => {
 .cuenta-datos { display: flex; flex-direction: column; min-width: 0; }
 .cuenta-rotulo { font-family: var(--font-display); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--n6); }
 .cuenta-email {
+  margin: 0;
   font-family: var(--font-display); font-size: 1.25rem; font-weight: 600; letter-spacing: 0.04em;
   color: var(--n8); overflow-wrap: anywhere; line-height: 1.15;
 }

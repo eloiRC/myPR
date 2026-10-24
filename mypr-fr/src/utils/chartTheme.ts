@@ -1,5 +1,4 @@
-import { Chart as ChartJS, Filler } from 'chart.js';
-import type { ScriptableContext } from 'chart.js';
+﻿import { Chart as ChartJS, Filler } from 'chart.js';
 
 // Estética común de las gráficas: tipografía de la app, curvas suaves,
 // trazos y puntos redondeados, relleno en degradado y tooltips redondeados.
@@ -47,7 +46,7 @@ export function applyChartTheme() {
     backgroundColor: 'rgba(13, 17, 26, 0.95)',
     borderColor: 'rgba(255, 255, 255, 0.12)',
     borderWidth: 1,
-    cornerRadius: 12,
+    cornerRadius: 4,
     padding: { x: 12, y: 10 },
     caretSize: 6,
     displayColors: false,
@@ -66,7 +65,7 @@ function hexToRgba(hex: string, alpha: number) {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 }
 
-/** Serie de línea redondeada con relleno en degradado vertical que se desvanece hacia el eje. */
+/** Serie de línea redondeada con relleno plano muy sutil. */
 export function roundedLineDataset(label: string, data: number[], color: string = CHART_COLORS.accent) {
   return {
     label,
@@ -77,14 +76,8 @@ export function roundedLineDataset(label: string, data: number[], color: string 
     pointHoverBackgroundColor: color,
     pointHoverBorderColor: CHART_COLORS.surface,
     fill: 'origin' as const,
-    backgroundColor: (ctx: ScriptableContext<'line'>) => {
-      const { ctx: canvas, chartArea } = ctx.chart;
-      if (!chartArea) return hexToRgba(color, 0.15);
-      const gradient = canvas.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-      gradient.addColorStop(0, hexToRgba(color, 0.35));
-      gradient.addColorStop(1, hexToRgba(color, 0));
-      return gradient;
-    },
+    // Relleno plano y muy sutil: sin degradados
+    backgroundColor: hexToRgba(color, 0.06),
   };
 }
 
@@ -119,24 +112,17 @@ export function roundedChartOptions(opts: { yTitle?: string; tooltipLabel: (valu
   };
 }
 
-/** Barras con esquinas redondeadas y degradado vertical (carga diaria: los días sin entreno no se dibujan). */
+/** Barras con extremos cuadrados y relleno plano (carga diaria: los días sin entreno no se dibujan). */
 export function roundedBarDataset(label: string, data: number[], color: string = CHART_COLORS.accent) {
   return {
     label,
     data,
-    borderRadius: 3,
+    borderRadius: 0,
     borderSkipped: false as const,
     maxBarThickness: 22,
     categoryPercentage: 0.9,
     barPercentage: 0.8,
     hoverBackgroundColor: color,
-    backgroundColor: (ctx: ScriptableContext<'bar'>) => {
-      const { ctx: canvas, chartArea } = ctx.chart;
-      if (!chartArea) return color;
-      const gradient = canvas.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-      gradient.addColorStop(0, color);
-      gradient.addColorStop(1, hexToRgba(color, 0.35));
-      return gradient;
-    },
+    backgroundColor: color,
   };
 }
