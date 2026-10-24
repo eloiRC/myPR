@@ -69,7 +69,7 @@ export const useAuthStore = defineStore('auth', () => {
         // ajustes del temporizador (y su migración pendiente), chats del entrenador y vista por entreno
         try {
             Object.keys(localStorage)
-                .filter(k => k.startsWith('mypr_rest_timer_') || k.startsWith('chatHistory') || k.startsWith('isFirstMessage') || k.startsWith('mypr_entreno_vista:'))
+                .filter(k => k.startsWith('mypr_rest_timer_') || k.startsWith('chatHistory') || k.startsWith('isFirstMessage') || k.startsWith('mypr_entreno_vista:') || k.startsWith('mypr_entreno_abierto:'))
                 .forEach(k => localStorage.removeItem(k));
         } catch { /* sin almacenamiento disponible */ }
         // Opcional: router.push('/login');

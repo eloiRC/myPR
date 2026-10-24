@@ -19,7 +19,7 @@ const { actual, deshacer } = useDeshacer();
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(var(--bottom-nav-h, 0px) + var(--rest-dock-h, 0px) + env(safe-area-inset-bottom) + 0.75rem);
+  bottom: calc(var(--bottom-nav-h, 0px) + env(safe-area-inset-bottom) + 0.75rem);
   width: calc(100% - 1.5rem);
   max-width: 26rem;
   display: flex;

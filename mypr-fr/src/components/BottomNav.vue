@@ -1,20 +1,17 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { Dumbbell, ListChecks, MessageSquareText, UserRound } from 'lucide-vue-next';
+import { Dumbbell, ListChecks, UserRound } from 'lucide-vue-next';
 
 const route = useRoute();
 
-// "Entrenador" abre el chat del entreno en curso (el último, o uno nuevo si no hay)
 const items = [
   { to: '/entrenos', label: 'Entrenos', icon: Dumbbell, prefijos: ['/entrenos', '/entreno/'] },
   { to: '/ejercicios', label: 'Ejercicios', icon: ListChecks, prefijos: ['/ejercicios', '/ejercicio/'] },
-  { to: '/entreno/actual?chat=1', label: 'Entrenador', icon: MessageSquareText, prefijos: [] as string[] },
   { to: '/user', label: 'Perfil', icon: UserRound, prefijos: ['/user'] },
 ];
 
 const activo = computed(() => {
-  if (route.query.chat === '1') return '/entreno/actual?chat=1';
   return items.find(i => i.prefijos.some(p => route.path === p || route.path.startsWith(p)))?.to;
 });
 </script>
@@ -43,7 +40,7 @@ const activo = computed(() => {
   bottom: 0;
   z-index: 900;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   height: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
   background: var(--n0);

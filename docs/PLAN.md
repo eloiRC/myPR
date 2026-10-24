@@ -24,6 +24,7 @@ Estado a 2026-10-23 (actualizado). Se actualiza al cerrar cada bloque.
   - chat a pantalla completa;
   - fuentes autoalojadas;
   - sistema documentado en `DESIGN.md`.
+  - ajustes tras la primera revisión (2026-10-24): «Nuevo entreno» arriba en la lista, series agrupadas solo por tramos consecutivos (respeta el orden real), entrenador solo dentro del entreno, tarjetas sin pilotos ni paginación inferior, tira superior como navegación, descanso en la banda, tiempo de sesión en Datos y ambos relojes persistentes tras recargar.
   Hecho en autónomo: los supuestos están en `PRODUCT.md`.
 
 ## Próxima sesión

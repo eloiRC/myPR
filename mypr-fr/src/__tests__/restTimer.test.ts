@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   iniciarEstado, restanteMs, pausarEstado, reanudarEstado, ajustarEstado,
   progresoEstado, formatearMmSs, clampDuracionSeg, leerAjustes, resolverDescanso, desdeServidor, haciaServidor,
-  debeMigrarLocales, sincronizarAjustes, type DepsSync,
+  debeMigrarLocales, sincronizarAjustes, type DepsSync, estadoVigente, GRACIA_RESTAURAR_MS,
 } from '../composables/useRestTimer';
 
 describe('temporizador de descanso (lógica pura)', () => {
@@ -210,5 +210,21 @@ describe('sincronizarAjustes', () => {
     const deps: DepsSync = { leerUsuario: async () => { throw new Error('offline'); }, guardar: async () => DEF };
     await expect(sincronizarAjustes(deps)).rejects.toThrow('offline');
     expect(leerAjustes().duracionSeg).toBe(120);
+  });
+});
+
+describe('restaurar el temporizador al recargar', () => {
+  it('conserva uno en marcha y uno en pausa', () => {
+    expect(estadoVigente({ totalMs: 90000, finMs: 150000, pausadoMs: null }, 100000)).toEqual({ totalMs: 90000, finMs: 150000, pausadoMs: null });
+    expect(estadoVigente({ totalMs: 90000, finMs: null, pausadoMs: 30000 }, 999999)).toEqual({ totalMs: 90000, finMs: null, pausadoMs: 30000 });
+  });
+  it('descarta uno terminado hace tiempo, pero no uno recién terminado', () => {
+    expect(estadoVigente({ totalMs: 90000, finMs: 100000, pausadoMs: null }, 100000 + GRACIA_RESTAURAR_MS + 1)).toBeNull();
+    expect(estadoVigente({ totalMs: 90000, finMs: 100000, pausadoMs: null }, 100000 + 2000)).not.toBeNull();
+  });
+  it('descarta basura', () => {
+    for (const raw of [null, 'x', {}, { totalMs: 0, finMs: 1, pausadoMs: null }, { totalMs: 5, finMs: 1, pausadoMs: 2 }]) {
+      expect(estadoVigente(raw, 1)).toBeNull();
+    }
   });
 });

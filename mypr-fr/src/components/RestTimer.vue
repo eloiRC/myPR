@@ -7,7 +7,7 @@ import {
   reanudarEstado, ajustarEstado, formatearMmSs, PASO_AJUSTE_SEG,
 } from '../composables/useRestTimer';
 
-const { habilitado, estado, ciclo, cerrar } = useRestTimer();
+const { habilitado, estado, ciclo, iniciar, cerrar } = useRestTimer();
 
 const ahora = ref(Date.now());
 const terminado = ref(false);
@@ -21,11 +21,9 @@ const pausado = computed(() => (estado.value ? estaPausado(estado.value) : false
 const progreso = computed(() => (estado.value ? progresoEstado(estado.value, ahora.value) : 0));
 const texto = computed(() => formatearMmSs(restante.value));
 const visible = computed(() => habilitado.value && estado.value !== null);
-// Altura del reloj acoplado, para que otros avisos fijos (Deshacer) se coloquen encima
-watch(visible, (v) => {
-  document.documentElement.style.setProperty('--rest-dock-h', v ? '3.6rem' : '0px');
-}, { immediate: true });
 // La barra mide lo que queda del descanso: su longitud es la duración
+const textoCelda = computed(() => (visible.value ? texto.value : '00:00'));
+const tono = computed(() => (!visible.value || pausado.value ? 'muted' : terminado.value ? 'amber' : 'red') as 'muted' | 'amber' | 'red');
 const fraccionRestante = computed(() => (terminado.value ? 0 : 1 - progreso.value));
 
 const pitar = () => {
@@ -105,7 +103,6 @@ onMounted(() => {
 });
 onUnmounted(() => {
   document.removeEventListener('visibilitychange', onVisibilidad);
-  document.documentElement.style.setProperty('--rest-dock-h', '0px');
   parar();
   if (tOcultar) clearTimeout(tOcultar);
   if (audioCtx) { void audioCtx.close().catch(() => {}); audioCtx = null; }
@@ -115,6 +112,11 @@ const ajustar = (seg: number) => {
   if (!estado.value || terminado.value) return;
   estado.value = ajustarEstado(estado.value, seg * 1000, Date.now());
   tick();
+};
+const pulsarCelda = () => {
+  if (!visible.value) iniciar();
+  else if (terminado.value) cerrar();
+  else alternarPausa();
 };
 const alternarPausa = () => {
   if (!estado.value || terminado.value) return;
@@ -128,37 +130,34 @@ const alternarPausa = () => {
   <!-- Región viva siempre presente: solo se anuncia el fin, no cada segundo -->
   <div class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ anuncio }}</div>
 
-  <Transition name="rest-slide">
-    <div
-      v-if="visible"
-      class="rest-timer"
-      :class="{ done: terminado, paused: pausado }"
-      role="group"
-      aria-label="Temporizador de descanso"
-    >
-      <div class="rest-progress" aria-hidden="true">
-        <div class="rest-progress-fill" :style="{ transform: `scaleX(${fraccionRestante})` }"></div>
-      </div>
+  <button
+    v-if="habilitado"
+    type="button"
+    class="lectura"
+    :class="{ viva: visible && !terminado && !pausado, done: terminado, paused: pausado }"
+    :aria-label="!visible ? 'Iniciar descanso' : terminado ? 'Cerrar descanso' : pausado ? `Descanso en pausa, quedan ${texto}. Reanudar` : `Descanso, quedan ${texto}. Pausar`"
+    @click="pulsarCelda"
+  >
+    <span class="rotulo">Descanso</span>
+    <span class="valor"><SegDisplay :value="textoCelda" :tone="tono" aria-hidden="true" class="seg-valor" /></span>
+    <span class="barra" aria-hidden="true"><span class="barra-fill" :style="{ transform: `scaleX(${visible ? fraccionRestante : 0})` }"></span></span>
+  </button>
 
-      <div class="rest-main">
-        <div v-if="terminado" class="rest-done">A por la siguiente serie</div>
-        <template v-else>
-          <div class="rest-time">
-            <SegDisplay :value="texto" :tone="pausado ? 'muted' : 'red'" :label="`Descanso, quedan ${texto}${pausado ? ', en pausa' : ''}`" class="rest-seg" />
-          </div>
-          <div class="rest-controls">
-            <button type="button" class="rest-btn" aria-label="Restar 15 segundos" @click="ajustar(-PASO_AJUSTE_SEG)">−15</button>
-            <button type="button" class="rest-btn" aria-label="Sumar 15 segundos" @click="ajustar(PASO_AJUSTE_SEG)">+15</button>
-            <button type="button" class="rest-btn" :aria-label="pausado ? 'Reanudar descanso' : 'Pausar descanso'" @click="alternarPausa">
-              <Play v-if="pausado" :size="20" :stroke-width="2.25" aria-hidden="true" />
-              <Pause v-else :size="20" :stroke-width="2.25" aria-hidden="true" />
-            </button>
-          </div>
-        </template>
-        <button type="button" class="rest-btn rest-close" aria-label="Cerrar temporizador de descanso" @click="cerrar">
-          <X :size="20" :stroke-width="2.25" aria-hidden="true" />
+  <!-- Controles del descanso: cuelgan bajo la banda sin empujar el contenido -->
+  <Transition name="rest-slide">
+    <div v-if="habilitado && visible" class="controles" role="group" aria-label="Temporizador de descanso">
+      <span v-if="terminado" class="rest-done">A por la siguiente serie</span>
+      <template v-else>
+        <button type="button" class="rest-btn" aria-label="Restar 15 segundos" @click="ajustar(-PASO_AJUSTE_SEG)">−15</button>
+        <button type="button" class="rest-btn" aria-label="Sumar 15 segundos" @click="ajustar(PASO_AJUSTE_SEG)">+15</button>
+        <button type="button" class="rest-btn" :aria-label="pausado ? 'Reanudar descanso' : 'Pausar descanso'" @click="alternarPausa">
+          <Play v-if="pausado" :size="20" :stroke-width="2.25" aria-hidden="true" />
+          <Pause v-else :size="20" :stroke-width="2.25" aria-hidden="true" />
         </button>
-      </div>
+      </template>
+      <button type="button" class="rest-btn rest-close" aria-label="Cerrar temporizador de descanso" @click="cerrar">
+        <X :size="20" :stroke-width="2.25" aria-hidden="true" />
+      </button>
     </div>
   </Transition>
 </template>
@@ -176,60 +175,71 @@ const alternarPausa = () => {
   border: 0;
 }
 
-/* Acoplado justo encima de la barra de navegación, a todo el ancho */
-.rest-timer {
-  position: fixed;
+/* Celda de la banda: misma caja hundida que SERIES */
+.lectura {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.45rem 0.75rem 0;
+  text-align: left;
+  background: var(--n0);
+  border: 1px solid var(--n3);
+  border-radius: var(--radius-md);
+  color: inherit;
+  cursor: pointer;
+  overflow: hidden;
+}
+.lectura.viva { border-color: var(--led-red); }
+.lectura.done { border-color: var(--led-amber); }
+.rotulo {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--n6);
+}
+.lectura.viva .rotulo { color: var(--led-red); }
+.lectura.done .rotulo { color: var(--led-amber); }
+.valor { display: flex; align-items: baseline; min-height: 1.9rem; }
+.seg-valor { font-size: 1.9rem; }
+.barra { display: block; height: 4px; margin: 0.15rem -0.75rem 0; background: var(--n2); }
+.barra-fill { display: block; height: 100%; background: var(--led-red); transform-origin: left center; transition: transform 0.25s linear; }
+.lectura.paused .barra-fill { background: var(--n6); }
+.lectura.done .barra-fill { background: var(--led-amber); }
+
+/* Bajo la banda (sticky): superpuesto al contenido, sin empujarlo */
+.controles {
+  position: absolute;
+  top: 100%;
   left: 0;
   right: 0;
-  bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom));
-  z-index: 950;
-  background: var(--n1);
-  border-top: 1px solid var(--n4);
-  box-shadow: var(--bevel), 0 -8px 20px rgba(0, 0, 0, 0.45);
-}
-
-.rest-progress { height: 6px; background: var(--n3); }
-.rest-progress-fill {
-  height: 100%;
-  background: var(--led-red);
-  transform-origin: left center;
-  transition: transform 0.25s linear;
-}
-.rest-timer.paused .rest-progress-fill { background: var(--n6); }
-.rest-timer.done .rest-progress-fill { background: var(--led-amber); }
-
-.rest-main {
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  max-width: 44rem;
-  margin: 0 auto;
-  padding: 0.35rem 0.25rem 0.35rem 1rem;
-  min-height: 3.5rem;
+  padding: 0.15rem 0.5rem;
+  background: var(--n1);
+  border-bottom: 1px solid var(--n4);
+  box-shadow: var(--bevel);
 }
-
-.rest-time { display: flex; align-items: center; }
-.rest-seg { font-size: 2.1rem; }
-
-.rest-controls { display: flex; margin-left: auto; }
-
 .rest-done {
   flex: 1;
+  padding-left: 0.5rem;
   font-family: var(--font-display);
-  font-size: 1.3rem;
+  font-size: 1.15rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--led-amber);
 }
-
+.rest-close { margin-left: auto; }
 .rest-btn {
   min-width: var(--touch-min);
   min-height: var(--touch-min);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 0.25rem;
+  padding: 0 0.5rem;
   background: transparent;
   border: none;
   border-radius: var(--radius-sm);
@@ -242,12 +252,11 @@ const alternarPausa = () => {
   cursor: pointer;
 }
 .rest-btn:hover { background: var(--n3); color: var(--n8); }
-.rest-btn:focus-visible { outline-offset: -3px; }
 
 .rest-slide-enter-active,
-.rest-slide-leave-active { transition: transform 0.2s ease, opacity 0.2s ease; }
+.rest-slide-leave-active { transition: transform 0.18s ease, opacity 0.18s ease; }
 .rest-slide-enter-from,
-.rest-slide-leave-to { transform: translateY(100%); opacity: 0; }
+.rest-slide-leave-to { transform: translateY(-30%); opacity: 0; }
 @media (prefers-reduced-motion: reduce) {
   .rest-slide-enter-active, .rest-slide-leave-active { transition: none; }
 }

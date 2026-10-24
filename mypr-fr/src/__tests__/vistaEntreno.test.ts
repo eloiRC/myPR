@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { claveVista, leerVista, guardarVista, resolverIndiceTarjeta } from '../utils/vistaEntreno';
+import { claveVista, leerVista, guardarVista, resolverIndiceTarjeta , abiertoPersistido } from '../utils/vistaEntreno';
 
 const fakeStorage = (init: Record<string, string> = {}, throws = false) => {
   const data = { ...init };
@@ -35,4 +35,22 @@ describe('posición recordada del entreno', () => {
     expect(resolverIndiceTarjeta(5, orden, () => 2)).toBe(2);
     expect(resolverIndiceTarjeta(null, orden, () => 2)).toBe(2);
   });
+});
+
+describe('abiertoPersistido', () => {
+  const memoria = (): Storage => {
+    const d = new Map<string, string>();
+    return { getItem: (k: string) => d.get(k) ?? null, setItem: (k: string, v: string) => { d.set(k, v); } } as unknown as Storage;
+  };
+  it('la primera vez guarda el momento actual y las siguientes lo reutiliza', () => {
+    const s = memoria();
+    expect(abiertoPersistido(5, 1000, 21600, s)).toBe(1000);
+    expect(abiertoPersistido(5, 1500, 21600, s)).toBe(1000);
+  });
+  it('empieza de nuevo si lo guardado es muy antiguo', () => {
+    const s = memoria();
+    abiertoPersistido(5, 1000, 21600, s);
+    expect(abiertoPersistido(5, 1000 + 21601, 21600, s)).toBe(22601);
+  });
+  it('sin almacenamiento devuelve ahora', () => expect(abiertoPersistido(5, 1000, 21600, null)).toBe(1000));
 });

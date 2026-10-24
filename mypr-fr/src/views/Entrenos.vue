@@ -8,7 +8,7 @@ import { apiFetch } from '../services/api';
 import { eliminarConDeshacer } from '../composables/useDeshacer';
 import { applyChartTheme, roundedBarDataset, roundedChartOptions } from '../utils/chartTheme';
 
-import { ChevronLeft, ChevronRight, Plus, Dumbbell, ExternalLink, Trash2 } from 'lucide-vue-next';
+import { ChevronLeft, ChevronRight, Plus, ExternalLink, Trash2 } from 'lucide-vue-next';
 import SegDisplay from '../components/SegDisplay.vue';
 import BottomSheet from '../components/BottomSheet.vue';
 import FilaEntreno from '../components/listas/FilaEntreno.vue';
@@ -160,11 +160,6 @@ const verDetalleEntreno = (entrenoId: number) => {
   router.push(`/entreno/${entrenoId}`);
 };
 
-// Navegar a la página de ejercicios
-const irAEjercicios = () => {
-  router.push('/ejercicios');
-};
-
 // Crear un nuevo entreno
 const crearNuevoEntreno = async () => {
   try {
@@ -228,8 +223,8 @@ onMounted(() => {
     <header class="marcador">
       <div class="marcador-top">
         <h1>Mis entrenos</h1>
-        <button type="button" @click="irAEjercicios" class="btn btn-secondary btn-sm" :disabled="isLoading">
-          <Dumbbell :size="16" aria-hidden="true" /> Ejercicios
+        <button type="button" @click="crearNuevoEntreno" class="btn btn-primary btn-sm" :disabled="isLoading">
+          <Plus :size="16" aria-hidden="true" /> Nuevo entreno
         </button>
       </div>
 
@@ -285,17 +280,6 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Acción principal al alcance del pulgar, sobre la barra inferior -->
-    <button
-      v-if="!isLoading && entrenos.length > 0"
-      type="button"
-      class="btn btn-primary btn-lg fab"
-      :disabled="isLoading"
-      @click="crearNuevoEntreno"
-    >
-      <Plus :size="20" aria-hidden="true" /> Nuevo entreno
-    </button>
-
     <BottomSheet :open="menuEntreno !== null" :title="menuEntreno?.Nom" @close="menuEntreno = null">
       <div class="acciones" v-if="menuEntreno">
         <button type="button" class="accion" @click="abrirDesdeMenu">
@@ -310,7 +294,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.entrenos { padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + 8rem); }
+.entrenos { padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + 1.5rem); }
 
 .marcador {
   margin-bottom: 1.25rem;
@@ -383,17 +367,6 @@ onMounted(() => {
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
-}
-
-.fab {
-  position: fixed;
-  right: var(--space-page-x);
-  bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + 0.75rem);
-  z-index: 40;
-  box-shadow: var(--shadow-lg);
-}
-@media (min-width: 700px) {
-  .fab { right: calc(50% - var(--max-content) / 2 + var(--space-page-x)); }
 }
 
 /* Carga: esqueletos con la forma de lo que viene */

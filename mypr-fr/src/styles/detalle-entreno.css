@@ -4,8 +4,8 @@
     width: 100%;
     max-width: var(--max-content);
     margin: 0 auto;
-    /* Hueco para que el reloj de descanso acoplado no tape la última fila */
-    padding-bottom: 5.5rem;
+    /* Hueco bajo la última fila */
+    padding-bottom: 1.5rem;
 }
 
 /* ---- Avisos ---- */
@@ -107,23 +107,6 @@
 
 .detalle-entreno .segmento-btn:focus-visible {
     outline-offset: -3px;
-}
-
-.detalle-entreno .icono-btn {
-    flex: 0 0 var(--touch-min);
-    min-height: var(--touch-min);
-    display: grid;
-    place-items: center;
-    background: var(--n1);
-    color: var(--n7);
-    border: 1px solid var(--n4);
-    border-radius: var(--radius-md);
-    cursor: pointer;
-}
-
-.detalle-entreno .icono-btn:hover {
-    background: var(--n2);
-    color: var(--n8);
 }
 
 .detalle-entreno .terminar {

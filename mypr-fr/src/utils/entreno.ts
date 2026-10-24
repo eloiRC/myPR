@@ -30,22 +30,31 @@ export interface GrupoEjercicio<S> {
 }
 
 /**
- * Agrupa las series por ejercicio. Los grupos salen en el orden de la primera aparición de cada
- * ejercicio y, dentro de cada grupo, se respeta el orden de la API. Un ejercicio repetido de forma
- * no contigua (superseries) queda en un único grupo.
+ * Agrupa las series en tramos de un mismo ejercicio, respetando el orden real del entreno: solo se
+ * juntan las series consecutivas. Si el usuario alterna ejercicios (superseries), cada vuelta es un
+ * tramo propio. La numeración (n) sigue contando por ejercicio a lo largo de todo el entreno.
  */
 export function agruparPorEjercicio<S extends SerieBase>(series: S[], esHecha: EsHecha): GrupoEjercicio<S>[] {
-  const grupos = new Map<number, GrupoEjercicio<S>>();
+  const grupos: GrupoEjercicio<S>[] = [];
+  const cuenta = new Map<number, number>();
   series.forEach((serie, idx) => {
-    let g = grupos.get(serie.ExerciciId);
-    if (!g) {
+    let g = grupos[grupos.length - 1];
+    if (!g || g.ejercicioId !== serie.ExerciciId) {
       g = { ejercicioId: serie.ExerciciId, filas: [], hechas: 0 };
-      grupos.set(serie.ExerciciId, g);
+      grupos.push(g);
     }
-    g.filas.push({ serie, n: g.filas.length + 1, idx });
+    const n = (cuenta.get(serie.ExerciciId) ?? 0) + 1;
+    cuenta.set(serie.ExerciciId, n);
+    g.filas.push({ serie, n, idx });
     if (esHecha(serie.SerieId)) g.hechas++;
   });
-  return Array.from(grupos.values());
+  return grupos;
+}
+
+/** Posición (0..n-1) de una serie bajo un punto x de una tira de ancho `ancho`; recorta en los extremos. */
+export function indiceEnTira(x: number, ancho: number, n: number): number {
+  if (n <= 0 || ancho <= 0) return 0;
+  return Math.min(n - 1, Math.max(0, Math.floor((x / ancho) * n)));
 }
 
 /** Primera serie no hecha según el orden del entreno (null si todas están hechas o no hay series). */

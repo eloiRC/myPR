@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { Plus, Timer, Flag } from 'lucide-vue-next';
+import { Plus, Flag } from 'lucide-vue-next';
 import { useAuthStore } from '../stores/auth';
 import { guardarNuevoEjercicio } from '../utils/ejercicioUtils';
 import { apiFetch } from '../services/api';
-import { leerVista, guardarVista, resolverIndiceTarjeta } from '../utils/vistaEntreno';
+import { leerVista, guardarVista, resolverIndiceTarjeta, abiertoPersistido } from '../utils/vistaEntreno';
 import {
-  agruparPorEjercicio, siguientePendiente, resumenSesion, inicioSesion, formatoSesion, elegirEntrenoActual,
+  agruparPorEjercicio, siguientePendiente, resumenSesion, inicioSesion, formatoSesion, elegirEntrenoActual, MAX_SESION_SEG,
 } from '../utils/entreno';
 import Chatbot from '../components/Chatbot.vue';
 import BottomSheet from '../components/BottomSheet.vue';
@@ -159,13 +159,16 @@ const todoHecho = computed(() => series.value.length > 0 && !pendiente.value);
 const infoPendiente = computed(() => {
   const p = pendiente.value;
   if (!p) return { n: 1, total: 1 };
-  const g = grupos.value.find(x => x.ejercicioId === p.ExerciciId);
-  const fila = g?.filas.find(f => f.serie.SerieId === p.SerieId);
-  return { n: fila?.n ?? 1, total: g?.filas.length ?? 1 };
+  const fila = grupos.value.flatMap(g => g.filas).find(f => f.serie.SerieId === p.SerieId);
+  return { n: fila?.n ?? 1, total: series.value.filter(s => s.ExerciciId === p.ExerciciId).length || 1 };
 });
 
 const celdasMarcador = computed(() =>
   series.value.map(s => (isCompletada(s.SerieId) ? 'hecha' : s.SerieId === pendiente.value?.SerieId ? 'actual' : 'pendiente') as 'hecha' | 'actual' | 'pendiente'));
+
+// Tira superior: huecos entre tramos y etiqueta (nombre del ejercicio) por serie
+const cortesMarcador = computed(() => grupos.value.slice(1).map(g => g.filas[0].idx));
+const etiquetasMarcador = computed(() => series.value.map(s => nombreEjercicio(s)));
 
 const duracionSeg = computed(() => Math.max(0, ahoraSeg.value - inicioSesion(series.value, abiertoSeg.value, ahoraSeg.value)));
 const tiempoSesion = computed(() => formatoSesion(duracionSeg.value));
@@ -350,8 +353,6 @@ const resetearEstado = () => {
   showTerminar.value = false;
   editOpen.value = false;
   pr.value.open = false;
-  abiertoSeg.value = Math.floor(Date.now() / 1000);
-  ahoraSeg.value = abiertoSeg.value;
 };
 
 const cargarRuta = async () => {
@@ -366,6 +367,9 @@ const cargarRuta = async () => {
     return;
   }
   entrenoId.value = id;
+  // El reloj de sesión sobrevive a recargar: se recuerda cuándo se abrió el entreno
+  ahoraSeg.value = Math.floor(Date.now() / 1000);
+  abiertoSeg.value = abiertoPersistido(id, ahoraSeg.value, MAX_SESION_SEG);
   await loadEntreno();
 };
 
@@ -609,6 +613,47 @@ const abrirModalEjercicio = () => {
   if (gruposMusculares.value.length === 0) loadGruposMusculares();
 };
 
+// ---------- Tira superior como navegación ----------
+// En tarjetas el cursor es la tarjeta actual; en lista, la serie que queda justo bajo la banda.
+const indiceScroll = ref(0);
+const indiceCursor = computed(() => (modoVisualizacion.value === 'tarjetas' ? serieActualIdx.value : indiceScroll.value));
+let bloqueoScroll = 0;
+let rafScroll = 0;
+
+const bordeBanda = () => document.querySelector('.marcador')?.getBoundingClientRect().bottom ?? 0;
+
+const actualizarIndiceScroll = () => {
+  rafScroll = 0;
+  if (modoVisualizacion.value !== 'lista' || Date.now() < bloqueoScroll) return;
+  const corte = bordeBanda() + 8;
+  const filas = document.querySelectorAll<HTMLElement>('[data-serie-id]');
+  let idx = Math.max(0, series.value.length - 1);
+  for (const el of filas) {
+    if (el.getBoundingClientRect().bottom > corte) {
+      const i = series.value.findIndex(s => s.SerieId === Number(el.dataset.serieId));
+      if (i >= 0) idx = i;
+      break;
+    }
+  }
+  indiceScroll.value = idx;
+};
+const alHacerScroll = () => { if (!rafScroll) rafScroll = requestAnimationFrame(actualizarIndiceScroll); };
+
+const irASerie = (i: number) => {
+  const s = series.value[i];
+  if (!s) return;
+  if (modoVisualizacion.value === 'tarjetas') { serieActualIdx.value = i; return; }
+  indiceScroll.value = i;
+  bloqueoScroll = Date.now() + 400;
+  const fila = document.querySelector<HTMLElement>(`[data-serie-id="${s.SerieId}"]`);
+  if (!fila) return;
+  // La primera fila de un tramo lleva su cabecera (nombre del ejercicio): se apunta a ella
+  const destino = grupos.value.some(g => g.filas[0].serie.SerieId === s.SerieId) ? (fila.closest('section') ?? fila) : fila;
+  window.scrollTo({ top: Math.max(0, destino.getBoundingClientRect().top + window.scrollY - bordeBanda() - 8) });
+};
+
+watch([modoVisualizacion, () => series.value.length], () => nextTick(actualizarIndiceScroll));
+
 // ---------- Cabecera ----------
 const abrirCoach = () => { router.replace({ query: { ...route.query, chat: '1' } }); };
 const volver = () => router.push('/entrenos');
@@ -621,9 +666,12 @@ const terminar = () => {
 onMounted(() => {
   cargarRuta();
   relojTimer = setInterval(() => { ahoraSeg.value = Math.floor(Date.now() / 1000); }, 1000);
+  window.addEventListener('scroll', alHacerScroll, { passive: true });
 });
 onUnmounted(() => {
   if (relojTimer) clearInterval(relojTimer);
+  window.removeEventListener('scroll', alHacerScroll);
+  if (rafScroll) cancelAnimationFrame(rafScroll);
   if (prTimer) clearTimeout(prTimer);
   if (avisoOkTimer) clearTimeout(avisoOkTimer);
   if (avisoErrorTimer) clearTimeout(avisoErrorTimer);
@@ -673,13 +721,18 @@ const irAEjercicio = (id: number) => router.push(`/ejercicio/${id}`);
         :nombre="entreno.Nom"
         :hechas="hechasCount"
         :total="series.length"
-        :tiempo="tiempoSesion"
         :celdas="celdasMarcador"
+        :cortes="cortesMarcador"
+        :etiquetas="etiquetasMarcador"
+        :indice="indiceCursor"
+        @ir="irASerie"
         @volver="volver"
         @renombrar="guardarNombre"
         @datos="showDatos = true"
         @coach="abrirCoach"
-      />
+      >
+        <template #descanso><RestTimer /></template>
+      </MarcadorSesion>
 
       <!-- Ahora: la siguiente serie pendiente (solo en lista; las tarjetas ya muestran una serie por pantalla) -->
       <SerieActual
@@ -705,13 +758,12 @@ const irAEjercicio = (id: number) => router.push(`/ejercicio/${id}`);
           <button type="button" class="segmento-btn" :class="{ activo: modoVisualizacion === 'lista' }" :aria-pressed="modoVisualizacion === 'lista'" @click="modoVisualizacion = 'lista'">Lista</button>
           <button type="button" class="segmento-btn" :class="{ activo: modoVisualizacion === 'tarjetas' }" :aria-pressed="modoVisualizacion === 'tarjetas'" @click="cambiarModoTarjetas">Tarjetas</button>
         </div>
-        <button v-if="restTimer.habilitado.value" type="button" class="icono-btn" aria-label="Iniciar temporizador de descanso" @click="restTimer.iniciar()"><Timer :size="22" :stroke-width="2" /></button>
         <button v-if="hechasCount > 0" type="button" class="btn btn-secondary terminar" aria-label="Terminar entreno" @click="showTerminar = true"><Flag :size="18" :stroke-width="2.25" aria-hidden="true" />Terminar</button>
       </div>
 
       <!-- MODO LISTA: series agrupadas por ejercicio -->
       <div v-if="modoVisualizacion === 'lista' && series.length > 0" class="grupos">
-        <section v-for="g in grupos" :key="g.ejercicioId" class="grupo" :aria-label="nombreEjercicioId(g.ejercicioId)">
+        <section v-for="g in grupos" :key="g.filas[0].serie.SerieId" class="grupo" :aria-label="nombreEjercicioId(g.ejercicioId)">
           <header class="grupo-cab">
             <button type="button" class="grupo-nombre" @click="irAEjercicio(g.ejercicioId)">{{ nombreEjercicioId(g.ejercicioId) }}</button>
             <span class="grupo-cuenta" :aria-label="`${g.hechas} de ${g.filas.length} series hechas`">{{ g.hechas }}<span class="grupo-total">/{{ g.filas.length }}</span></span>
@@ -802,6 +854,7 @@ const irAEjercicio = (id: number) => router.push(`/ejercicio/${id}`);
       :series="series"
       :ejercicios="ejercicios"
       :grupos-musculares="gruposMusculares"
+      :tiempo="tiempoSesion"
       :guardar="guardarDatos"
     />
   </BottomSheet>
@@ -822,9 +875,8 @@ const irAEjercicio = (id: number) => router.push(`/ejercicio/${id}`);
     @guardar="newExercici"
   />
 
-  <RestTimer />
 
-  <!-- El coach se abre con ?chat=1 (botón de la cabecera o pestaña «Entrenador»); se refresca si la IA cambia datos -->
+  <!-- El coach se abre con ?chat=1 (botón de la cabecera del entreno); se refresca si la IA cambia datos -->
   <Chatbot
     v-if="entreno"
     :entreno-id="entrenoId"

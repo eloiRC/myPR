@@ -40,3 +40,19 @@ export function resolverIndiceTarjeta(serieId: number | null | undefined, orden:
   }
   return respaldo();
 }
+
+// Momento en que se abrió el entreno por primera vez: el reloj de sesión sobrevive a recargar la página.
+export const claveAbierto = (entrenoId: number) => `mypr_entreno_abierto:${entrenoId}`;
+
+/**
+ * Segundo (epoch) desde el que cuenta la sesión de un entreno sin series con hora. Se reutiliza el guardado
+ * mientras tenga menos de `maxSeg`; si no existe o es antiguo (otro día), empieza uno nuevo.
+ */
+export function abiertoPersistido(entrenoId: number, ahoraSeg: number, maxSeg: number, storage: Storage | null = almacen()): number {
+  try {
+    const v = Number(storage?.getItem(claveAbierto(entrenoId)));
+    if (Number.isFinite(v) && v > 0 && v <= ahoraSeg && ahoraSeg - v <= maxSeg) return v;
+  } catch { /* se ignora */ }
+  try { storage?.setItem(claveAbierto(entrenoId), String(ahoraSeg)); } catch { /* sin almacenamiento */ }
+  return ahoraSeg;
+}

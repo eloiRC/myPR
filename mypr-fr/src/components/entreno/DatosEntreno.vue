@@ -8,6 +8,8 @@ interface Props {
   series: any[];
   ejercicios: any[];
   gruposMusculares: { GrupMuscularId: number; Nom: string }[];
+  /** Tiempo de sesión ya formateado (m:ss o h:mm) */
+  tiempo: string;
   /** Guarda descripción y puntuación; debe lanzar si falla */
   guardar: (valores: { descripcio: string; puntuacio: number }) => Promise<void>;
 }
@@ -78,6 +80,7 @@ const MODOS = [['series', 'Series'], ['reps', 'Reps'], ['carga', 'Carga (kg)']] 
       <div class="stat"><span class="num">{{ entreno.CargaTotal }}<small> t</small></span><span class="rotulo">Peso total</span></div>
       <div class="stat"><span class="num">{{ series.length }}</span><span class="rotulo">Series</span></div>
       <div class="stat"><span class="num">{{ ejerciciosUnicos }}</span><span class="rotulo">Ejercicios</span></div>
+      <div class="stat"><span class="num">{{ tiempo }}</span><span class="rotulo">Tiempo</span></div>
     </div>
 
     <section v-if="musculoStats.length" class="musculos" aria-label="Reparto por músculo">
@@ -133,7 +136,7 @@ const MODOS = [['series', 'Series'], ['reps', 'Reps'], ['carga', 'Carga (kg)']] 
   text-transform: uppercase;
   color: var(--n6);
 }
-.resumen { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+.resumen { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
 .stat { display: flex; flex-direction: column; gap: 0.1rem; padding: 0.6rem 0.75rem; background: var(--n2); border: 1px solid var(--n3); border-radius: var(--radius-md); }
 .num { font-family: var(--font-display); font-size: 1.8rem; font-weight: 700; line-height: 1.05; font-variant-numeric: tabular-nums; }
 .num small { font-size: 1rem; color: var(--n6); }

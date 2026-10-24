@@ -210,7 +210,7 @@ Una carcasa de neutros fríos casi negros con tres luces de señal saturadas que
 - **Title** (700, 1.2rem a 1.4rem, mayúsculas): nombre de entreno en el marcador, filas de lista, título de hoja (1.15rem).
 - **Body** (Barlow 400, 1rem, 1.5): texto corrido; los campos suben a 16 px en móvil para que iOS no haga zoom.
 - **Figure** (Barlow 600, 1.45rem, números tabulares): kg y reps en las filas de serie.
-- **Label / rótulo** (700, 0.75rem a 0.85rem, 0.12em a 0.16em, mayúsculas, `n6`): nombra la lectura o el campo que tiene justo al lado o debajo ("SERIES", "TIEMPO", "KG").
+- **Label / rótulo** (700, 0.75rem a 0.85rem, 0.12em a 0.16em, mayúsculas, `n6`): nombra la lectura o el campo que tiene justo al lado o debajo ("SERIES", "DESCANSO", "KG").
 - **Button** (700, 0.95rem, 0.06em, mayúsculas): todos los botones; 1.15rem a 1.4rem en las acciones grandes de la serie actual.
 
 ### Named Rules
@@ -224,7 +224,7 @@ Columna única mobile-first de 44rem como máximo, centrada, con 1rem de margen 
 
 El ritmo es compacto, en pasos de 0.25rem: 0.5rem entre filas, 0.6rem a 0.75rem entre controles, 1rem a 1.25rem de relleno de panel y entre secciones, 1.75rem bajo la cabecera de página.
 
-La cifra de la serie actual se escala con container queries: el 88 % del ancho útil se reparte según los caracteres reales, con un tope de 6rem. La duración es longitud: el descanso y el progreso de la sesión se dibujan como barras proporcionales de 6 px (la tira del marcador tiene una celda por serie).
+La cifra de la serie actual se escala con container queries: el 88 % del ancho útil se reparte según los caracteres reales, con un tope de 6rem. La duración es longitud: el descanso se dibuja como una barra proporcional de 4 px al pie de su celda y la tira del marcador tiene una celda por serie.
 
 ### Named Rules
 **The Thumb Floor Rule.** Todo control táctil mide al menos 44 px (`touch-min`). Los tamaños compactos de 36 px suben a 44 px con `pointer: coarse`. Las acciones principales del entreno miden 3.75rem.
@@ -275,16 +275,16 @@ Rótulo condensado en mayúsculas sobre esquina de hardware; se hunde 1 px al pu
 - **Label:** rótulo condensado en mayúsculas `n6` encima del campo.
 
 ### Navigation
-Barra inferior fija de cuatro destinos (Entrenos, Ejercicios, Entrenador, Perfil) sobre carcasa `n0` con junta superior `n3`. Cada destino apila un icono Lucide de 22 px y un rótulo condensado de 0.72rem en `n6`; el hover pasa a `n8` y el activo se enciende en ámbar con una barra ámbar de 3 px en el borde superior.
+Barra inferior fija de tres destinos (Entrenos, Ejercicios, Perfil; el entrenador vive solo dentro de cada entreno, en la cabecera) sobre carcasa `n0` con junta superior `n3`. Cada destino apila un icono Lucide de 22 px y un rótulo condensado de 0.72rem en `n6`; el hover pasa a `n8` y el activo se enciende en ámbar con una barra ámbar de 3 px en el borde superior.
 
 ### Segment Display (signature)
-Display de 7 segmentos dibujado en SVG, en caja de 60 × 100 con segmentos hexagonales; 1em es la altura del dígito. La coma y el punto se dibujan como punto decimal y los dos puntos como separador de reloj. Tonos: ámbar (en curso, tiempo de sesión), blanco (hechas, récord), rojo (descanso en marcha), apagado `n6` (descanso en pausa). Siempre lleva `role="img"` con una etiqueta legible ("82,5 kilos"). Se monta dentro de una lectura hundida `n0` con su rótulo encima.
+Display de 7 segmentos dibujado en SVG, en caja de 60 × 100 con segmentos hexagonales; 1em es la altura del dígito. La coma y el punto se dibujan como punto decimal y los dos puntos como separador de reloj. Tonos: ámbar (en curso), blanco (hechas, récord), rojo (descanso en marcha), apagado `n6` (descanso en pausa). Siempre lleva `role="img"` con una etiqueta legible ("82,5 kilos"). Se monta dentro de una lectura hundida `n0` con su rótulo encima.
 
 ### Judge Lights (signature)
 Tres pilotos circulares: apagados en `n2` con aro `n4`, encendidos en blanco de jueces. Al batir un récord se encienden en secuencia (escalonado de 0.22 s, encendido en seco con `steps`), sin animación con reduced-motion. Con rótulo se alojan en una caja hundida `n0`.
 
 ### State Vocabulary
-Un vocabulario de estado fijo para cada serie: **pendiente** (aro `n5` vacío), **en curso** (luz y borde ámbar), **hecha** (luz blanca, cifras atenuadas a `n7`), **PR** (etiqueta con contorno blanco de jueces). La tira del marcador repite el código: `n3` pendiente, ámbar en curso, blanco hecha.
+Un vocabulario de estado fijo para cada serie: **pendiente** (aro `n5` vacío), **en curso** (luz y borde ámbar), **hecha** (luz blanca, cifras atenuadas a `n7`), **PR** (etiqueta con contorno blanco de jueces). La tira del marcador repite el código: `n3` pendiente, ámbar en curso, blanco hecha. Además es la navegación del entreno: la banda es fija arriba, tocar o arrastrar sobre la tira lleva a esa serie (scroll en lista, tarjeta en tarjetas), un cursor más alto marca la que se está viendo, los tramos de distinto ejercicio se separan con un hueco y una etiqueta con el nombre acompaña al dedo. El descanso ocupa la segunda lectura de la banda (toca para iniciar o pausar; −15/+15/cerrar cuelgan bajo la banda sin empujar el contenido) y el tiempo de sesión se consulta en Datos del entreno. Ambos relojes sobreviven a recargar la página.
 
 ### Bottom Sheet
 Sustituye a todos los modales. Sube desde abajo (0.28s, `cubic-bezier(0.22, 1, 0.36, 1)`) sobre un fondo `rgba(5, 6, 7, 0.7)`; chapa `n1`, junta superior, esquinas de 4 px solo arriba, asa de 4 px en `n4`, título condensado y botón de cierre de 44 px. Se cierra con el fondo, Escape o el botón y devuelve el foco. Alto automático o casi completo para el chat.

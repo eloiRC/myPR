@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { apiFetch } from '../services/api';
 
 // ---------- Lógica pura (testeable, sin dependencias de Vue ni del DOM) ----------
@@ -227,6 +227,40 @@ export const sincronizarAjustes = async (deps: DepsSync): Promise<AjustesTempori
   return servidor;
 };
 
+// ---------- Temporizador en marcha: persistencia ----------
+
+const CLAVE_ESTADO = 'mypr_rest_timer_estado';
+/** Un descanso terminado hace más de esto ya no tiene sentido restaurarlo */
+export const GRACIA_RESTAURAR_MS = 10_000;
+
+/** Estado válido a partir de lo guardado; null si es inválido o ya terminó hace tiempo */
+export const estadoVigente = (raw: unknown, now: number): EstadoTemporizador | null => {
+  const e = raw as Partial<EstadoTemporizador> | null;
+  if (!e || typeof e !== 'object') return null;
+  const num = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+  if (!num(e.totalMs) || e.totalMs <= 0) return null;
+  if (num(e.pausadoMs) && e.finMs === null) return { totalMs: e.totalMs, finMs: null, pausadoMs: Math.max(0, e.pausadoMs) };
+  if (num(e.finMs) && e.pausadoMs === null && now - e.finMs <= GRACIA_RESTAURAR_MS) {
+    return { totalMs: e.totalMs, finMs: e.finMs, pausadoMs: null };
+  }
+  return null;
+};
+
+function leerEstadoGuardado(now: number): EstadoTemporizador | null {
+  try {
+    const raw = localStorage.getItem(CLAVE_ESTADO);
+    return raw ? estadoVigente(JSON.parse(raw), now) : null;
+  } catch {
+    return null;
+  }
+}
+function guardarEstado(e: EstadoTemporizador | null) {
+  try {
+    if (e) localStorage.setItem(CLAVE_ESTADO, JSON.stringify(e));
+    else localStorage.removeItem(CLAVE_ESTADO);
+  } catch { /* sin almacenamiento: solo vale en esta sesión */ }
+}
+
 // ---------- Estado compartido ----------
 
 const inicial = leerAjustes(); // arranque instantáneo / sin conexión
@@ -250,8 +284,9 @@ const actuales = (): AjustesTemporizador => ({
 
 // ---------- Estado compartido del temporizador en marcha ----------
 
-/** null = no hay temporizador visible */
-const estado = ref<EstadoTemporizador | null>(null);
+/** null = no hay temporizador visible. Se guarda en el dispositivo: recargar la página no lo reinicia. */
+const estado = ref<EstadoTemporizador | null>(leerEstadoGuardado(Date.now()));
+watch(estado, (e) => guardarEstado(e), { deep: true });
 /** Se incrementa en cada inicio/reinicio (distingue de los ajustes ±15 s) */
 const ciclo = ref(0);
 
