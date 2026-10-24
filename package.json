@@ -3,7 +3,7 @@
 	"scripts": {
 		"dev": "wrangler dev ",
 		"deploy": "wrangler deploy --minify",
-		"deploy-front": "cd ./mypr-fr/ && npm run build && cd.. && wrangler pages deploy ./mypr-fr/dist/ --project-name myprfr",
+		"deploy-front": "cd ./mypr-fr/ && yarn build && cd .. && wrangler pages deploy ./mypr-fr/dist/ --project-name myprfr",
 		"update-db": "wrangler d1 export mypr-eu --remote --output=./database.sql && wrangler d1 execute  mypr-eu --local --file=./drop.sql && wrangler d1 execute  mypr-eu --local --file=./database.sql",
 		"cf-typegen": "wrangler types --env-interface CloudflareBindings",
 		"sql:edit": "powershell -ExecutionPolicy Bypass -File ./run-edit-sql.ps1",
