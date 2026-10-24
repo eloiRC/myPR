@@ -143,7 +143,7 @@ const alternarPausa = () => {
     <span class="barra" aria-hidden="true"><span class="barra-fill" :style="{ transform: `scaleX(${visible ? fraccionRestante : 0})` }"></span></span>
   </button>
 
-  <!-- Controles del descanso: cuelgan bajo la banda sin empujar el contenido -->
+  <!-- Controles del descanso: fila propia dentro de la banda, para no tapar nada -->
   <Transition name="rest-slide">
     <div v-if="habilitado && visible" class="controles" role="group" aria-label="Temporizador de descanso">
       <span v-if="terminado" class="rest-done">A por la siguiente serie</span>
@@ -208,19 +208,14 @@ const alternarPausa = () => {
 .lectura.paused .barra-fill { background: var(--n6); }
 .lectura.done .barra-fill { background: var(--led-amber); }
 
-/* Bajo la banda (sticky): superpuesto al contenido, sin empujarlo */
+/* Segunda fila de la banda: ocupa todo el ancho y empuja el contenido en vez de taparlo */
 .controles {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
+  grid-row: 2;
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.15rem 0.5rem;
-  background: var(--n1);
-  border-bottom: 1px solid var(--n4);
-  box-shadow: var(--bevel);
+  min-width: 0;
 }
 .rest-done {
   flex: 1;
