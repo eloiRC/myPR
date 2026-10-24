@@ -26,6 +26,13 @@ const serie = computed(() => props.series[props.indice] ?? null);
 const hecha = (id: number) => props.hechas[id] ?? false;
 const total = computed(() => props.series.length);
 
+// Las cifras ocupan todo el ancho que dejan sus caracteres: más grandes cuando son pocos (45 × 8),
+// más ajustadas con decimales (82,5 × 12). Un dígito mide ~0,72 em y el punto decimal ~0,35.
+const anchoEm = computed(() => {
+  if (!serie.value) return 3;
+  return [...`${kgDisplay(serie.value.Kg)}${serie.value.Reps}`].reduce((a, c) => a + (c === '.' ? 0.35 : 0.72), 0);
+});
+
 const direccion = ref<'next' | 'prev'>('next');
 watch(() => props.indice, (n, o) => { direccion.value = n >= o ? 'next' : 'prev'; });
 
@@ -87,14 +94,14 @@ onUnmounted(() => window.removeEventListener('keydown', onKey));
             <li v-for="g in gruposDe(serie)" :key="g" class="chip-m">{{ g }}</li>
           </ul>
 
-          <div class="cifras" role="group" :aria-label="`${kgDisplay(serie.Kg).replace('.', ',')} kilos por ${serie.Reps} repeticiones`">
+          <div class="cifras" :style="{ '--ancho-em': anchoEm }" role="group" :aria-label="`${kgDisplay(serie.Kg).replace('.', ',')} kilos por ${serie.Reps} repeticiones`">
             <div class="cifra">
-              <SegDisplay :value="kgDisplay(serie.Kg)" :tone="hecha(serie.SerieId) ? 'muted' : 'amber'" :label="`${kgDisplay(serie.Kg).replace('.', ',')} kilos`" class="seg-enorme" />
+              <SegDisplay :value="kgDisplay(serie.Kg)" :tone="hecha(serie.SerieId) ? 'white' : 'amber'" :label="`${kgDisplay(serie.Kg).replace('.', ',')} kilos`" class="seg-enorme" />
               <span class="unidad">kg</span>
             </div>
             <span class="por" aria-hidden="true">×</span>
             <div class="cifra">
-              <SegDisplay :value="serie.Reps" :tone="hecha(serie.SerieId) ? 'muted' : 'amber'" :label="`${serie.Reps} repeticiones`" class="seg-enorme" />
+              <SegDisplay :value="serie.Reps" :tone="hecha(serie.SerieId) ? 'white' : 'amber'" :label="`${serie.Reps} repeticiones`" class="seg-enorme" />
               <span class="unidad">reps</span>
             </div>
           </div>
@@ -174,6 +181,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey));
   line-height: 1.6;
 }
 .cifras {
+  container-type: inline-size;
   flex: 1;
   display: flex;
   align-items: center;
@@ -187,8 +195,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKey));
   border-radius: var(--radius-md);
 }
 .cifra { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; min-width: 0; }
-.seg-enorme { font-size: clamp(4rem, 21vw, 7rem); }
-.unidad { font-family: var(--font-display); font-size: 0.9rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--n6); }
+.seg-enorme { font-size: min(9rem, calc((100cqw - 4.5rem) / var(--ancho-em, 3))); }
+.unidad { font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--n7); }
 .por { font-family: var(--font-display); font-size: clamp(1.6rem, 7vw, 2.4rem); font-weight: 600; color: var(--n6); margin-bottom: 1.4rem; }
 .carga { display: flex; align-items: center; justify-content: center; gap: 0.9rem; margin: 0 0 0.75rem; color: var(--n7); font-variant-numeric: tabular-nums; }
 .descanso { display: inline-flex; align-items: center; gap: 0.3rem; }

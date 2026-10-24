@@ -168,7 +168,7 @@ const seriesCardOrder = computed(() => series.value.slice());
 const serieActual = computed(() => seriesCardOrder.value[serieActualIdx.value] || null);
 
 // ---------- Avisos ----------
-const PR_TOAST_MS = 6000;
+const PR_TOAST_MS = 4000;
 const celebrarPr = (exerciciId: number, kg: number, reps: number) => {
   pr.value = { open: true, ejercicio: nombreEjercicioId(exerciciId), kg, reps };
   if (navigator.vibrate) navigator.vibrate([80, 60, 160]);

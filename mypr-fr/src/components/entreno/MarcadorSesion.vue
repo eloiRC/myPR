@@ -235,9 +235,10 @@ const posEtiqueta = computed(() => {
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+  line-height: 1;
   color: var(--n6);
 }
-.valor { display: flex; align-items: baseline; gap: 0.5rem; min-height: 1.9rem; }
+.valor { display: flex; align-items: center; gap: 0.5rem; height: 1.9rem; }
 .seg-valor { font-size: 1.9rem; }
 .de {
   font-family: var(--font-display);

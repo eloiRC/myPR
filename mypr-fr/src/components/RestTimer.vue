@@ -23,7 +23,7 @@ const texto = computed(() => formatearMmSs(restante.value));
 const visible = computed(() => habilitado.value && estado.value !== null);
 // La barra mide lo que queda del descanso: su longitud es la duración
 const textoCelda = computed(() => (visible.value ? texto.value : '00:00'));
-const tono = computed(() => (!visible.value || pausado.value ? 'muted' : terminado.value ? 'amber' : 'red') as 'muted' | 'amber' | 'red');
+const tono = computed(() => (!visible.value || pausado.value ? 'muted' : 'amber') as 'muted' | 'amber');
 const fraccionRestante = computed(() => (terminado.value ? 0 : 1 - progreso.value));
 
 const pitar = () => {
@@ -184,7 +184,7 @@ const alternarPausa = () => {
   border-radius: var(--radius-md);
   overflow: hidden;
 }
-.lectura.viva { border-color: var(--led-red); }
+
 .lectura.done { border-color: var(--led-amber); }
 .principal {
   display: flex;
@@ -205,12 +205,12 @@ const alternarPausa = () => {
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+  line-height: 1;
   color: var(--n6);
   white-space: nowrap;
 }
-.lectura.viva .rotulo { color: var(--led-red); }
 .lectura.done .rotulo { color: var(--led-amber); }
-.valor { display: flex; align-items: baseline; min-height: 1.9rem; }
+.valor { display: flex; align-items: center; height: 1.9rem; }
 .seg-valor { font-size: 1.9rem; }
 
 /* +15 sobre −15, uno encima del otro */
@@ -253,7 +253,7 @@ const alternarPausa = () => {
 .cerrar:hover { color: var(--n8); }
 
 .barra { grid-column: 1 / -1; display: block; background: var(--n2); }
-.barra-fill { display: block; height: 100%; background: var(--led-red); transform-origin: left center; transition: transform 0.25s linear; }
-.lectura.paused .barra-fill { background: var(--n6); }
+.barra-fill { display: block; height: 100%; background: var(--n7); transform-origin: left center; transition: transform 0.25s linear; }
+.lectura.paused .barra-fill { background: var(--n5); }
 .lectura.done .barra-fill { background: var(--led-amber); }
 </style>
