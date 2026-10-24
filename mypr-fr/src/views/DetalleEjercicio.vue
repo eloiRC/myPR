@@ -6,7 +6,7 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 import { applyChartTheme, roundedLineDataset, roundedChartOptions, CHART_COLORS } from '../utils/chartTheme';
 import { useAuthStore } from '../stores/auth';
 import { apiFetch } from '../services/api';
-import { DURACION_MIN_SEG, DURACION_MAX_SEG, descansoAceptable, textoDescanso } from '../composables/useRestTimer';
+import { DURACION_MIN_SEG, DURACION_MAX_SEG, descansoAceptable, textoDescanso, useRestTimer } from '../composables/useRestTimer';
 
 import { ArrowLeft, Pencil, Timer, ChevronRight } from 'lucide-vue-next';
 import SegDisplay from '../components/SegDisplay.vue';
@@ -14,8 +14,10 @@ import JudgeLights from '../components/JudgeLights.vue';
 import BottomSheet from '../components/BottomSheet.vue';
 import GrupoChips from '../components/listas/GrupoChips.vue';
 import { kgDisplay } from '../utils/segmentos';
+import { recordEjercicio } from '../utils/record';
 
 const authStore = useAuthStore();
+const restTimer = useRestTimer();
 
 // Registrar los componentes necesarios de Chart.js
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
@@ -151,6 +153,12 @@ const guardarEdicionEjercicio = async () => {
     errorEdicion.value = e.message || 'Error al guardar';
   }
 };
+
+// Récord a mostrar: nunca menor que el máximo del historial (la columna PR puede estar desfasada)
+const record = computed(() => recordEjercicio(ejercicio.value?.PR, historialPesos.value));
+const descansoTexto = computed(() => ejercicio.value?.DescansoSeg != null
+  ? textoDescanso(ejercicio.value.DescansoSeg)
+  : `${textoDescanso(restTimer.duracionSeg.value)} · por defecto`);
 
 // Datos para la gráfica de PR
 const chartData = computed(() => {
@@ -315,10 +323,10 @@ onMounted(loadEjercicio);
       <section class="hero" aria-label="Récord personal">
         <div class="hero-top">
           <span class="hero-rotulo">Récord personal</span>
-          <JudgeLights :lit="ejercicio.PR > 0 ? 3 : 0" size="md" :label="ejercicio.PR > 0 ? 'Récord registrado' : 'Sin récord'" />
+          <JudgeLights :lit="record.valor > 0 ? 3 : 0" size="md" rotulo="Récord" :label="record.valor > 0 ? 'Récord registrado' : 'Sin récord'" />
         </div>
-        <div v-if="ejercicio.PR > 0" class="hero-valor">
-          <SegDisplay :value="kgDisplay(ejercicio.PR)" tone="white" :label="`${kgDisplay(ejercicio.PR).replace('.', ',')} kg`" class="hero-seg" />
+        <div v-if="record.valor > 0" class="hero-valor">
+          <SegDisplay :value="kgDisplay(record.valor)" tone="white" :label="`${kgDisplay(record.valor).replace('.', ',')} kg`" class="hero-seg" />
           <span class="hero-unidad">kg</span>
         </div>
         <div v-else class="hero-valor">
@@ -331,12 +339,12 @@ onMounted(loadEjercicio);
         <p class="hero-descanso">
           <Timer :size="16" aria-hidden="true" />
           Descanso
-          <strong>{{ ejercicio.DescansoSeg != null ? textoDescanso(ejercicio.DescansoSeg) : 'global' }}</strong>
+          <strong>{{ descansoTexto }}</strong>
         </p>
       </section>
 
       <!-- Entreno del PR -->
-      <section v-if="ejercicio.entrenoPr" aria-labelledby="pr-entreno-t">
+      <section v-if="ejercicio.entrenoPr && !record.desfasado" aria-labelledby="pr-entreno-t">
         <h2 id="pr-entreno-t" class="section-title">Entreno del PR</h2>
         <button type="button" class="fila-pr" @click="verDetalleEntreno(ejercicio.entrenoPr.EntrenoId)">
           <span class="fila-pr-texto">
@@ -350,6 +358,7 @@ onMounted(loadEjercicio);
           <ChevronRight :size="18" class="fila-pr-chev" aria-hidden="true" />
         </button>
       </section>
+      <p v-else-if="record.valor > 0" class="sin-pr">Récord sin entreno asociado</p>
       <p v-else class="sin-pr">Este ejercicio aún no tiene un PR registrado.</p>
 
       <!-- Gráfica de evolución -->

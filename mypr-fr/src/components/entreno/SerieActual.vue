@@ -30,6 +30,15 @@ const emit = defineEmits<{
 }>();
 
 const descanso = computed(() => (props.serie?.DescansoSeg != null ? textoDescanso(props.serie.DescansoSeg) : ''));
+// Ancho del marcador en em de dígito (celda 0,6 em, punto 0,16 em, hueco 0,08 em): el tamaño se
+// ajusta para que kg y reps llenen ~88 % de la ventana, también con "102.5" × 12.
+const anchoEm = (t: string) => {
+  const s = String(t);
+  let w = 0, n = 0;
+  for (const ch of s) { w += ch === '.' ? 0.16 : 0.6; n++; }
+  return w + Math.max(0, n - 1) * 0.08;
+};
+const totalEm = computed(() => props.serie ? (anchoEm(kgDisplay(props.serie.Kg)) + anchoEm(String(props.serie.Reps)) + 1.5).toFixed(3) : '1');
 const aria = computed(() => props.serie ? `${kgDisplay(props.serie.Kg).replace('.', ',')} kilos por ${props.serie.Reps} repeticiones` : '');
 </script>
 
@@ -37,15 +46,15 @@ const aria = computed(() => props.serie ? `${kgDisplay(props.serie.Kg).replace('
   <section class="ahora" :class="{ 'ahora--completo': completo && !serie }" aria-label="Serie actual">
     <template v-if="serie">
       <div class="cabecera">
-        <span class="rotulo">Ahora · serie {{ n }} de {{ totalEjercicio }}</span>
+        <button type="button" class="ejercicio" @click="emit('irEjercicio')">{{ nombreEjercicio }}</button>
+        <span class="cuenta" :aria-label="`Serie ${n} de ${totalEjercicio}`">{{ n }}<span class="cuenta-total">/{{ totalEjercicio }}</span></span>
         <button type="button" class="editar" aria-label="Editar esta serie" @click="emit('editar')"><Pencil :size="18" :stroke-width="2" /></button>
       </div>
-      <button type="button" class="ejercicio" @click="emit('irEjercicio')">{{ nombreEjercicio }}</button>
       <ul v-if="grupos.length" class="chips" aria-label="Músculos">
         <li v-for="g in grupos" :key="g" class="chip-m">{{ g }}</li>
       </ul>
 
-      <div class="cifras" role="group" :aria-label="aria">
+      <div class="cifras" role="group" :aria-label="aria" :style="{ '--tot': totalEm }">
         <div class="cifra">
           <SegDisplay :value="kgDisplay(serie.Kg)" tone="amber" :label="`${kgDisplay(serie.Kg).replace('.', ',')} kilos`" class="seg-grande" />
           <span class="unidad">kg</span>
@@ -98,7 +107,16 @@ const aria = computed(() => props.serie ? `${kgDisplay(props.serie.Kg).replace('
   border-radius: var(--radius-lg);
   box-shadow: var(--bevel);
 }
-.cabecera { display: flex; align-items: center; justify-content: space-between; }
+.cabecera { display: flex; align-items: baseline; gap: 0.75rem; }
+.cuenta {
+  flex-shrink: 0;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--n8);
+  font-variant-numeric: tabular-nums;
+}
+.cuenta-total { color: var(--n6); }
 .rotulo {
   font-family: var(--font-display);
   font-size: 0.8rem;
@@ -110,6 +128,8 @@ const aria = computed(() => props.serie ? `${kgDisplay(props.serie.Kg).replace('
 .editar {
   min-width: var(--touch-min);
   min-height: var(--touch-min);
+  flex-shrink: 0;
+  align-self: center;
   margin: -0.5rem -0.75rem -0.5rem 0;
   display: grid;
   place-items: center;
@@ -122,9 +142,9 @@ const aria = computed(() => props.serie ? `${kgDisplay(props.serie.Kg).replace('
 .editar:hover { background: var(--n2); color: var(--n8); }
 .ejercicio {
   display: block;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   padding: 0;
-  margin-top: 0.15rem;
   background: none;
   border: none;
   color: var(--n8);
@@ -157,7 +177,8 @@ const aria = computed(() => props.serie ? `${kgDisplay(props.serie.Kg).replace('
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  gap: clamp(0.5rem, 3vw, 1.25rem);
+  gap: 0;
+  container-type: inline-size;
   margin: 1rem 0 0.5rem;
   padding: 1rem 0.5rem 0.75rem;
   background: var(--n0);
@@ -165,10 +186,13 @@ const aria = computed(() => props.serie ? `${kgDisplay(props.serie.Kg).replace('
   border-radius: var(--radius-md);
 }
 .cifra { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; min-width: 0; }
-.seg-grande { font-size: clamp(3.4rem, 17vw, 5.6rem); }
+/* 88 % del ancho útil de la ventana repartido según el ancho real de las cifras */
+.cifra { font-size: min(6rem, calc(88cqi / var(--tot, 5))); }
+.seg-grande { font-size: 1em; }
 .unidad {
   font-family: var(--font-display);
   font-size: 0.85rem;
+  line-height: 1;
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -177,8 +201,10 @@ const aria = computed(() => props.serie ? `${kgDisplay(props.serie.Kg).replace('
 .por {
   align-self: center;
   margin-bottom: 1.2rem;
+  width: calc(1.5 * min(6rem, calc(88cqi / var(--tot, 5))));
+  text-align: center;
   font-family: var(--font-display);
-  font-size: clamp(1.6rem, 7vw, 2.4rem);
+  font-size: calc(0.6 * min(6rem, calc(88cqi / var(--tot, 5))));
   font-weight: 600;
   color: var(--n6);
 }

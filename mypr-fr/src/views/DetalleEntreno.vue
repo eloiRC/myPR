@@ -706,7 +706,7 @@ const irAEjercicio = (id: number) => router.push(`/ejercicio/${id}`);
           <button type="button" class="segmento-btn" :class="{ activo: modoVisualizacion === 'tarjetas' }" :aria-pressed="modoVisualizacion === 'tarjetas'" @click="cambiarModoTarjetas">Tarjetas</button>
         </div>
         <button v-if="restTimer.habilitado.value" type="button" class="icono-btn" aria-label="Iniciar temporizador de descanso" @click="restTimer.iniciar()"><Timer :size="22" :stroke-width="2" /></button>
-        <button v-if="hechasCount > 0" type="button" class="btn btn-secondary terminar" @click="showTerminar = true"><Flag :size="18" :stroke-width="2.25" aria-hidden="true" />Terminar entreno</button>
+        <button v-if="hechasCount > 0" type="button" class="btn btn-secondary terminar" aria-label="Terminar entreno" @click="showTerminar = true"><Flag :size="18" :stroke-width="2.25" aria-hidden="true" />Terminar</button>
       </div>
 
       <!-- MODO LISTA: series agrupadas por ejercicio -->

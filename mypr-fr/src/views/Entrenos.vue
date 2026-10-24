@@ -310,7 +310,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.entrenos { padding-bottom: calc(var(--bottom-nav-h) + 5.5rem); }
+.entrenos { padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + 8rem); }
 
 .marcador {
   margin-bottom: 1.25rem;

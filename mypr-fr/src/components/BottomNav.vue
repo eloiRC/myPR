@@ -49,6 +49,14 @@ const activo = computed(() => {
   background: var(--n0);
   border-top: 1px solid var(--n3);
 }
+@media (min-width: 768px) {
+  .bottom-nav {
+    max-width: var(--max-content);
+    margin-inline: auto;
+    border-left: 1px solid var(--n3);
+    border-right: 1px solid var(--n3);
+  }
+}
 .bottom-nav-item {
   position: relative;
   display: flex;
