@@ -137,8 +137,9 @@ const aria = computed(() => props.serie ? `${kgDisplay(props.serie.Kg).replace('
   text-transform: uppercase;
   cursor: pointer;
   overflow-wrap: anywhere;
+  text-decoration: none;
 }
-.chips { display: flex; flex-wrap: wrap; gap: 0.35rem; list-style: none; margin: 0.45rem 0 0; padding: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 0.35rem; list-style: none; margin: 0.65rem 0 0; padding: 0; }
 .chip-m {
   padding: 0 0.5rem;
   border: 1px solid var(--n4);

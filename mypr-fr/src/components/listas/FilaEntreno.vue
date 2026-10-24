@@ -15,7 +15,7 @@ const emit = defineEmits<{ (e: 'abrir'): void; (e: 'menu'): void }>();
         <span class="fila-fecha">{{ fecha }}</span>
       </span>
       <span class="fila-carga">
-        <SegDisplay :value="String(cargaT)" tone="amber" :label="`${String(cargaT).replace('.', ',')} toneladas`" class="fila-seg" />
+        <SegDisplay :value="String(cargaT)" tone="white" :label="`${String(cargaT).replace('.', ',')} toneladas`" class="fila-seg" />
         <span class="fila-unidad">t</span>
       </span>
       <ChevronRight :size="18" class="fila-chev" aria-hidden="true" />

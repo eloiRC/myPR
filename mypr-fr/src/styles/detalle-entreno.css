@@ -68,6 +68,7 @@
 /* ---- Barra de herramientas: vista, descanso manual, terminar ---- */
 .detalle-entreno .herramientas {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem;
     margin: 0.75rem 0.75rem 0;
@@ -75,6 +76,7 @@
 
 .detalle-entreno .segmento {
     display: inline-flex;
+    flex: 0 0 auto; /* nunca se recorta "Tarjetas" */
     border: 1px solid var(--n4);
     border-radius: var(--radius-md);
     overflow: hidden;
@@ -179,7 +181,7 @@
     color: var(--n6);
 }
 
-.detalle-entreno .chips {
+.detalle-entreno .grupo .chips {
     display: flex;
     flex-wrap: wrap;
     gap: 0.35rem;

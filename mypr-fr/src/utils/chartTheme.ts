@@ -5,7 +5,8 @@ import type { ScriptableContext } from 'chart.js';
 // trazos y puntos redondeados, relleno en degradado y tooltips redondeados.
 
 export const CHART_COLORS = {
-  accent: '#ffb020',
+  // Los datos se dibujan en gris claro: el ámbar se reserva para lo accionable o en curso
+  accent: '#b9bec5',
   pr: '#f4f6f7',
   surface: '#141518',
 } as const;
