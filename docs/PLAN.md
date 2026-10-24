@@ -17,11 +17,20 @@ Estado a 2026-10-23 (actualizado). Se actualiza al cerrar cada bloque.
 - Chat: generación en Cloudflare Queues, fases en vivo, retomar tras bloqueo, respuestas rápidas, contexto compacto y menos llamadas al modelo (`LLM_THINKING=off`).
 - Eliminada la integración con Garmin: código, workflow, scripts, tablas de D1 (migración 0006) y secretos.
 
+- **Rediseño UX/UI completo mobile-first** (2026-10-24), en dirección "marcador LED de competición":
+  - números de 7 segmentos, ámbar solo para lo accionable, pilotos de jueces para hechas y PR;
+  - barra inferior y hojas inferiores;
+  - entreno con la serie actual en grande, series agrupadas por ejercicio, repetir serie, pulsación larga para reordenar, resumen al terminar;
+  - chat a pantalla completa;
+  - fuentes autoalojadas;
+  - sistema documentado en `DESIGN.md`.
+  Hecho en autónomo: los supuestos están en `PRODUCT.md`.
+
 ## Próxima sesión
 
 Orden recomendado: **A (rediseño) → B → C**. B (entrevista) conviene hacerlo ya con el diseño nuevo del chat. C (RAG) es independiente y puede ir en paralelo.
 
-### A · Rediseño UX/UI completo, mobile-first
+### A · Rediseño UX/UI completo, mobile-first — HECHO (ver arriba); quedan los pendientes de abajo
 No son retoques: rediseño de toda la app pensado primero para el móvil en el gimnasio (una mano, sudado, entre series, a veces con mala cobertura). El aspecto actual sirve solo como referencia de lo que funciona y de lo que no.
 
 **Proceso** (skill de diseño `impeccable`):
@@ -72,6 +81,14 @@ Objetivo: respuestas mejor fundamentadas (programación, volumen, progresión, t
 5. **Por decidir**: quién redacta las fichas. Propuesta: borrador con IA a partir de fuentes reconocidas y revisión tuya.
 
 ### Mantenimiento pendiente
+- Pulido del rediseño (inconsistencias que encontró el documentador):
+  - **estado "fallida"**: no existe todavía;
+  - **sombras**: `--shadow-sm` y `--shadow-md` son sombras duras;
+  - **colores sueltos**: `.error-message` aún usa un rojo antiguo; el tooltip de las gráficas usa un azulado fuera de la escala de neutros; quedan dos colores sin pasar a tokens;
+  - **restos sin uso**: CSS (`.toast-pr`, `.pr-valor`) y tokens antiguos (`--color-teal`…, `--radius-xl`, `--radius-full`, `--shadow-glow`);
+  - **aviso de PR**: lleva un rótulo encima del nombre del ejercicio.
+- Decidir si se quiere tema claro (de momento solo oscuro, por la escena del gimnasio).
+- Récords: corregir en origen la columna `Exercici.PR` desfasada (la app ya muestra el máximo real) y llamar a `checkPr` al borrar un entreno.
 - Borrar la base de datos antigua `mypr` (WNAM) cuando se confirme que `mypr-eu` va bien.
 - Medir los tiempos del chat tras las últimas optimizaciones (`[coach-timing]`) y decidir si `LLM_THINKING` sigue en `off`.
 - Borrar el secreto `GEMINI_API_KEY`, que ya no se usa.

@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-24T00:00:00Z",
+  "title": "Design System: MyPR",
+  "extensions": {
+    "colorMeta": {
+      "n0": { "role": "neutral", "displayName": "Carcasa", "canonical": "#0d0e10", "tonalRamp": ["#0d0e10", "#141518", "#1b1d21", "#262a2f", "#353a41", "#4d535b", "#8a9099", "#b9bec5"] },
+      "n1": { "role": "neutral", "displayName": "Chapa", "canonical": "#141518", "tonalRamp": ["#0d0e10", "#141518", "#1b1d21", "#262a2f", "#353a41", "#4d535b", "#8a9099", "#b9bec5"] },
+      "n2": { "role": "neutral", "displayName": "Chapa Pulida", "canonical": "#1b1d21", "tonalRamp": ["#0d0e10", "#141518", "#1b1d21", "#262a2f", "#353a41", "#4d535b", "#8a9099", "#b9bec5"] },
+      "n3": { "role": "neutral", "displayName": "Junta", "canonical": "#262a2f", "tonalRamp": ["#141518", "#1b1d21", "#262a2f", "#353a41", "#4d535b", "#8a9099", "#b9bec5", "#eef0f2"] },
+      "n4": { "role": "neutral", "displayName": "Junta Marcada", "canonical": "#353a41", "tonalRamp": ["#141518", "#1b1d21", "#262a2f", "#353a41", "#4d535b", "#8a9099", "#b9bec5", "#eef0f2"] },
+      "n5": { "role": "neutral", "displayName": "Remache", "canonical": "#4d535b", "tonalRamp": ["#141518", "#1b1d21", "#262a2f", "#353a41", "#4d535b", "#8a9099", "#b9bec5", "#eef0f2"] },
+      "n6": { "role": "neutral", "displayName": "Serigrafía", "canonical": "#8a9099", "tonalRamp": ["#141518", "#1b1d21", "#262a2f", "#353a41", "#4d535b", "#8a9099", "#b9bec5", "#eef0f2"] },
+      "n7": { "role": "neutral", "displayName": "Serigrafía Clara", "canonical": "#b9bec5", "tonalRamp": ["#141518", "#1b1d21", "#262a2f", "#353a41", "#4d535b", "#8a9099", "#b9bec5", "#eef0f2"] },
+      "n8": { "role": "neutral", "displayName": "Pantalla", "canonical": "#eef0f2", "tonalRamp": ["#141518", "#1b1d21", "#262a2f", "#353a41", "#4d535b", "#8a9099", "#b9bec5", "#eef0f2"] },
+      "led-amber": { "role": "primary", "displayName": "Ámbar LED", "canonical": "#ffb020", "tonalRamp": ["#3d2800", "#5c3d00", "#8a5c00", "#b88000", "#e69e0f", "#ffb020", "#ffcb66", "#ffe7b8"] },
+      "led-amber-hover": { "role": "primary", "displayName": "Ámbar Encendido", "canonical": "#ffc24f", "tonalRamp": ["#3d2800", "#5c3d00", "#8a5c00", "#b88000", "#e69e0f", "#ffc24f", "#ffd585", "#ffecc4"] },
+      "led-amber-dim": { "role": "primary", "displayName": "Ámbar Tenue", "canonical": "rgba(255, 176, 32, 0.12)" },
+      "on-amber": { "role": "primary", "displayName": "Ámbar Quemado", "canonical": "#1d1200" },
+      "led-red": { "role": "secondary", "displayName": "Rojo LED", "canonical": "#ff4a3d", "tonalRamp": ["#3d0d09", "#5c1510", "#8a2018", "#b82c22", "#e63a2e", "#ff4a3d", "#ff8a80", "#ffcfcb"] },
+      "led-red-dim": { "role": "secondary", "displayName": "Rojo Tenue", "canonical": "rgba(255, 74, 61, 0.12)" },
+      "judge-white": { "role": "tertiary", "displayName": "Blanco de Jueces", "canonical": "#f4f6f7", "tonalRamp": ["#3a3c3e", "#5a5d60", "#7d8186", "#a2a7ac", "#c4c8cc", "#dfe2e5", "#eef0f2", "#f4f6f7"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Título de página, Barlow Condensed en mayúsculas." },
+      "headline": { "displayName": "Headline", "purpose": "Nombre del ejercicio en curso." },
+      "title": { "displayName": "Title", "purpose": "Nombre del entreno en el marcador, filas de lista, título de hoja." },
+      "body": { "displayName": "Body", "purpose": "Texto corrido en Barlow; 16 px en campos móviles." },
+      "figure": { "displayName": "Figure", "purpose": "Kg y reps en filas de serie, números tabulares." },
+      "label": { "displayName": "Rótulo", "purpose": "Nombra la lectura o el campo contiguo; mayúsculas espaciadas en n6." },
+      "button": { "displayName": "Button", "purpose": "Todos los botones, condensada en mayúsculas." }
+    },
+    "shadows": [
+      { "name": "bevel", "value": "inset 0 1px 0 rgba(255, 255, 255, 0.04)", "purpose": "Borde superior de todo panel, fila y marcador." },
+      { "name": "recess", "value": "inset 0 2px 4px rgba(0, 0, 0, 0.5)", "purpose": "Alojamientos hundidos: caja de pilotos, sello de marca, display del temporizador, carril del interruptor." },
+      { "name": "float", "value": "0 10px 28px rgba(0, 0, 0, 0.55)", "purpose": "Toasts, tarjeta de récord y desplegables." },
+      { "name": "sheet", "value": "0 -12px 32px rgba(0, 0, 0, 0.5)", "purpose": "Hoja inferior, proyecta hacia arriba." },
+      { "name": "rest-dock", "value": "inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 -8px 20px rgba(0, 0, 0, 0.45)", "purpose": "Temporizador de descanso acoplado sobre la navegación." },
+      { "name": "lifted-row", "value": "0 8px 18px rgba(0, 0, 0, 0.6)", "purpose": "Serie levantada durante el reordenado." },
+      { "name": "focus-ring-field", "value": "0 0 0 1px var(--led-amber)", "purpose": "Anillo de foco de campos, junto al borde ámbar." }
+    ],
+    "motion": [
+      { "name": "ease-sheet", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Entrada de hojas inferiores (0.28s) y toasts (0.35s)." },
+      { "name": "state-change", "value": "0.15s ease", "purpose": "Fondo, borde y color de botones y filas." },
+      { "name": "press", "value": "transform 0.08s ease; translateY(1px)", "purpose": "Pulsación hacia dentro de los botones." },
+      { "name": "judge-sequence", "value": "0.28s steps(1, end), delay i * 0.22s", "purpose": "Encendido en seco de los tres pilotos al batir un récord." },
+      { "name": "long-press", "value": "450ms, tolerancia 10px", "purpose": "Umbral para levantar una serie y reordenarla." },
+      { "name": "reduced-motion", "value": "0.01ms", "purpose": "Con prefers-reduced-motion se anulan transiciones y animaciones." }
+    ],
+    "breakpoints": [
+      { "name": "mobile-fields", "value": "640px" },
+      { "name": "nav-contained", "value": "768px" },
+      { "name": "touch", "value": "pointer: coarse" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "La acción viva de la vista (Hecha, Terminar, Enviar). Una por vista.",
+      "html": "<button class=\"ds-btn ds-btn-primary\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 6 9 17l-5-5\"/></svg>Hecha</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.6rem 1.1rem; min-height: 44px; border-radius: var(--radius-md, 4px); border: 1px solid transparent; font-family: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif; font-size: 0.95rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1.1; cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.08s ease; } .ds-btn:active { transform: translateY(1px); } .ds-btn:focus-visible { outline: 2px solid var(--led-amber, #ffb020); outline-offset: 2px; } .ds-btn-primary { background: var(--led-amber, #ffb020); color: var(--on-amber, #1d1200); } .ds-btn-primary:hover { background: var(--led-amber-hover, #ffc24f); }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Acción de apoyo (Repetir serie, Añadir serie) en chapa con junta.",
+      "html": "<button class=\"ds-btn2\">Repetir serie</button>",
+      "css": ".ds-btn2 { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.6rem 1.1rem; min-height: 44px; border-radius: var(--radius-md, 4px); background: var(--n1, #141518); color: var(--n8, #eef0f2); border: 1px solid var(--n4, #353a41); font-family: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif; font-size: 0.95rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease, transform 0.08s ease; } .ds-btn2:hover { background: var(--n2, #1b1d21); border-color: var(--n5, #4d535b); } .ds-btn2:active { transform: translateY(1px); } .ds-btn2:focus-visible { outline: 2px solid var(--led-amber, #ffb020); outline-offset: 2px; }"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Borrar: relleno rojo tenue y texto rojo LED.",
+      "html": "<button class=\"ds-btn-danger\">Borrar entreno</button>",
+      "css": ".ds-btn-danger { display: inline-flex; align-items: center; justify-content: center; padding: 0.6rem 1.1rem; min-height: 44px; border-radius: var(--radius-md, 4px); background: var(--led-red-dim, rgba(255,74,61,0.12)); color: var(--led-red, #ff4a3d); border: 1px solid rgba(255, 74, 61, 0.4); font-family: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif; font-size: 0.95rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; transition: background 0.15s ease; } .ds-btn-danger:hover { background: rgba(255, 74, 61, 0.2); } .ds-btn-danger:focus-visible { outline: 2px solid var(--led-amber, #ffb020); outline-offset: 2px; }"
+    },
+    {
+      "name": "Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo con rótulo: interior de carcasa, junta marcada, foco ámbar sin halo.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Nombre</span><input class=\"ds-input\" value=\"Press banca\"></label>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 0.375rem; } .ds-field-label { font-family: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--n6, #8a9099); } .ds-input { width: 100%; padding: 0.75rem 1rem; border-radius: var(--radius-sm, 3px); border: 1px solid var(--n4, #353a41); background: var(--n0, #0d0e10); color: var(--n8, #eef0f2); font-family: 'Barlow', system-ui, sans-serif; font-size: 1rem; caret-color: var(--led-amber-hover, #ffc24f); transition: border-color 0.2s, box-shadow 0.2s; } .ds-input:focus { outline: none; border-color: var(--led-amber, #ffb020); box-shadow: 0 0 0 1px var(--led-amber, #ffb020); }"
+    },
+    {
+      "name": "Bottom Navigation",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Cuatro destinos fijos abajo; el activo se enciende en ámbar con barra superior de 3 px.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item ds-active\" href=\"#\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14.4 14.4 9.6 9.6\"/><path d=\"M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z\"/><path d=\"m21.5 21.5-1.4-1.4\"/><path d=\"M3.9 3.9 2.5 2.5\"/><path d=\"M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z\"/></svg><span>Entrenos</span></a><a class=\"ds-nav-item\" href=\"#\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m3 17 2 2 4-4\"/><path d=\"m3 7 2 2 4-4\"/><path d=\"M13 6h8\"/><path d=\"M13 12h8\"/><path d=\"M13 18h8\"/></svg><span>Ejercicios</span></a><a class=\"ds-nav-item\" href=\"#\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\"/><path d=\"M13 8H7\"/><path d=\"M17 12H7\"/></svg><span>Entrenador</span></a><a class=\"ds-nav-item\" href=\"#\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"8\" r=\"5\"/><path d=\"M20 21a8 8 0 0 0-16 0\"/></svg><span>Perfil</span></a></nav>",
+      "css": ".ds-nav { display: grid; grid-template-columns: repeat(4, 1fr); height: 3.75rem; background: var(--n0, #0d0e10); border-top: 1px solid var(--n3, #262a2f); } .ds-nav-item { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem; min-height: 44px; color: var(--n6, #8a9099); text-decoration: none; font-family: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; } .ds-nav-item:hover { color: var(--n8, #eef0f2); } .ds-nav-item:focus-visible { outline: 2px solid var(--led-amber, #ffb020); outline-offset: 2px; } .ds-nav-item.ds-active { color: var(--led-amber, #ffb020); } .ds-nav-item.ds-active::before { content: ''; position: absolute; top: -1px; left: 28%; right: 28%; height: 3px; background: var(--led-amber, #ffb020); }"
+    },
+    {
+      "name": "Chips",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Grupo muscular en contorno; filtro activo relleno de ámbar.",
+      "html": "<div class=\"ds-chips\"><span class=\"ds-chip\">Pecho</span><button class=\"ds-chip-filter\">Todos</button><button class=\"ds-chip-filter ds-on\">Pierna</button></div>",
+      "css": ".ds-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; } .ds-chip { padding: 0 0.5rem; border: 1px solid var(--n4, #353a41); border-radius: var(--radius-sm, 3px); font-family: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--n7, #b9bec5); line-height: 1.6; } .ds-chip-filter { min-height: 44px; padding: 0.4375rem 0.875rem; border-radius: var(--radius-sm, 3px); border: 1px solid var(--n4, #353a41); background: transparent; color: var(--n7, #b9bec5); font-family: 'Barlow', system-ui, sans-serif; font-size: 0.8125rem; font-weight: 600; cursor: pointer; transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease; } .ds-chip-filter:hover { border-color: var(--led-amber, #ffb020); color: var(--led-amber, #ffb020); } .ds-chip-filter:focus-visible { outline: 2px solid var(--led-amber, #ffb020); outline-offset: 2px; } .ds-chip-filter.ds-on { background: var(--led-amber, #ffb020); border-color: var(--led-amber, #ffb020); color: var(--on-amber, #1d1200); }"
+    },
+    {
+      "name": "Serie Row",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Fila de serie en chapa con bisel; luz de estado pendiente / en curso / hecha y etiqueta PR.",
+      "html": "<div class=\"ds-rows\"><div class=\"ds-row\"><span class=\"ds-row-n\">1</span><span class=\"ds-row-fig\">80 <i>×</i> 8 <b class=\"ds-pr\">PR</b></span><span class=\"ds-luz ds-luz-hecha\"></span></div><div class=\"ds-row ds-row-actual\"><span class=\"ds-row-n\">2</span><span class=\"ds-row-fig\">82,5 <i>×</i> 8</span><span class=\"ds-luz ds-luz-actual\"></span></div><div class=\"ds-row\"><span class=\"ds-row-n\">3</span><span class=\"ds-row-fig\">82,5 <i>×</i> 8</span><span class=\"ds-luz\"></span></div></div>",
+      "css": ".ds-rows { display: flex; flex-direction: column; gap: 0.5rem; } .ds-row { display: grid; grid-template-columns: 2rem 1fr auto; align-items: center; gap: 0.5rem; min-height: 3.5rem; padding: 0.35rem 0.75rem 0.35rem 0.5rem; background: var(--n1, #141518); border: 1px solid var(--n3, #262a2f); border-radius: var(--radius-md, 4px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04); color: var(--n8, #eef0f2); cursor: pointer; transition: background 0.15s ease; } .ds-row:hover { background: var(--n2, #1b1d21); } .ds-row-actual { border-color: rgba(255, 176, 32, 0.55); background: var(--n2, #1b1d21); } .ds-row-n { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 1.15rem; font-weight: 700; color: var(--n6, #8a9099); text-align: center; } .ds-row-fig { font-family: 'Barlow', system-ui, sans-serif; font-size: 1.45rem; font-weight: 600; font-variant-numeric: tabular-nums; } .ds-row-fig i { font-style: normal; color: var(--n6, #8a9099); font-size: 1.1rem; } .ds-pr { margin-left: 0.5rem; padding: 0 0.35rem; border: 1px solid var(--judge-white, #f4f6f7); border-radius: var(--radius-sm, 3px); font-family: 'Barlow Condensed', sans-serif; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em; color: var(--judge-white, #f4f6f7); vertical-align: middle; } .ds-luz { width: 1.05rem; height: 1.05rem; border-radius: 50%; border: 2px solid var(--n5, #4d535b); } .ds-luz-actual { border-color: var(--led-amber, #ffb020); background: var(--led-amber, #ffb020); } .ds-luz-hecha { border-color: var(--judge-white, #f4f6f7); background: var(--judge-white, #f4f6f7); }"
+    },
+    {
+      "name": "Segment Readout",
+      "kind": "custom",
+      "refersTo": "readout",
+      "description": "Lectura hundida con rótulo y cifra de 7 segmentos con segmentos apagados visibles.",
+      "html": "<div class=\"ds-readout\" role=\"img\" aria-label=\"Tiempo de sesión 42:07\"><span class=\"ds-rotulo\">Tiempo</span><span class=\"ds-seg\"><svg viewBox=\"0 0 60 100\"><g class=\"on\"><polygon points=\"12,10 17,5 43,5 48,10 43,15 17,15\"/><polygon points=\"50,12 55,17 55,43 50,48 45,43 45,17\"/><polygon points=\"50,52 55,57 55,83 50,88 45,83 45,57\"/><polygon points=\"10,12 15,17 15,43 10,48 5,43 5,17\"/><polygon points=\"12,50 17,45 43,45 48,50 43,55 17,55\"/></g><g class=\"off\"><polygon points=\"12,90 17,85 43,85 48,90 43,95 17,95\"/><polygon points=\"10,52 15,57 15,83 10,88 5,83 5,57\"/></g></svg><svg viewBox=\"0 0 60 100\"><g class=\"on\"><polygon points=\"12,10 17,5 43,5 48,10 43,15 17,15\"/><polygon points=\"50,12 55,17 55,43 50,48 45,43 45,17\"/><polygon points=\"12,90 17,85 43,85 48,90 43,95 17,95\"/><polygon points=\"10,52 15,57 15,83 10,88 5,83 5,57\"/><polygon points=\"12,50 17,45 43,45 48,50 43,55 17,55\"/></g><g class=\"off\"><polygon points=\"50,52 55,57 55,83 50,88 45,83 45,57\"/><polygon points=\"10,12 15,17 15,43 10,48 5,43 5,17\"/></g></svg><svg class=\"ds-narrow\" viewBox=\"0 0 16 100\"><g class=\"on\"><rect x=\"3\" y=\"28\" width=\"10\" height=\"10\"/><rect x=\"3\" y=\"62\" width=\"10\" height=\"10\"/></g></svg><svg viewBox=\"0 0 60 100\"><g class=\"on\"><polygon points=\"12,10 17,5 43,5 48,10 43,15 17,15\"/><polygon points=\"50,12 55,17 55,43 50,48 45,43 45,17\"/><polygon points=\"50,52 55,57 55,83 50,88 45,83 45,57\"/><polygon points=\"12,90 17,85 43,85 48,90 43,95 17,95\"/><polygon points=\"10,52 15,57 15,83 10,88 5,83 5,57\"/><polygon points=\"10,12 15,17 15,43 10,48 5,43 5,17\"/></g><g class=\"off\"><polygon points=\"12,50 17,45 43,45 48,50 43,55 17,55\"/></g></svg><svg viewBox=\"0 0 60 100\"><g class=\"on\"><polygon points=\"12,10 17,5 43,5 48,10 43,15 17,15\"/><polygon points=\"50,12 55,17 55,43 50,48 45,43 45,17\"/><polygon points=\"50,52 55,57 55,83 50,88 45,83 45,57\"/></g><g class=\"off\"><polygon points=\"12,90 17,85 43,85 48,90 43,95 17,95\"/><polygon points=\"10,52 15,57 15,83 10,88 5,83 5,57\"/><polygon points=\"10,12 15,17 15,43 10,48 5,43 5,17\"/><polygon points=\"12,50 17,45 43,45 48,50 43,55 17,55\"/></g></svg></span></div>",
+      "css": ".ds-readout { display: inline-flex; flex-direction: column; gap: 0.2rem; padding: 0.45rem 0.75rem 0.55rem; background: var(--n0, #0d0e10); border: 1px solid var(--n3, #262a2f); border-radius: var(--radius-md, 4px); } .ds-rotulo { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--n6, #8a9099); } .ds-seg { display: inline-flex; align-items: flex-end; gap: 0.08em; height: 1em; font-size: 2.4rem; color: var(--led-amber, #ffb020); transform: skewX(-6deg); } .ds-seg svg { height: 1em; width: 0.6em; overflow: visible; } .ds-seg svg.ds-narrow { width: 0.16em; } .ds-seg .on { fill: currentColor; } .ds-seg .off { fill: currentColor; opacity: 0.07; }"
+    },
+    {
+      "name": "Judge Lights",
+      "kind": "custom",
+      "refersTo": "readout",
+      "description": "Tres pilotos de jueces en caja hundida; blancos = récord válido.",
+      "html": "<span class=\"ds-judges-box\" role=\"img\" aria-label=\"Récord: 3 de 3 luces blancas\"><span class=\"ds-judges\"><span class=\"ds-judge ds-lit\"></span><span class=\"ds-judge ds-lit\"></span><span class=\"ds-judge ds-lit\"></span></span><span class=\"ds-judges-label\">Récord</span></span>",
+      "css": ".ds-judges-box { display: inline-flex; flex-direction: column; align-items: center; gap: 0.3rem; padding: 0.5rem 0.65rem 0.35rem; background: var(--n0, #0d0e10); border: 1px solid var(--n3, #262a2f); border-radius: var(--radius-sm, 3px); box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6); } .ds-judges { display: inline-flex; gap: 0.35em; font-size: 1.75rem; } .ds-judge { width: 0.7em; height: 0.7em; border-radius: 50%; background: var(--n2, #1b1d21); box-shadow: inset 0 0 0 1px var(--n4, #353a41); } .ds-judge.ds-lit { background: var(--judge-white, #f4f6f7); box-shadow: inset 0 0 0 1px var(--judge-white, #f4f6f7); } .ds-judges-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; line-height: 1; color: var(--n7, #b9bec5); }"
+    },
+    {
+      "name": "Bottom Sheet",
+      "kind": "custom",
+      "refersTo": "bottom-sheet",
+      "description": "Sustituye a los modales: chapa que sube desde abajo con asa, título condensado y cierre de 44 px.",
+      "html": "<section class=\"ds-sheet\" role=\"dialog\" aria-label=\"Nueva serie\"><header class=\"ds-sheet-head\"><span class=\"ds-sheet-grip\"></span><h2 class=\"ds-sheet-title\">Nueva serie</h2><button class=\"ds-sheet-close\" aria-label=\"Cerrar\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/></svg></button></header><div class=\"ds-sheet-body\">Contenido de la hoja.</div></section>",
+      "css": ".ds-sheet { width: 100%; max-width: 40rem; background: var(--n1, #141518); border: 1px solid var(--n3, #262a2f); border-bottom: none; border-radius: var(--radius-md, 4px) var(--radius-md, 4px) 0 0; box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.5); color: var(--n8, #eef0f2); font-family: 'Barlow', system-ui, sans-serif; } .ds-sheet-head { position: relative; display: flex; align-items: center; gap: 0.75rem; padding: 1.1rem 0.75rem 0.6rem 1rem; border-bottom: 1px solid var(--n3, #262a2f); } .ds-sheet-grip { position: absolute; top: 0.45rem; left: 50%; width: 2.5rem; height: 4px; margin-left: -1.25rem; border-radius: 2px; background: var(--n4, #353a41); } .ds-sheet-title { flex: 1; margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 1.15rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; } .ds-sheet-close { min-width: 44px; min-height: 44px; display: grid; place-items: center; border: none; border-radius: var(--radius-sm, 3px); background: transparent; color: var(--n7, #b9bec5); cursor: pointer; } .ds-sheet-close:hover { background: var(--n2, #1b1d21); color: var(--n8, #eef0f2); } .ds-sheet-close:focus-visible { outline: 2px solid var(--led-amber, #ffb020); outline-offset: 2px; } .ds-sheet-body { padding: 1rem; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "El marcador del rack",
+    "overview": "MyPR se lee como el reloj LED de una competición de fuerza montado en el rack: una carcasa negra mate con paneles de chapa grafito, cifras de siete segmentos dibujadas que se leen a un brazo de distancia, y tres pilotos de jueces que se encienden en blanco cuando la marca es buena. Todo está pensado para el gimnasio: una mano, el móvil apoyado, manos sudadas, prisa entre series. El tema es oscuro y fijo (`color-scheme: dark`).\n\nLa densidad es la de un instrumento, no la de una app de tarjetas: rótulos condensados en mayúsculas espaciadas nombran cada lectura, las cifras son el elemento monumental (la serie actual ocupa el 88 % del ancho útil), y el resto es chapa neutra. La profundidad viene de biseles de 1 px y alojamientos hundidos, no de luz. Hay tres luces de señal y cada una significa una sola cosa.\n\nEl sistema rechaza explícitamente el panel oscuro con acento neón brillante (sin halos ni degradados) y la app de fitness blanca de tarjetas redondeadas (esquinas de hardware de 3 a 6 px).",
+    "keyCharacteristics": [
+      "Carcasa negra mate y escala tonal fija de 9 pasos; no hay grises sueltos.",
+      "Tres pilotos con significado único: ámbar vivo/accionable, rojo alarma/borrar/descanso, blanco de jueces hecha/válida/PR.",
+      "Cifras en display de 7 segmentos dibujado en SVG, con los segmentos apagados visibles.",
+      "Barlow Condensed para rótulos y botones, Barlow para cuerpo y cifras de texto.",
+      "Esquinas casi rectas, bisel superior de 1 px, nada de brillo.",
+      "Hojas inferiores en lugar de modales; todo control táctil mide 44 px o más."
+    ],
+    "rules": [
+      { "name": "The One Meaning Rule", "body": "Cada luz significa una sola cosa en toda la app. Ámbar es vivo o accionable; rojo es alarma, borrar o descanso; blanco de jueces es hecha, válida o PR. Si un elemento no es ninguna de esas cosas, es neutro.", "section": "colors" },
+      { "name": "The Nine Steps Rule", "body": "Los neutros salen solo de `n0`..`n8`. Un gris que no está en la escala es un defecto.", "section": "colors" },
+      { "name": "The Grey Data Rule", "body": "Los datos de las gráficas se dibujan en `n7` y los récords en blanco de jueces; el ámbar no pinta datos porque no son accionables.", "section": "colors" },
+      { "name": "The Drawn Numerals Rule", "body": "Las cifras protagonistas (serie actual, marcador, descanso, récord, sello de marca) no son una fuente: son el display de 7 segmentos en SVG, inclinado -6°, con los segmentos apagados al 7 % de opacidad como construcción visible. El tono del segmento sigue The One Meaning Rule.", "section": "typography" },
+      { "name": "The Nameplate Rule", "body": "Un rótulo nombra una lectura, un campo o un panel. No se apila sobre un titular como etiqueta de categoría.", "section": "typography" },
+      { "name": "The Thumb Floor Rule", "body": "Todo control táctil mide al menos 44 px (`touch-min`). Los tamaños compactos de 36 px suben a 44 px con `pointer: coarse`. Las acciones principales del entreno miden 3.75rem.", "section": "layout" },
+      { "name": "The No Glow Rule", "body": "Ninguna luz emite halo: ni `text-shadow`, ni sombras de color, ni degradados. Un LED encendido es un relleno plano.", "section": "elevation" }
+    ],
+    "dos": [
+      "**Do** reservar el ámbar para lo vivo o accionable: una acción principal por vista, la serie en curso, la pestaña activa y el foco.",
+      "**Do** dibujar las cifras protagonistas con el display de 7 segmentos y sus segmentos apagados al 7 %, con etiqueta accesible.",
+      "**Do** usar solo `n0`..`n8` para neutros y biseles de 1 px para separar paneles.",
+      "**Do** dar a todo control táctil al menos 44 px y poner las acciones del entreno al alcance del pulgar.",
+      "**Do** abrir formularios, datos y el chat en una hoja inferior.",
+      "**Do** marcar el estado de una serie solo con pendiente, en curso, hecha o PR y su código de luces.",
+      "**Do** usar iconos Lucide de un solo grosor (2 a 3 px de trazo) y respetar reduced-motion en toda animación."
+    ],
+    "donts": [
+      "**Don't** usar halos, `text-shadow`, sombras de color ni degradados; un LED encendido es un relleno plano.",
+      "**Don't** redondear más de 6 px un contenedor ni usar formas de píldora; solo los pilotos son círculos.",
+      "**Don't** usar el ámbar para datos, decoración o estado \"hecha\"; ni el blanco de jueces como color de texto general.",
+      "**Don't** abrir modales centrados.",
+      "**Don't** usar emojis como iconos ni imágenes de ejercicios.",
+      "**Don't** añadir un botón de mover para reordenar; se reordena con pulsación larga.",
+      "**Don't** introducir un tema claro sin decisión del propietario: hoy el tema es oscuro fijo por la escena del gimnasio."
+    ]
+  }
+}
