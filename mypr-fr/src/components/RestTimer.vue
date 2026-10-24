@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
-import { Pause, Play, X } from 'lucide-vue-next';
+import { X } from 'lucide-vue-next';
 import SegDisplay from './SegDisplay.vue';
 import {
   useRestTimer, restanteMs, progresoEstado, estaPausado, pausarEstado,
@@ -130,36 +130,33 @@ const alternarPausa = () => {
   <!-- Región viva siempre presente: solo se anuncia el fin, no cada segundo -->
   <div class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ anuncio }}</div>
 
-  <button
+  <div
     v-if="habilitado"
-    type="button"
     class="lectura"
     :class="{ viva: visible && !terminado && !pausado, done: terminado, paused: pausado }"
-    :aria-label="!visible ? 'Iniciar descanso' : terminado ? 'Cerrar descanso' : pausado ? `Descanso en pausa, quedan ${texto}. Reanudar` : `Descanso, quedan ${texto}. Pausar`"
-    @click="pulsarCelda"
+    role="group"
+    aria-label="Temporizador de descanso"
   >
-    <span class="rotulo">Descanso</span>
-    <span class="valor"><SegDisplay :value="textoCelda" :tone="tono" aria-hidden="true" class="seg-valor" /></span>
-    <span class="barra" aria-hidden="true"><span class="barra-fill" :style="{ transform: `scaleX(${visible ? fraccionRestante : 0})` }"></span></span>
-  </button>
-
-  <!-- Controles del descanso: fila propia dentro de la banda, para no tapar nada -->
-  <Transition name="rest-slide">
-    <div v-if="habilitado && visible" class="controles" role="group" aria-label="Temporizador de descanso">
-      <span v-if="terminado" class="rest-done">A por la siguiente serie</span>
-      <template v-else>
-        <button type="button" class="rest-btn" aria-label="Restar 15 segundos" @click="ajustar(-PASO_AJUSTE_SEG)">−15</button>
+    <button
+      type="button"
+      class="principal"
+      :aria-label="!visible ? 'Iniciar descanso' : terminado ? 'Cerrar descanso' : pausado ? `Descanso en pausa, quedan ${texto}. Reanudar` : `Descanso, quedan ${texto}. Pausar`"
+      @click="pulsarCelda"
+    >
+      <span class="rotulo">{{ terminado ? 'A por la siguiente' : pausado ? 'Descanso · pausa' : 'Descanso' }}</span>
+      <span class="valor"><SegDisplay :value="textoCelda" :tone="tono" aria-hidden="true" class="seg-valor" /></span>
+    </button>
+    <template v-if="visible && !terminado">
+      <div class="ajustes">
         <button type="button" class="rest-btn" aria-label="Sumar 15 segundos" @click="ajustar(PASO_AJUSTE_SEG)">+15</button>
-        <button type="button" class="rest-btn" :aria-label="pausado ? 'Reanudar descanso' : 'Pausar descanso'" @click="alternarPausa">
-          <Play v-if="pausado" :size="20" :stroke-width="2.25" aria-hidden="true" />
-          <Pause v-else :size="20" :stroke-width="2.25" aria-hidden="true" />
-        </button>
-      </template>
-      <button type="button" class="rest-btn rest-close" aria-label="Cerrar temporizador de descanso" @click="cerrar">
-        <X :size="20" :stroke-width="2.25" aria-hidden="true" />
+        <button type="button" class="rest-btn" aria-label="Restar 15 segundos" @click="ajustar(-PASO_AJUSTE_SEG)">−15</button>
+      </div>
+      <button type="button" class="cerrar" aria-label="Cerrar temporizador de descanso" @click="cerrar">
+        <X :size="16" :stroke-width="2.5" aria-hidden="true" />
       </button>
-    </div>
-  </Transition>
+    </template>
+    <span class="barra" aria-hidden="true"><span class="barra-fill" :style="{ transform: `scaleX(${visible ? fraccionRestante : 0})` }"></span></span>
+  </div>
 </template>
 
 <style scoped>
@@ -175,22 +172,33 @@ const alternarPausa = () => {
   border: 0;
 }
 
-/* Celda de la banda: misma caja hundida que SERIES */
+/* Celda de la banda: misma caja hundida que SERIES, con los ajustes de ±15 s al costado */
 .lectura {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  padding: 0.45rem 0.75rem 0;
-  text-align: left;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: 1fr 4px;
+  min-width: 0;
   background: var(--n0);
   border: 1px solid var(--n3);
   border-radius: var(--radius-md);
-  color: inherit;
-  cursor: pointer;
   overflow: hidden;
 }
 .lectura.viva { border-color: var(--led-red); }
 .lectura.done { border-color: var(--led-amber); }
+.principal {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  min-width: 0;
+  padding: 0.45rem 0.5rem 0.4rem 0.75rem;
+  background: none;
+  border: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
 .rotulo {
   font-family: var(--font-display);
   font-size: 0.75rem;
@@ -198,46 +206,23 @@ const alternarPausa = () => {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--n6);
+  white-space: nowrap;
 }
 .lectura.viva .rotulo { color: var(--led-red); }
 .lectura.done .rotulo { color: var(--led-amber); }
 .valor { display: flex; align-items: baseline; min-height: 1.9rem; }
 .seg-valor { font-size: 1.9rem; }
-.barra { display: block; height: 4px; margin: 0.15rem -0.75rem 0; background: var(--n2); }
-.barra-fill { display: block; height: 100%; background: var(--led-red); transform-origin: left center; transition: transform 0.25s linear; }
-.lectura.paused .barra-fill { background: var(--n6); }
-.lectura.done .barra-fill { background: var(--led-amber); }
 
-/* Segunda fila de la banda: ocupa todo el ancho y empuja el contenido en vez de taparlo */
-.controles {
-  grid-row: 2;
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  min-width: 0;
-}
-.rest-done {
-  flex: 1;
-  padding-left: 0.5rem;
-  font-family: var(--font-display);
-  font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--led-amber);
-}
-.rest-close { margin-left: auto; }
+/* +15 sobre −15, uno encima del otro */
+.ajustes { display: flex; flex-direction: column; border-left: 1px solid var(--n3); }
+.ajustes .rest-btn { flex: 1; min-width: 3rem; padding: 0 0.4rem; border-radius: 0; }
+.ajustes .rest-btn + .rest-btn { border-top: 1px solid var(--n3); }
 .rest-btn {
-  min-width: var(--touch-min);
-  min-height: var(--touch-min);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 0.5rem;
   background: transparent;
   border: none;
-  border-radius: var(--radius-sm);
   color: var(--n7);
   font-family: var(--font-display);
   font-size: 1.05rem;
@@ -246,13 +231,29 @@ const alternarPausa = () => {
   font-variant-numeric: tabular-nums;
   cursor: pointer;
 }
-.rest-btn:hover { background: var(--n3); color: var(--n8); }
+.rest-btn:hover { background: var(--n2); color: var(--n8); }
 
-.rest-slide-enter-active,
-.rest-slide-leave-active { transition: transform 0.18s ease, opacity 0.18s ease; }
-.rest-slide-enter-from,
-.rest-slide-leave-to { transform: translateY(-30%); opacity: 0; }
-@media (prefers-reduced-motion: reduce) {
-  .rest-slide-enter-active, .rest-slide-leave-active { transition: none; }
+/* Cerrar: pequeño, en la esquina de la lectura; el área táctil se amplía con ::after */
+.cerrar {
+  position: absolute;
+  top: 0.15rem;
+  right: 3.4rem;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--n6);
+  cursor: pointer;
 }
+.cerrar::after { content: ''; position: absolute; inset: -0.5rem; }
+.cerrar:hover { color: var(--n8); }
+
+.barra { grid-column: 1 / -1; display: block; background: var(--n2); }
+.barra-fill { display: block; height: 100%; background: var(--led-red); transform-origin: left center; transition: transform 0.25s linear; }
+.lectura.paused .barra-fill { background: var(--n6); }
+.lectura.done .barra-fill { background: var(--led-amber); }
 </style>

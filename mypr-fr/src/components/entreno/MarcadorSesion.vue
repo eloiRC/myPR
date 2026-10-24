@@ -217,12 +217,14 @@ const posEtiqueta = computed(() => {
   outline: none;
 }
 
-.lecturas { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 0.5rem; padding: 0.25rem 0.5rem 0; }
+.lecturas { display: grid; grid-template-columns: 7.25rem minmax(0, 1fr); gap: 0.5rem; padding: 0.25rem 0.5rem 0; }
+/* Sin temporizador activado, SERIES ocupa todo el ancho */
+.lecturas:not(:has(> .lectura ~ .lectura)) { grid-template-columns: 1fr; }
 .lectura {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  padding: 0.45rem 0.75rem 0.55rem;
+  padding: 0.45rem 0.6rem 0.55rem 0.75rem;
   background: var(--n0);
   border: 1px solid var(--n3);
   border-radius: var(--radius-md);
