@@ -137,6 +137,8 @@ export const chatStatus = z.object({
 export const chatGPT = z.object({
   message: z.string().min(1),
   requestId: z.string().optional(),
+  // 'entrevista': conversación para conocer al usuario, sin entreno asociado
+  mode: z.enum(['entreno', 'entrevista']).optional(),
   currentTraining: z.object({
     entreno: z.object({
       EntrenoId: z.number(),
@@ -169,7 +171,7 @@ export const chatGPT = z.object({
       GrupMuscular4: z.number().nullable(),
       GrupMuscular5: z.number().nullable(),
     })).nullish()
-  }),
+  }).optional(),
   previousTrainings: z.array(z.object({
     EntrenoId: z.number(),
     UserId: z.number(),
@@ -207,7 +209,7 @@ export const chatGPT = z.object({
     z.object({ role: z.enum(['user', 'assistant']), content: z.string() }),
     z.object({ role: z.enum(['user', 'model']), parts: z.array(z.object({ text: z.string().optional() }).passthrough()) }),
   ])).nullish()
-})
+}).refine(v => v.mode === 'entrevista' || !!v.currentTraining, { message: 'Falta el entreno actual', path: ['currentTraining'] })
 
 export const memoryList = z.object({})
 

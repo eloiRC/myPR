@@ -5,6 +5,7 @@ import { HTTPException } from 'hono/http-exception'
 import { cors } from 'hono/cors'
 import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars, getExercici, getPesosHistorial, nouEntreno, editEntreno, getCargaHistorial, chatGPT, getUser, deleteEntreno, reorderSerie, toggleSerieCompletada, updateRestTimer, updateLlmModel, chatStatus, memoryList, memoryCreate, memoryUpdate, memoryDelete } from './schema'
 import { hashPassword, verifyPassword, generateJWT, verifyJWT } from './jwt'
+import { INTERVIEW_PERSONA, INTERVIEW_TOOLS, INTERVIEW_TOOL_DEFS, buildInterviewContext } from './coachInterview'
 import { createProvider, formatUsage, MODEL_CATALOG, DEFAULT_MODEL_ID, findModel, modelAvailable } from './llm'
 import { runToolLoop, type LoopPhaseEvent } from './llm/loop'
 import { convertHistory } from './llm/history'
@@ -18,7 +19,7 @@ import { analyzeTraining, formatSeriesHoy, type HistoryRow, type ExerciseRow, ty
 type DbCtx = { env: { DB: D1Database } }
 
 /** Datos que necesita la generación del coach (lo que se encola; el contexto pesado se recarga de D1). */
-type CoachPayload = { message: string; entrenoId: number; history: unknown }
+type CoachPayload = { message: string; entrenoId: number | null; history: unknown; mode?: 'entreno' | 'entrevista' }
 type CoachQueueMessage = { jobId: string; userId: number; payload: CoachPayload }
 
 type Bindings = {
@@ -714,7 +715,7 @@ const requireCoach = (env: Bindings, userId: number | string) => {
 };
 
 const coachHandler = async (c: any) => {
-  const { message, currentTraining, history, requestId: rawRequestId } = await c.req.json();
+  const { message, currentTraining, history, requestId: rawRequestId, mode } = await c.req.json();
   const userId = await c.get('jwtPayload').UserId;
   requireCoach(c.env, userId);
   const requestId = normalizeRequestId(rawRequestId);
@@ -724,10 +725,12 @@ const coachHandler = async (c: any) => {
   if (created) {
     // Solo viaja lo imprescindible: el contexto pesado (series, historial de entrenos) se recarga de D1
     // al procesar, y los mensajes de cola tienen un límite de 128 KB.
+    const entrevista = mode === 'entrevista';
     const payload: CoachPayload = {
       message,
-      entrenoId: Number(currentTraining.entreno.EntrenoId),
+      entrenoId: entrevista ? null : Number(currentTraining.entreno.EntrenoId),
       history: Array.isArray(history) ? history.slice(-60) : history,
+      ...(entrevista ? { mode: 'entrevista' as const } : {}),
     };
     let encolado = false;
     if (c.env.COACH_QUEUE) {
@@ -763,7 +766,9 @@ async function procesarMensajeCola(env: Bindings, body: CoachQueueMessage) {
 }
 
 async function procesarChatJob(jobId: string, userId: number, payload: CoachPayload, env: Bindings) {
-  const { message, entrenoId, history } = payload;
+  const { message, history } = payload;
+  const entrevista = payload.mode === 'entrevista';
+  const entrenoId = payload.entrenoId ?? 0;
   // Contexto mínimo { env } para los helpers que antes recibían el contexto de Hono
   const c: DbCtx & { env: Bindings } = { env };
   // Si falla a mitad, se registra si ya se aplicó algo para que el front refresque
@@ -776,6 +781,32 @@ async function procesarChatJob(jobId: string, userId: number, payload: CoachPayl
     const userModel = await c.env.DB.prepare('SELECT LlmModel FROM Users WHERE UserId = ?').bind(userId).first<{ LlmModel: string | null }>();
     const provider = createProvider(c.env, userModel?.LlmModel);
 
+    let system: { stable: string; volatile: string };
+    let tools = TOOL_DEFS;
+    let toolCtx: ToolContext;
+    const nowSec = Math.floor(Date.now() / 1000);
+    const dateLabel = new Date().toLocaleDateString('es-ES');
+
+    if (entrevista) {
+      // Entrevista: sin entreno ni análisis; solo la memoria actual y herramientas de memoria
+      const memories = await listActiveMemories(c.env.DB, userId);
+      tCtx = Date.now() - t0;
+      system = { stable: INTERVIEW_PERSONA, volatile: buildInterviewContext({ dateLabel, nowSec, memories }) };
+      tools = INTERVIEW_TOOL_DEFS;
+      toolCtx = {
+        db: c.env.DB,
+        userId,
+        entrenoId: 0,
+        validExerciseIds: new Set<number>(),
+        validMuscleGroupIds: new Set<number>(),
+        state,
+        deps: {
+          addSerie: () => Promise.reject(new Error('No hay entreno en la entrevista')),
+          checkPr: () => Promise.reject(new Error('No hay entreno en la entrevista')),
+          updateCargaTotal: () => Promise.reject(new Error('No hay entreno en la entrevista')),
+        },
+      };
+    } else {
     const [entreno, coachData, seriesCurrentTraining, memories, restSettings] = await Promise.all([
       c.env.DB.prepare('SELECT EntrenoId, Nom FROM Entreno WHERE EntrenoId = ? AND UserId = ?').bind(entrenoId, userId).first<{ EntrenoId: number; Nom: string | null }>(),
       getCoachData(userId, entrenoId, c),
@@ -787,10 +818,9 @@ async function procesarChatJob(jobId: string, userId: number, payload: CoachPayl
     tCtx = Date.now() - t0;
 
     const analysis = analyzeTraining(coachData);
-    const nowSec = Math.floor(Date.now() / 1000);
 
     const volatile = buildVolatileContext({
-      dateLabel: new Date().toLocaleDateString('es-ES'),
+      dateLabel,
       nowSec,
       entreno: { EntrenoId: entrenoId, Nom: entreno.Nom || '' },
       seriesToday: seriesCurrentTraining,
@@ -804,7 +834,8 @@ async function procesarChatJob(jobId: string, userId: number, payload: CoachPayl
       } : undefined,
     });
 
-    const toolCtx: ToolContext = {
+    system = { stable: COACH_PERSONA, volatile };
+    toolCtx = {
       db: c.env.DB,
       userId,
       entrenoId,
@@ -817,6 +848,7 @@ async function procesarChatJob(jobId: string, userId: number, payload: CoachPayl
         updateCargaTotal: (id) => updateCargaTotal(c, userId, id),
       },
     };
+    }
 
     // Texto en streaming hacia D1 con throttle (no en cada delta)
     let fullText = '';
@@ -853,12 +885,15 @@ async function procesarChatJob(jobId: string, userId: number, payload: CoachPayl
     const result = await runToolLoop({
       provider,
       input: {
-        system: { stable: COACH_PERSONA, volatile },
+        system,
         messages: [...convertHistory(history), { role: 'user', text: message }],
-        tools: TOOL_DEFS,
+        tools,
         maxTokens: 8000,
       },
-      exec: call => executeTool(toolCtx, call.name, call.args),
+      // En la entrevista solo se ejecutan las herramientas ofrecidas (memoria y respuestas rápidas)
+      exec: call => entrevista && !INTERVIEW_TOOLS.has(call.name)
+        ? Promise.resolve({ content: 'Herramienta no disponible en la entrevista.', isError: true })
+        : executeTool(toolCtx, call.name, call.args),
       onText,
       onPhase,
       terminalTools: TERMINAL_TOOLS,

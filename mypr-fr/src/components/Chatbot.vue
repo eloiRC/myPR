@@ -11,6 +11,8 @@ import { loadPending, savePending, clearPending, createPollGuard, chatErrorMessa
 
 // Props
 interface Props {
+  /** 'entrevista': conversación guiada para conocer al usuario (sin entreno asociado) */
+  modo?: 'entreno' | 'entrevista';
   entrenoId?: number;
   entrenoData?: any;
   series?: any[];
@@ -18,11 +20,16 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  modo: 'entreno',
   entrenoId: undefined,
   entrenoData: undefined,
   series: () => [],
   ejercicios: () => []
 });
+
+const esEntrevista = computed(() => props.modo === 'entrevista');
+// Clave del historial y del job en curso: uno por entreno y uno aparte para la entrevista
+const scope = computed(() => (esEntrevista.value ? 'entrevista' : props.entrenoId));
 
 // Definir emits
 const emit = defineEmits(['refresh']);
@@ -50,16 +57,19 @@ const mounted = ref(true);
 
 // Mensaje de bienvenida
 const welcomeMessage = computed(() => {
+  if (esEntrevista.value) return 'Te hago unas preguntas cortas para conocerte: objetivos, experiencia, días, material, lesiones y preferencias. Con tus respuestas actualizo lo que recuerdo de ti y lo tendré en cuenta en cada entreno.';
   return 'Conozco tu historial, tus récords y qué músculos llevan más tiempo sin trabajar. Pídeme el entreno de hoy o elige una sugerencia.';
 });
 
-const QUICK_PROMPTS = [
+const QUICK_PROMPTS_ENTREVISTA = ['Empezar la entrevista'];
+const QUICK_PROMPTS_ENTRENO = [
   'Propón el entreno de hoy',
   'Dame 2 opciones distintas',
   '¿Qué músculo me toca?',
   '¿En qué ejercicio estoy estancado?',
   'Hoy estoy cansado, algo ligero',
 ];
+const QUICK_PROMPTS = computed(() => (esEntrevista.value ? QUICK_PROMPTS_ENTREVISTA : QUICK_PROMPTS_ENTRENO));
 
 // Las sugerencias solo se muestran mientras no haya conversación
 const showQuickPrompts = computed(() => !isLoading.value && !messages.value.some(m => m.isUser));
@@ -183,7 +193,7 @@ const pollJob = async (jobId: string, botMessageId: number): Promise<void> => {
       } catch (pollError: any) {
         // Errores de red puntuales se reintentan; un job perdido o fallos repetidos no
         if (pollError.message?.includes('Job no encontrado') || ++pollFailures >= MAX_POLL_FAILURES) {
-          clearPending(props.entrenoId);
+          clearPending(scope.value);
           // Puede que el plan ya se haya aplicado: refrescar para mostrar lo guardado
           emit('refresh');
           throw new Error('Se perdió la conexión con el entrenador. Inténtalo de nuevo.');
@@ -207,14 +217,14 @@ const pollJob = async (jobId: string, botMessageId: number): Promise<void> => {
         const botMsg = ensureBotMessage(botMessageId);
         botMsg.text = status.fullText;
         botMsg.quickReplies = sanitizeQuickReplies(status.quickReplies);
-        clearPending(props.entrenoId);
+        clearPending(scope.value);
         // Siempre se refresca: es barato y evita páginas desfasadas
         emit('refresh');
         break;
       }
       if (status.status === 'error') {
         console.error('Error del entrenador:', status.error);
-        clearPending(props.entrenoId);
+        clearPending(scope.value);
         // Un plan parcial pudo aplicarse antes del fallo
         emit('refresh');
         throw new Error(chatErrorMessage(status.error));
@@ -247,7 +257,7 @@ const followJob = async (jobId: string, botMessageId: number) => {
 // Retoma un job en curso de este entreno (al montar o al volver a la pestaña)
 const resumePending = () => {
   if (pollGuard.busy) return;
-  const pending = loadPending(props.entrenoId);
+  const pending = loadPending(scope.value);
   if (!pending) return;
   ensureBotMessage(pending.botMessageId);
   void followJob(pending.jobId, pending.botMessageId);
@@ -276,7 +286,7 @@ const sendText = async (raw: string) => {
   messages.value.push({ id: botMessageId, text: '', isUser: false, timestamp: new Date() });
 
   try {
-    if (!props.entrenoData) {
+    if (!esEntrevista.value && !props.entrenoData) {
       throw new Error('Los datos del entrenamiento no están disponibles. Por favor, espera un momento.');
     }
 
@@ -299,12 +309,12 @@ const sendText = async (raw: string) => {
     // 1) Lanzar trabajo. El requestId hace el envío idempotente: si la petición se repite,
     // el backend devuelve el mismo job en vez de duplicar las series.
     const requestId = crypto.randomUUID();
-    const launch = await apiFetch<{ jobId: string }>('/api/coach', {
-      message: userMessage, currentTraining, chatId: null, history, requestId
-    });
+    const launch = await apiFetch<{ jobId: string }>('/api/coach', esEntrevista.value
+      ? { message: userMessage, mode: 'entrevista', history, requestId }
+      : { message: userMessage, currentTraining, chatId: null, history, requestId });
 
     // Se guarda el job en curso: si se bloquea la pantalla o se cierra la app, se retoma al volver
-    savePending(props.entrenoId, { jobId: launch.jobId, botMessageId, requestId, startedAt: Date.now() });
+    savePending(scope.value, { jobId: launch.jobId, botMessageId, requestId, startedAt: Date.now() });
   } catch (error: any) {
     const botMsg = ensureBotMessage(botMessageId);
     botMsg.text = error.message || 'Lo siento, hubo un error al procesar tu mensaje. Por favor, intenta de nuevo.';
@@ -314,7 +324,7 @@ const sendText = async (raw: string) => {
   }
 
   // 2) Polling hasta que termine
-  const pending = loadPending(props.entrenoId);
+  const pending = loadPending(scope.value);
   if (pending && pending.botMessageId === botMessageId) {
     await followJob(pending.jobId, botMessageId);
   } else {
@@ -359,7 +369,7 @@ const scrollToBottom = () => {
 onMounted(() => {
   // Limpia la clave global antigua (antes el historial se compartía entre entrenos)
   ['chatHistory', 'isFirstMessage', 'chatHistoryTimestamp', 'responseId'].forEach(k => localStorage.removeItem(k));
-  const { messages: savedMessages, isFirstMessage: savedIsFirstMessage } = chatGPTService.loadMessages(props.entrenoId);
+  const { messages: savedMessages, isFirstMessage: savedIsFirstMessage } = chatGPTService.loadMessages(scope.value);
   messages.value = savedMessages;
   isFirstMessage.value = savedIsFirstMessage;
   
@@ -383,7 +393,7 @@ onUnmounted(() => {
 
 // Modificar el watch de messages
 watch([messages, isFirstMessage], () => {
-  chatGPTService.saveMessages(messages.value, isFirstMessage.value, props.entrenoId);
+  chatGPTService.saveMessages(messages.value, isFirstMessage.value, scope.value);
 }, { deep: true });
 
 // Modificar toggleChat
@@ -396,7 +406,7 @@ watch(messages, () => {
 const resetConversation = () => {
   messages.value = [];
   isFirstMessage.value = true;
-  chatGPTService.clearMessages(props.entrenoId);
+  chatGPTService.clearMessages(scope.value);
   
   // Añadir mensaje de bienvenida
   messages.value.push({
@@ -412,11 +422,12 @@ const resetConversation = () => {
 
 <template>
   <div class="chatbot-root">
-    <BottomSheet :open="isOpen" title="Entrenador" height="full" @close="closeChat">
+    <BottomSheet :open="isOpen" :title="esEntrevista ? 'Entrevista' : 'Entrenador'" height="full" @close="closeChat">
       <template #header>
         <div class="chat-head">
-          <h2 class="chat-title">Entrenador</h2>
-          <span v-if="entrenoData?.Nom" class="chat-subtitle">{{ entrenoData.Nom }}</span>
+          <h2 class="chat-title">{{ esEntrevista ? 'Entrevista' : 'Entrenador' }}</h2>
+          <span v-if="esEntrevista" class="chat-subtitle">Con tu entrenador</span>
+          <span v-else-if="entrenoData?.Nom" class="chat-subtitle">{{ entrenoData.Nom }}</span>
         </div>
         <button type="button" class="chat-icon-btn" aria-label="Nueva conversación" title="Nueva conversación" @click="resetConversation">
           <RotateCcw :size="20" aria-hidden="true" />

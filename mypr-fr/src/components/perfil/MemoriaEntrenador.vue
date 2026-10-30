@@ -2,7 +2,7 @@
 import { ref, onMounted, computed, nextTick, watch } from 'vue';
 import { apiFetch } from '../../services/api';
 import { eliminarConDeshacer } from '../../composables/useDeshacer';
-import { Check, RotateCcw, Trash2, Plus } from 'lucide-vue-next';
+import { Check, RotateCcw, Trash2, Plus, MessageSquareText } from 'lucide-vue-next';
 
 interface CoachMemory {
   MemoryId: number;
@@ -30,6 +30,8 @@ const isAddingMemory = ref(false);
 const activeMemories = computed(() => memories.value.filter(m => m.Status === 'activa'));
 const resolvedMemories = computed(() => memories.value.filter(m => m.Status === 'resuelta'));
 const formatMemoryDate = (ts: number) => new Date(ts * 1000).toLocaleDateString('es-ES');
+
+const emit = defineEmits<{ (e: 'entrevista'): void }>();
 
 const loadMemories = async () => {
   try {
@@ -126,6 +128,7 @@ const deleteMemory = (m: CoachMemory) => {
 onMounted(loadMemories);
 
 // TODO(entrevista): aquí irá el acceso a "Entrevista con tu entrenador" cuando exista la función.
+defineExpose({ loadMemories });
 </script>
 
 <template>
@@ -134,6 +137,12 @@ onMounted(loadMemories);
     <p class="mem-intro">
       Lo que tu entrenador IA sabe de ti. Él la actualiza al hablar contigo; tú puedes cambiar cualquier cosa.
     </p>
+
+    <!-- Entrevista guiada: la forma rápida de rellenar (o revisar) la memoria -->
+    <button type="button" class="btn mem-entrevista" :class="!memoriesLoading && memories.length === 0 ? 'btn-primary' : 'btn-secondary'" @click="emit('entrevista')">
+      <MessageSquareText :size="20" :stroke-width="2.25" aria-hidden="true" />
+      {{ !memoriesLoading && memories.length === 0 ? 'Hacer la entrevista inicial' : 'Repasar con una entrevista' }}
+    </button>
 
     <form class="mem-add" @submit.prevent="addMemory">
       <label class="sr-only" for="mem-new-kind">Tipo</label>
@@ -152,7 +161,7 @@ onMounted(loadMemories);
     <p v-if="memoryError" id="mem-error" class="mem-error" role="alert">{{ memoryError }}</p>
     <p v-if="memoriesLoading" class="mem-note">Cargando...</p>
     <p v-else-if="memories.length === 0" class="mem-note">
-      Aún no hay nada guardado. Añádelo arriba o cuéntaselo al entrenador en el chat.
+      Aún no hay nada guardado. Haz la entrevista, añádelo arriba o cuéntaselo al entrenador en el chat.
     </p>
 
     <template v-else>
@@ -286,4 +295,5 @@ textarea.memory-text:focus { outline: none; border-color: var(--led-amber); box-
 .mem-resolved .mem-list { margin-top: 0; }
 
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+.mem-entrevista { width: 100%; margin: 0 0 0.75rem; }
 </style>

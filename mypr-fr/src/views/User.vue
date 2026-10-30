@@ -1,15 +1,20 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { Download, LogOut } from 'lucide-vue-next';
 import { useAuthStore } from '../stores/auth';
 import { apiFetch } from '../services/api';
 import TemporizadorDescanso from '../components/perfil/TemporizadorDescanso.vue';
 import MemoriaEntrenador from '../components/perfil/MemoriaEntrenador.vue';
 import { useCoachAcceso } from '../composables/useCoachAcceso';
+import Chatbot from '../components/Chatbot.vue';
 import ModeloEntrenador from '../components/perfil/ModeloEntrenador.vue';
 
 const router = useRouter();
+const route = useRoute();
+const memoria = ref<InstanceType<typeof MemoriaEntrenador> | null>(null);
+// La entrevista abre el chat en modo entrevista (misma hoja que el del entreno, con ?chat=1)
+const abrirEntrevista = () => { void router.replace({ query: { ...route.query, chat: '1' } }); };
 const { coachHabilitado } = useCoachAcceso();
 const authStore = useAuthStore();
 
@@ -83,7 +88,7 @@ onMounted(() => {
 
     <ModeloEntrenador v-if="coachHabilitado" />
 
-    <MemoriaEntrenador v-if="coachHabilitado" />
+    <MemoriaEntrenador v-if="coachHabilitado" ref="memoria" @entrevista="abrirEntrevista" />
 
     <section class="panel" aria-labelledby="datos-h">
       <h2 id="datos-h" class="panel-title">Datos</h2>
@@ -98,6 +103,8 @@ onMounted(() => {
       <p v-if="error" id="datos-error" class="datos-error" role="alert">{{ error }}</p>
     </section>
   </div>
+  <!-- Al terminar cada respuesta se recarga la memoria: así se ve lo que la entrevista ha guardado -->
+  <Chatbot v-if="coachHabilitado" modo="entrevista" @refresh="memoria?.loadMemories()" />
 </template>
 
 <style scoped>

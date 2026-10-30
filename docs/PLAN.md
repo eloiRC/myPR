@@ -61,7 +61,9 @@ No son retoques: rediseño de toda la app pensado primero para el móvil en el g
 
 **Reparto**: dirección y sistema de diseño en la sesión principal (decisiones contigo). Las pantallas, por agentes en paralelo una vez fijado el sistema, revisadas y probadas antes de publicar.
 
-### B · Entrevista inicial con el entrenador IA
+### B · Entrevista inicial con el entrenador IA — HECHO (2026-11-01)
+Botón en Perfil, dentro de Memoria del entrenador («Hacer la entrevista inicial» si la memoria está vacía, «Repasar con una entrevista» si no). Modo «entrevista» del coach (`src/coachInterview.ts`): una pregunta por mensaje con respuestas rápidas, salta lo que ya está en la memoria y guarda o actualiza memorias al confirmar el resumen. Pendiente: ofrecerla también desde el chat del entreno cuando la memoria esté vacía, y decidir si se repite cada cierto tiempo.
+
 - **Dónde**: botón en Ajustes, "Entrevista con tu entrenador". También se ofrece al primer uso si la memoria está vacía.
 - **Formato** (propuesta): chat guiado con **una pregunta a la vez** y **respuestas rápidas** (botones) cuando haya opciones típicas.
 - **Temas**: objetivo principal, experiencia, días y tiempo disponibles, material o gimnasio, lesiones y molestias, ejercicios preferidos y a evitar, estilo de entreno.

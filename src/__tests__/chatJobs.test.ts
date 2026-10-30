@@ -103,8 +103,16 @@ describe('decideJobRun (reentregas de la cola)', () => {
 
 describe('chatGPT schema requestId', () => {
   it('requestId es opcional', () => {
-    const shape = chatGPT.shape as any;
+    const shape = chatGPT.innerType().shape as any;
     expect(shape.requestId.safeParse(undefined).success).toBe(true);
     expect(shape.requestId.safeParse('abc').success).toBe(true);
+  });
+});
+
+describe('chatGPT schema: modo entrevista', () => {
+  it('la entrevista no necesita entreno; el chat normal sí', () => {
+    expect(chatGPT.safeParse({ message: 'hola', mode: 'entrevista' }).success).toBe(true);
+    expect(chatGPT.safeParse({ message: 'hola' }).success).toBe(false);
+    expect(chatGPT.safeParse({ message: 'hola', mode: 'otro' }).success).toBe(false);
   });
 });

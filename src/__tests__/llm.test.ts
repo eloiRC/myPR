@@ -318,3 +318,12 @@ describe('modelo elegido por el usuario', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 });
+
+describe('entrevista', () => {
+  it('solo ofrece herramientas de memoria y respuestas rápidas', async () => {
+    const { INTERVIEW_TOOL_DEFS, INTERVIEW_PERSONA, buildInterviewContext } = await import('../coachInterview');
+    expect(INTERVIEW_TOOL_DEFS.map(t => t.name).sort()).toEqual(['delete_memory', 'save_memory', 'suggest_replies', 'update_memory']);
+    expect(INTERVIEW_PERSONA).toContain('suggest_replies');
+    expect(buildInterviewContext({ dateLabel: '1/11/2026', nowSec: 0, memories: [] })).toContain('entrevista');
+  });
+});
