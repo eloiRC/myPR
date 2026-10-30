@@ -76,16 +76,20 @@ app.use('/api/*', async (c, next) => {
   }
 })
 
+/** Máximo de kg registrado de un ejercicio (parámetros: UserId, ExerciciId) */
+const MAX_KG_SERIES = '(SELECT COALESCE(MAX(Kg), 0) FROM Series WHERE UserId=? AND ExerciciId=?)';
+
 // Función auxiliar para añadir series (Refactorizada para usar en API y en las herramientas del coach)
 async function addSerieToDb(c: DbCtx,userId: number, entrenoId: number, exerciciId: number, kg: number, reps: number, descansoSeg: number | null = null) {
   const data = Math.floor(Date.now() / 1000)
   const carga = kg * reps
 
-  // Reset all PR flags for this exercise (harmless if no PR changed)
-  const updatePrStmt = c.env.DB.prepare('UPDATE Exercici SET PR=? WHERE UserId=? AND ExerciciId=? AND ? > PR')
-    .bind(kg, userId, exerciciId, kg);
-  const resetPrStmt = c.env.DB.prepare('UPDATE Series SET PR=0 WHERE UserId=? AND ExerciciId=?')
-    .bind(userId, exerciciId);
+  // Récord: se compara con el máximo real de las series (la columna Exercici.PR puede estar desfasada).
+  // Solo si hay récord nuevo se quitan las marcas de PR anteriores; si no, la serie récord la conserva.
+  const updatePrStmt = c.env.DB.prepare(`UPDATE Exercici SET PR=? WHERE UserId=? AND ExerciciId=? AND ? > ${MAX_KG_SERIES}`)
+    .bind(kg, userId, exerciciId, kg, userId, exerciciId);
+  const resetPrStmt = c.env.DB.prepare(`UPDATE Series SET PR=0 WHERE UserId=? AND ExerciciId=? AND ? > ${MAX_KG_SERIES}`)
+    .bind(userId, exerciciId, kg, userId, exerciciId);
   const maxOrdenStmt = c.env.DB.prepare('SELECT COALESCE(MAX(Orden), 0) + 1 AS newOrden FROM Series WHERE UserId=? AND EntrenoId=?')
     .bind(userId, entrenoId);
 
@@ -209,13 +213,16 @@ app.post('/api/editSerie', zValidator('json', editSerie), async (c) => {
     //actualitzem la serie
     // descansoSeg: ausente = no tocar (clientes antiguos), null = borrar, número = fijar
     const tocaDescanso = descansoSeg !== undefined ? 1 : 0
+    const anterior = await c.env.DB.prepare('SELECT ExerciciId FROM Series WHERE SerieId=? AND UserId=?').bind(serieId, userId).first<{ ExerciciId: number }>()
     const updateSerie = await c.env.DB.prepare('UPDATE Series SET ExerciciId=?,Kg=?,Reps=?,Carga=?,DescansoSeg=CASE WHEN ?=1 THEN ? ELSE DescansoSeg END WHERE UserID=? AND SerieId=?  RETURNING *').bind(exerciciId, kg, reps, carga, tocaDescanso, descansoSeg ?? null, userId, serieId).run()
 
     //actualitzem el pr
     const updatePr = await checkPr(c, userId, exerciciId, kg)
-    if (updatePr.serieId == serieId) {
+    if (updatePr.prUpdated && updatePr.serieIds.includes(Number(serieId))) {
       newPr = true
     }
+    // Si la serie cambió de ejercicio, el anterior puede haber perdido su récord
+    if (anterior && anterior.ExerciciId !== Number(exerciciId)) await checkPr(c, userId, anterior.ExerciciId, 0)
 
     //actualitzem la carga total de l'entreno
     const updateCT = await updateCargaTotal(c, userId, entrenoId)
@@ -280,8 +287,12 @@ app.post('/api/deleteEntreno', zValidator('json', deleteEntreno), async (c) => {
   const userId = await c.get('jwtPayload').UserId
 
   try {
+    // Ejercicios afectados: tras borrar sus series hay que recalcular su récord
+    const { results: afectados } = await c.env.DB.prepare('SELECT DISTINCT ExerciciId FROM Series WHERE EntrenoId=? AND UserId=?').bind(entrenoId, userId).all<{ ExerciciId: number }>()
+
     // Borrar todas las series asociadas a este entreno para el usuario
     await c.env.DB.prepare('DELETE FROM Series WHERE EntrenoId=? AND UserId=?').bind(entrenoId, userId).run()
+    for (const a of afectados ?? []) await checkPr(c, userId, a.ExerciciId, 0)
 
     // Borrar el entreno
     const result = await c.env.DB.prepare('DELETE FROM Entreno WHERE EntrenoId=? AND UserId=?').bind(entrenoId, userId).run()
@@ -1013,26 +1024,29 @@ export default {
   },
 }
 
-async function checkPr(c: DbCtx,userId: any, exerciciId: any, kg: any) {
+/**
+ * Recalcula el récord de un ejercicio desde sus series: Exercici.PR = máximo de kg (0 si no quedan series)
+ * y marca PR=1 solo en las series con ese máximo. prUpdated indica si el récord ha subido.
+ * El kg de la serie ya no hace falta (se mantiene el parámetro por compatibilidad con las herramientas).
+ */
+async function checkPr(c: DbCtx, userId: any, exerciciId: any, _kg?: any) {
   try {
-    const updatePr = c.env.DB.prepare('UPDATE Exercici SET PR=(SELECT MAX(Kg) FROM Series WHERE ExerciciId=?) WHERE UserId=? AND ExerciciId=? AND PR!=? RETURNING PR')
-      .bind(exerciciId, userId, exerciciId, kg);
-    const resetPr = c.env.DB.prepare('UPDATE Series SET PR=0 WHERE UserId=? AND ExerciciId=?')
-      .bind(userId, exerciciId);
-    const setNewPr = c.env.DB.prepare('UPDATE Series SET PR=1 WHERE UserId=? AND ExerciciId=? AND Kg=(SELECT MAX(Kg) FROM Series WHERE ExerciciId=?) RETURNING SerieId')
-      .bind(userId, exerciciId, exerciciId);
-
-    const [prResult, , setResult] = await c.env.DB.batch([updatePr, resetPr, setNewPr]);
-
-    if ((prResult.meta?.rows_written ?? 0) > 0) {
-      return {
-        prUpdated: true,
-        newPR: (prResult.results?.[0] as any)?.PR ?? false,
-        serieId: (setResult.results?.[0] as any)?.SerieId ?? 0
-      };
-    }
-    return { prUpdated: false, newPR: false };
-
+    const db = c.env.DB;
+    const [antes, despues, , marcadas] = await db.batch([
+      db.prepare('SELECT PR FROM Exercici WHERE UserId=? AND ExerciciId=?').bind(userId, exerciciId),
+      db.prepare(`UPDATE Exercici SET PR=${MAX_KG_SERIES} WHERE UserId=? AND ExerciciId=? RETURNING PR`).bind(userId, exerciciId, userId, exerciciId),
+      db.prepare('UPDATE Series SET PR=0 WHERE UserId=? AND ExerciciId=?').bind(userId, exerciciId),
+      db.prepare(`UPDATE Series SET PR=1 WHERE UserId=? AND ExerciciId=? AND Kg>0 AND Kg=${MAX_KG_SERIES} RETURNING SerieId`).bind(userId, exerciciId, userId, exerciciId),
+    ]);
+    const prAntes = Number((antes.results?.[0] as any)?.PR ?? 0) || 0;
+    const prAhora = Number((despues.results?.[0] as any)?.PR ?? 0) || 0;
+    const serieIds = (marcadas.results ?? []).map((r: any) => Number(r.SerieId));
+    return {
+      prUpdated: prAhora > prAntes,
+      newPR: prAhora,
+      serieId: serieIds[0] ?? 0,
+      serieIds,
+    };
   } catch (error) {
     console.error(error)
     throw new HTTPException(500, { message: 'error sql query' })
