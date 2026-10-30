@@ -296,6 +296,11 @@ describe('modelo elegido por el usuario', () => {
     expect(resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'mimo-v2.6-pro')).toMatchObject({ model: 'xiaomi/mimo-v2.6-pro' });
     expect(resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'gpt-6-luna').effort).toBeUndefined();
   });
+  it('DeepSeek prefiere su API oficial y luego hosts de confianza', () => {
+    const c = resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'deepseek-v4.1-flash');
+    expect(c.providers?.[0]).toBe('DeepSeek');
+    expect(resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'gpt-6-luna').providers).toBeUndefined();
+  });
   it('los ids del catálogo son únicos', () => {
     const ids = MODEL_CATALOG.map(m => m.id);
     expect(new Set(ids).size).toBe(ids.length);

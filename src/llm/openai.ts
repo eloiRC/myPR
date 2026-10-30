@@ -9,6 +9,7 @@ export interface OpenAiOptions {
   name?: string;
   thinking?: 'adaptive' | 'off';
   effort?: 'low' | 'medium' | 'high';
+  providers?: string[];
 }
 
 export function createOpenAiProvider(apiKey: string, model = OPENAI_DEFAULT_MODEL, opts: OpenAiOptions = {}): LlmProvider {
@@ -31,6 +32,8 @@ export function createOpenAiProvider(apiKey: string, model = OPENAI_DEFAULT_MODE
         max_completion_tokens: input.maxTokens,
         stream: true,
         stream_options: { include_usage: true },
+        // OpenRouter: solo proveedores que soporten todos los parámetros (herramientas) y, si se indica, en este orden
+        ...(opts.baseURL ? { provider: { require_parameters: true, allow_fallbacks: true, ...(opts.providers?.length ? { order: opts.providers } : {}) } } : {}),
         // OpenRouter: razonamiento corto cuando se pide respuesta rápida (los modelos sin razonamiento lo ignoran)
         ...(opts.effort ? { reasoning: { effort: opts.effort } } : opts.thinking === 'off' ? { reasoning: { effort: 'low' } } : {}),
       } as OpenAI.Chat.ChatCompletionCreateParamsStreaming);
