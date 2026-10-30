@@ -291,6 +291,11 @@ describe('modelo elegido por el usuario', () => {
     expect(modelAvailable({ OPENROUTER_API_KEY: 'o' }, 'grok-4.3')).toBe(true);
     expect(modelAvailable({ OPENROUTER_API_KEY: 'o' }, 'inventado')).toBe(false);
   });
+  it('el esfuerzo fijo del catálogo llega a la configuración', () => {
+    expect(resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'deepseek-v4.1-flash-high')).toMatchObject({ model: 'deepseek/deepseek-v4.1-flash-1017', effort: 'high' });
+    expect(resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'mimo-v2.6-pro')).toMatchObject({ model: 'xiaomi/mimo-v2.6-pro' });
+    expect(resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'gpt-6-luna').effort).toBeUndefined();
+  });
   it('los ids del catálogo son únicos', () => {
     const ids = MODEL_CATALOG.map(m => m.id);
     expect(new Set(ids).size).toBe(ids.length);

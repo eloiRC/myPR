@@ -8,6 +8,7 @@ export interface OpenAiOptions {
   baseURL?: string;
   name?: string;
   thinking?: 'adaptive' | 'off';
+  effort?: 'low' | 'medium' | 'high';
 }
 
 export function createOpenAiProvider(apiKey: string, model = OPENAI_DEFAULT_MODEL, opts: OpenAiOptions = {}): LlmProvider {
@@ -31,7 +32,7 @@ export function createOpenAiProvider(apiKey: string, model = OPENAI_DEFAULT_MODE
         stream: true,
         stream_options: { include_usage: true },
         // OpenRouter: razonamiento corto cuando se pide respuesta rápida (los modelos sin razonamiento lo ignoran)
-        ...(opts.thinking === 'off' ? { reasoning: { effort: 'low' } } : {}),
+        ...(opts.effort ? { reasoning: { effort: opts.effort } } : opts.thinking === 'off' ? { reasoning: { effort: 'low' } } : {}),
       } as OpenAI.Chat.ChatCompletionCreateParamsStreaming);
 
       let text = '';

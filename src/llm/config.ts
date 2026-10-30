@@ -18,6 +18,8 @@ export interface ProviderConfig {
   model: string;
   apiKey: string;
   thinking: 'adaptive' | 'off';
+  /** Esfuerzo de razonamiento fijo del modelo elegido (si el catálogo lo define) */
+  effort?: 'low' | 'medium' | 'high';
 }
 
 /** Resuelve proveedor, modelo y clave desde el entorno; lanza un error en español si falta la clave. */
@@ -54,7 +56,7 @@ export function resolveModelConfig(env: LlmEnv, modelId?: string | null): Provid
   if (!key) {
     throw new Error(`El modelo ${m.label} no está disponible: falta ${m.route === 'anthropic' ? 'ANTHROPIC_API_KEY' : 'OPENROUTER_API_KEY'}.`);
   }
-  return { provider: m.route, model: m.model, apiKey: key, thinking };
+  return { provider: m.route, model: m.model, apiKey: key, thinking, ...(m.effort ? { effort: m.effort } : {}) };
 }
 
 export { DEFAULT_MODEL_ID };
