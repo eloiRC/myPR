@@ -8,13 +8,15 @@ import { useAuthStore } from '../stores/auth';
 import { apiFetch } from '../services/api';
 import { DURACION_MIN_SEG, DURACION_MAX_SEG, descansoAceptable, textoDescanso, useRestTimer } from '../composables/useRestTimer';
 
-import { ArrowLeft, Pencil, Timer, ChevronRight } from 'lucide-vue-next';
+import { ArrowLeft, Pencil, Timer, ChevronRight, Archive, ArchiveRestore } from 'lucide-vue-next';
 import SegDisplay from '../components/SegDisplay.vue';
 import JudgeLights from '../components/JudgeLights.vue';
 import BottomSheet from '../components/BottomSheet.vue';
 import GrupoChips from '../components/listas/GrupoChips.vue';
 import { kgDisplay } from '../utils/segmentos';
 import { recordEjercicio } from '../utils/record';
+import { esArchivado } from '../utils/archivado';
+import { eliminarConDeshacer } from '../composables/useDeshacer';
 
 const authStore = useAuthStore();
 const restTimer = useRestTimer();
@@ -31,6 +33,8 @@ interface Ejercicio {
   PR: number;
   /** Descanso por defecto del ejercicio (s); null = usa el global */
   DescansoSeg?: number | null;
+  /** 1 = archivado (no disponible para series nuevas; su historial se conserva) */
+  Archivat?: number;
   GrupMuscular1: number | null;
   GrupMuscular2: number | null;
   GrupMuscular3: number | null;
@@ -151,6 +155,60 @@ const guardarEdicionEjercicio = async () => {
     editando.value = false;
   } catch (e: any) {
     errorEdicion.value = e.message || 'Error al guardar';
+  }
+};
+
+// ---------- Archivar / desarchivar ----------
+// Archivar no borra nada: el ejercicio desaparece de los selectores de series y del entrenador IA,
+// pero sus series, entrenos y gráficas se conservan.
+const archivado = computed(() => esArchivado(ejercicio.value));
+const archivando = ref(false);
+const errorArchivo = ref('');
+
+const enviarArchivat = (archivat: boolean) =>
+  apiFetch('/api/archivarExercici', { exerciciId: Number(route.params.id), archivat });
+
+const fijarArchivatLocal = (archivat: boolean) => {
+  if (ejercicio.value) ejercicio.value = { ...ejercicio.value, Archivat: archivat ? 1 : 0 };
+};
+
+const archivar = async () => {
+  if (!ejercicio.value || archivando.value) return;
+  archivando.value = true;
+  errorArchivo.value = '';
+  try {
+    await enviarArchivat(true);
+    // Ya está guardado; «Deshacer» lo vuelve a desarchivar
+    eliminarConDeshacer({
+      mensaje: 'Ejercicio archivado',
+      aplicar: () => fijarArchivatLocal(true),
+      revertir: () => {
+        fijarArchivatLocal(false);
+        enviarArchivat(false).catch((e) => {
+          console.error('No se pudo desarchivar', e);
+          fijarArchivatLocal(true);
+        });
+      },
+      confirmar: async () => {},
+    });
+  } catch (e: any) {
+    errorArchivo.value = e.message || 'No se pudo archivar el ejercicio';
+  } finally {
+    archivando.value = false;
+  }
+};
+
+const desarchivar = async () => {
+  if (!ejercicio.value || archivando.value) return;
+  archivando.value = true;
+  errorArchivo.value = '';
+  try {
+    await enviarArchivat(false);
+    fijarArchivatLocal(false);
+  } catch (e: any) {
+    errorArchivo.value = e.message || 'No se pudo desarchivar el ejercicio';
+  } finally {
+    archivando.value = false;
   }
 };
 
@@ -319,6 +377,18 @@ onMounted(loadEjercicio);
     </div>
 
     <div v-else-if="ejercicio" class="ejercicio-content">
+      <!-- Aviso de archivado -->
+      <section v-if="archivado" class="aviso-archivado" aria-label="Ejercicio archivado">
+        <div class="aviso-texto">
+          <span class="aviso-rotulo"><Archive :size="16" aria-hidden="true" /> Archivado</span>
+          <p>No aparece al añadir series ni en el entrenador. Su historial se conserva.</p>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" :disabled="archivando" @click="desarchivar">
+          <ArchiveRestore :size="18" aria-hidden="true" /> Desarchivar
+        </button>
+      </section>
+      <p v-if="errorArchivo" class="error-message" role="alert">{{ errorArchivo }}</p>
+
       <!-- Marcador del récord -->
       <section class="hero" aria-label="Récord personal">
         <div class="hero-top">
@@ -382,6 +452,15 @@ onMounted(loadEjercicio);
           <p>No hay datos históricos disponibles</p>
         </div>
       </div>
+
+      <!-- Archivar: para máquinas que ya no tienes (p. ej. cambio de gimnasio) -->
+      <section v-if="!archivado" class="archivar" aria-labelledby="archivar-t">
+        <h2 id="archivar-t" class="section-title">¿Ya no tienes esta máquina?</h2>
+        <p class="archivar-ayuda">Archívalo: deja de salir al añadir series y en el entrenador, y su historial se conserva. Puedes desarchivarlo cuando quieras.</p>
+        <button type="button" class="btn btn-secondary" :disabled="archivando" @click="archivar">
+          <Archive :size="18" aria-hidden="true" /> {{ archivando ? 'Archivando…' : 'Archivar ejercicio' }}
+        </button>
+      </section>
     </div>
 
     <!-- Editar ejercicio -->
@@ -541,6 +620,33 @@ onMounted(loadEjercicio);
 .chart-panel { margin-bottom: 0; }
 .no-datos { text-align: center; padding: 2rem; color: var(--n6); font-size: 0.9rem; }
 .no-datos p { margin: 0; }
+
+.aviso-archivado {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.75rem 0.75rem 1rem;
+  background: var(--n0);
+  border: 1px dashed var(--n5);
+  border-radius: var(--radius-lg);
+}
+.aviso-texto { flex: 1; min-width: 0; }
+.aviso-rotulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--n8);
+}
+.aviso-texto p { margin: 0.25rem 0 0; font-size: 0.85rem; color: var(--n6); }
+.aviso-archivado .btn { flex-shrink: 0; }
+
+.archivar { padding-top: 0.25rem; border-top: 1px solid var(--n3); }
+.archivar-ayuda { margin: 0 0 0.75rem; font-size: 0.85rem; color: var(--n6); }
 
 .descanso-ejercicio input { max-width: 12rem; }
 .descanso-ayuda { margin: 0.5rem 0 0; font-size: 0.8rem; color: var(--n6); }

@@ -98,6 +98,12 @@ export const getExercici = z.object({
   exerciciId: z.number().min(1)
 })
 
+// Archivar / desarchivar un ejercicio (se oculta de listas y del coach; su historial se conserva)
+export const archivarExercici = z.object({
+  exerciciId: z.number().int().min(1),
+  archivat: z.boolean()
+})
+
 export const getPesosHistorial = z.object({
   exerciciId: z.number().min(1)
 })

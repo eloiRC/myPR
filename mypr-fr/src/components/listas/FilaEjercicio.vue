@@ -4,16 +4,18 @@ import SegDisplay from '../SegDisplay.vue';
 import { kgDisplay } from '../../utils/segmentos';
 
 // Fila del índice de ejercicios: nombre, grupos musculares y récord en segmentos.
-defineProps<{ nombre: string; pr: number; grupos: string[] }>();
+// archivado: ejercicio ya no disponible (se muestra apagado, con su historial intacto).
+defineProps<{ nombre: string; pr: number; grupos: string[]; archivado?: boolean }>();
 const emit = defineEmits<{ (e: 'abrir'): void; (e: 'editar'): void }>();
 </script>
 
 <template>
-  <div class="fe">
+  <div class="fe" :class="{ 'fe--archivado': archivado }">
     <button type="button" class="fe-main" @click="emit('abrir')">
       <span class="fe-texto">
         <span class="fe-nombre">{{ nombre }}</span>
-        <span v-if="grupos.length" class="fe-grupos">
+        <span v-if="grupos.length || archivado" class="fe-grupos">
+          <span v-if="archivado" class="fe-archivado">Archivado</span>
           <span v-for="(g, i) in grupos" :key="i" class="fe-grupo">{{ g }}</span>
         </span>
       </span>
@@ -76,6 +78,21 @@ const emit = defineEmits<{ (e: 'abrir'): void; (e: 'editar'): void }>();
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--n7);
+}
+/* Archivado: chapa apagada y borde discontinuo; sin color de señal */
+.fe--archivado { background: var(--n0); border-style: dashed; box-shadow: none; }
+.fe--archivado .fe-nombre { color: var(--n6); }
+.fe--archivado .fe-seg { opacity: 0.6; }
+.fe-archivado {
+  padding: 0.1rem 0.4rem;
+  background: var(--n3);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--n7);
 }

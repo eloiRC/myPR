@@ -37,6 +37,8 @@ export const updateWorkoutInput = z.object({
 export const createExerciseInput = z.object({
   name: z.string().trim().min(3).max(80),
   muscleGroupIds: z.array(idSchema).min(1).max(5),
+  /** true solo si el usuario confirmó que es distinto de los ejercicios parecidos que devolvió el aviso */
+  confirmedNew: z.boolean().optional(),
 });
 export const saveMemoryInput = z.object({
   kind: z.enum(MEMORY_KINDS),
@@ -90,8 +92,8 @@ export const TOOL_DEFS: LlmToolDef[] = [
   },
   {
     name: 'create_exercise',
-    description: 'Crea un ejercicio nuevo en el catálogo del usuario. Úsalo solo si no existe uno equivalente en el catálogo. muscleGroupIds: de 1 a 5 ids del catálogo de grupos musculares. Devuelve el exerciseId para usarlo en add_sets.',
-    parameters: obj({ name: { type: 'string' }, muscleGroupIds: { type: 'array', items: { type: 'integer' } } }, ['name', 'muscleGroupIds']),
+    description: 'Crea un ejercicio nuevo en el catálogo del usuario. Úsalo solo si no existe uno equivalente en el catálogo. muscleGroupIds: de 1 a 5 ids del catálogo de grupos musculares. Devuelve el exerciseId para usarlo en add_sets. Si el nombre se parece a ejercicios existentes, falla y los lista: usa uno de ellos o, solo si el usuario confirma que es un ejercicio realmente distinto, repite la llamada con confirmedNew: true.',
+    parameters: obj({ name: { type: 'string' }, muscleGroupIds: { type: 'array', items: { type: 'integer' } }, confirmedNew: { type: 'boolean' } }, ['name', 'muscleGroupIds']),
   },
   {
     name: 'save_memory',
@@ -128,6 +130,8 @@ export interface ToolContext {
   userId: number;
   entrenoId: number;
   validExerciseIds: Set<number>;
+  /** Ejercicios archivados del usuario (opcional): add_sets / edit_set los rechazan */
+  archivedExerciseIds?: Set<number>;
   validMuscleGroupIds: Set<number>;
   deps: ToolDeps;
   state: { workoutUpdated: boolean; /** respuestas rápidas sugeridas (la última llamada gana) */ quickReplies?: string[] };
@@ -149,9 +153,95 @@ export function normalizeName(s: string): string {
   return s.trim().replace(/\s+/g, ' ').toLowerCase();
 }
 
+// ---------- Detección de ejercicios parecidos (create_exercise) ----------
+
+// Palabras de relleno que no distinguen un ejercicio de otro ("press de banca" = "press banca")
+const FILLER_WORDS = new Set(['de', 'del', 'con', 'en', 'a', 'al', 'la', 'el', 'lo', 'los', 'las', 'y', 'e', 'por', 'para', 'un', 'una']);
+
+/** Singularización simple: "mancuernas" → "mancuerna", "dorsales" → "dorsal", "poleas" → "polea". */
+function singular(w: string): string {
+  if (w.length <= 3 || !w.endsWith('s') || w.endsWith('ss')) return w;
+  // consonante + "es" ("dorsales", "lumbares", "aductores"): se quita "es"
+  if (w.length > 4 && /[^aeiou]es$/.test(w) && /[lrnd]es$/.test(w)) return w.slice(0, -2);
+  return w.slice(0, -1);
+}
+
+/** Tokens normalizados de un nombre: minúsculas, sin acentos ni puntuación, sin relleno y en singular. */
+export function exerciseTokens(name: string): string[] {
+  return name
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w && !FILLER_WORDS.has(w))
+    .map(singular);
+}
+
+/** Nombre normalizado para comparar (tokens unidos por espacio). */
+export function normalizeExerciseName(name: string): string {
+  return exerciseTokens(name).join(' ');
+}
+
+function levenshtein(a: string, b: string): number {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
+export type ExerciseSimilarity = 'exact' | 'similar' | 'different';
+
+/**
+ * Compara dos nombres de ejercicio tras normalizarlos.
+ * exact: mismo nombre normalizado. similar: Jaccard de tokens ≥ 0.6, un nombre contenido en el otro
+ * (todos los tokens de uno están en el otro) o ratio de Levenshtein ≥ 0.8.
+ */
+export function compareExerciseNames(a: string, b: string): ExerciseSimilarity {
+  const ta = exerciseTokens(a);
+  const tb = exerciseTokens(b);
+  const na = ta.join(' ');
+  const nb = tb.join(' ');
+  if (na === nb) return 'exact';
+  if (!na || !nb) return 'different';
+  const sa = new Set(ta);
+  const sb = new Set(tb);
+  const inter = [...sa].filter(t => sb.has(t)).length;
+  const union = new Set([...sa, ...sb]).size;
+  if (inter / union >= 0.6) return 'similar';
+  if (inter && (inter === sa.size || inter === sb.size)) return 'similar';
+  const ratio = 1 - levenshtein(na, nb) / Math.max(na.length, nb.length);
+  if (ratio >= 0.8) return 'similar';
+  return 'different';
+}
+
+/** Ejercicios del catálogo con el mismo nombre normalizado (exact) o parecido (similar). */
+export function findSimilarExercises<T extends { ExerciciId: number; Nom: string }>(name: string, catalog: T[]): { exact: T[]; similar: T[] } {
+  const exact: T[] = [];
+  const similar: T[] = [];
+  for (const ex of catalog) {
+    const r = compareExerciseNames(name, ex.Nom || '');
+    if (r === 'exact') exact.push(ex);
+    else if (r === 'similar') similar.push(ex);
+  }
+  return { exact, similar };
+}
+
 /** Devuelve los ids que no están en el catálogo válido. */
 export function findInvalidExerciseIds(ids: number[], valid: Set<number>): number[] {
   return Array.from(new Set(ids.filter(id => !valid.has(id))));
+}
+
+function archivedMessage(ids: number[]): string {
+  const quien = ids.length > 1 ? `Los ejercicios con exerciseId ${ids.join(', ')} están archivados` : `El ejercicio con exerciseId ${ids[0]} está archivado`;
+  return `${quien} (el usuario ya no lo tiene disponible, p. ej. cambió de gimnasio). Elige otro del catálogo; si el usuario quiere volver a usarlo, puede desarchivarlo en Ejercicios.`;
 }
 
 function zodMessage(e: z.ZodError): string {
@@ -171,6 +261,8 @@ export async function executeTool(ctx: ToolContext, name: string, rawArgs: unkno
         if (!p.success) return fail(zodMessage(p.error));
         const invalid = findInvalidExerciseIds(p.data.sets.map(s => s.exerciseId), ctx.validExerciseIds);
         if (invalid.length) return fail(`exerciseId no válidos (no están en el catálogo): ${invalid.join(', ')}. No se ha añadido ninguna serie.`);
+        const archived = Array.from(new Set(p.data.sets.map(s => s.exerciseId).filter(id => ctx.archivedExerciseIds?.has(id))));
+        if (archived.length) return fail(`${archivedMessage(archived)} No se ha añadido ninguna serie.`);
         const added: { serieId: number; exerciseId: number; kg: number; reps: number; restSec: number | null; newPr: boolean }[] = [];
         let cargaTotal = 0;
         try {
@@ -195,6 +287,8 @@ export async function executeTool(ctx: ToolContext, name: string, rawArgs: unkno
         if (!row) return fail('Serie no encontrada en el entreno actual.');
         const exerciseId = p.data.exerciseId ?? row.ExerciciId;
         if (!ctx.validExerciseIds.has(exerciseId)) return fail(`exerciseId no válido: ${exerciseId}`);
+        // Pasar una serie a un ejercicio archivado no; corregir kg/reps de una serie que ya era de él, sí
+        if (exerciseId !== row.ExerciciId && ctx.archivedExerciseIds?.has(exerciseId)) return fail(`${archivedMessage([exerciseId])} No se ha modificado la serie.`);
         const kg = round1(p.data.kg ?? row.Kg);
         const reps = p.data.reps ?? row.Reps;
         // Mirror de /api/editSerie
@@ -252,10 +346,20 @@ export async function executeTool(ctx: ToolContext, name: string, rawArgs: unkno
         const badGroups = groups.filter(g => !ctx.validMuscleGroupIds.has(g));
         if (badGroups.length) return fail(`muscleGroupIds no válidos: ${badGroups.join(', ')}`);
         const nombre = capitalizeName(p.data.name);
-        // Duplicados del usuario, sin distinguir mayúsculas (toLowerCase de JS; el LOWER de SQLite solo cubre ASCII)
-        const { results } = await ctx.db.prepare('SELECT ExerciciId, Nom FROM Exercici WHERE UserId = ?').bind(ctx.userId).all();
-        const dup = (results as any[]).find(r => normalizeName(r.Nom) === normalizeName(nombre));
-        if (dup) return fail(`Ya existe el ejercicio "${dup.Nom}" (exerciseId ${dup.ExerciciId}). Úsalo en lugar de crear otro.`);
+        // Duplicados y parecidos en TODO el catálogo del usuario (archivados incluidos), comparando en JS
+        // (el LOWER de SQLite solo cubre ASCII y no quita acentos)
+        const { results } = await ctx.db.prepare('SELECT ExerciciId, Nom, Archivat FROM Exercici WHERE UserId = ?').bind(ctx.userId).all();
+        const catalog = (results || []) as { ExerciciId: number; Nom: string; Archivat?: number | null }[];
+        const archivado = (r: typeof catalog[number]) => Number(r.Archivat) === 1;
+        const label = (r: typeof catalog[number]) => `"${r.Nom}" (exerciseId ${r.ExerciciId}${archivado(r) ? ', archivado' : ''})`;
+        const { exact, similar } = findSimilarExercises(nombre, catalog);
+        if (exact.length) {
+          const dup = exact[0];
+          return fail(`Ya existe el ejercicio ${label(dup)}. Úsalo en lugar de crear otro${archivado(dup) ? '; está archivado: si el usuario lo vuelve a tener, puede desarchivarlo en Ejercicios' : ''}.`);
+        }
+        if (similar.length && !p.data.confirmedNew) {
+          return fail(`No se ha creado "${nombre}": se parece a ${similar.slice(0, 5).map(label).join(', ')}. Usa uno de ellos con su exerciseId. Solo si el usuario confirma que es un ejercicio realmente distinto, vuelve a llamar a create_exercise con confirmedNew: true.`);
+        }
         const [g1, g2, g3, g4, g5] = groups;
         const ins = await ctx.db.prepare(
           'INSERT INTO Exercici (Nom, UserId, PR, GrupMuscular1, GrupMuscular2, GrupMuscular3, GrupMuscular4, GrupMuscular5) VALUES (?, ?, 0, ?, ?, ?, ?, ?)'

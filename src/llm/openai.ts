@@ -26,6 +26,23 @@ export function openRouterProvider(r?: Routing): Record<string, unknown> {
   };
 }
 
+/** Une los trozos de reasoning_details del stream por índice (el texto llega troceado). */
+export function acumularRazonamiento(acc: Map<number, Record<string, unknown>>, trozos: unknown): void {
+  if (!Array.isArray(trozos)) return;
+  for (const raw of trozos) {
+    if (!raw || typeof raw !== 'object') continue;
+    const d = raw as Record<string, unknown>;
+    const index = typeof d.index === 'number' ? d.index : acc.size;
+    const cur = acc.get(index);
+    if (!cur) { acc.set(index, { ...d }); continue; }
+    for (const [k, v] of Object.entries(d)) {
+      if (k === 'index') continue;
+      if (typeof v === 'string' && typeof cur[k] === 'string' && ['text', 'summary', 'data'].includes(k)) cur[k] = (cur[k] as string) + v;
+      else if (v !== undefined && v !== null) cur[k] = v;
+    }
+  }
+}
+
 export function createOpenAiProvider(apiKey: string, model = OPENAI_DEFAULT_MODEL, opts: OpenAiOptions = {}): LlmProvider {
   const client = new OpenAI({
     apiKey,
@@ -40,7 +57,7 @@ export function createOpenAiProvider(apiKey: string, model = OPENAI_DEFAULT_MODE
       // Sin temperature/top_p: no se asume soporte para este modelo
       const stream = await client.chat.completions.create({
         model,
-        messages: toOpenAiMessages(input.system, input.messages) as OpenAI.Chat.ChatCompletionMessageParam[],
+        messages: toOpenAiMessages(input.system, input.messages, { toolReminder: !!opts.baseURL }) as OpenAI.Chat.ChatCompletionMessageParam[],
         tools: toOpenAiTools(input.tools),
         tool_choice: 'auto',
         max_completion_tokens: input.maxTokens,
@@ -57,6 +74,8 @@ export function createOpenAiProvider(apiKey: string, model = OPENAI_DEFAULT_MODE
       let sawRefusal = false;
       let usage: unknown = undefined;
       const acc: ToolCallAccumulator = new Map();
+      // OpenRouter: bloques de razonamiento del turno (se devuelven en el siguiente para no perder el hilo)
+      const reasoning = new Map<number, Record<string, unknown>>();
 
       for await (const chunk of stream) {
         if (chunk.usage) usage = chunk.usage;
@@ -69,16 +88,18 @@ export function createOpenAiProvider(apiKey: string, model = OPENAI_DEFAULT_MODE
         }
         if (delta?.refusal) sawRefusal = true;
         accumulateToolCallDeltas(acc, delta?.tool_calls as any);
+        acumularRazonamiento(reasoning, (delta as any)?.reasoning_details);
         if (choice.finish_reason) finishReason = choice.finish_reason;
       }
 
       const toolCalls = finalizeToolCalls(acc);
+      const reasoningDetails = Array.from(reasoning.entries()).sort((a, b) => a[0] - b[0]).map(([, d]) => d);
       return {
         text,
         toolCalls,
-        stopReason: mapOpenAiFinishReason(finishReason, sawRefusal),
+        stopReason: mapOpenAiFinishReason(finishReason, sawRefusal, toolCalls.length > 0),
         usage: mapOpenAiUsage(usage),
-        assistant: { role: 'assistant', text, toolCalls },
+        assistant: { role: 'assistant', text, toolCalls, ...(reasoningDetails.length ? { providerData: { reasoning_details: reasoningDetails } } : {}) },
       };
     },
   };

@@ -10,7 +10,8 @@ import {
 } from '../llm/openaiConvert';
 import { resolveProviderConfig, resolveModelConfig, modelAvailable } from '../llm/config';
 import { MODEL_CATALOG } from '../llm/models';
-import { openRouterProvider } from '../llm/openai';
+import { openRouterProvider, acumularRazonamiento } from '../llm/openai';
+import { parseToolArgs, TOOL_USE_REMINDER } from '../llm/openaiConvert';
 import { runToolLoop, executeToolCalls, closingNote, MAX_TOOL_ITERATIONS } from '../llm/loop';
 
 const conversation: LlmMessage[] = [
@@ -275,47 +276,78 @@ describe('runToolLoop', () => {
 });
 
 describe('modelo elegido por el usuario', () => {
-  it('sin elección o desconocido: usa el del entorno', () => {
+  it('sin elección o desconocido: usa el por defecto o el del entorno', () => {
     expect(resolveModelConfig({ ANTHROPIC_API_KEY: 'k' }, null).model).toBe('claude-haiku-5-5');
     expect(resolveModelConfig({ ANTHROPIC_API_KEY: 'k' }, 'no-existe').model).toBe('claude-haiku-5-5');
   });
-  it('modelos de Anthropic van directos y el resto por OpenRouter', () => {
-    expect(resolveModelConfig({ ANTHROPIC_API_KEY: 'a' }, 'claude-sonnet-5-5')).toMatchObject({ provider: 'anthropic', model: 'claude-sonnet-5-5', apiKey: 'a' });
-    expect(resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'gpt-6.1-terra')).toMatchObject({ provider: 'openrouter', model: 'openai/gpt-6.1-terra', apiKey: 'o' });
+  it('catálogo reducido: Haiku, Luna, Sol low y DeepSeek Flash', () => {
+    expect(MODEL_CATALOG.map(m => m.id)).toEqual(['claude-haiku-5-5', 'gpt-6-luna', 'gpt-6.1-sol-low', 'deepseek-v4.1-flash']);
+  });
+  it('Haiku va directo y adaptativo con tope medio aunque el global esté apagado', () => {
+    expect(resolveModelConfig({ ANTHROPIC_API_KEY: 'a', LLM_THINKING: 'off' }, 'claude-haiku-5-5')).toMatchObject({ provider: 'anthropic', thinking: 'adaptive', effort: 'medium', apiKey: 'a' });
+  });
+  it('OpenRouter: Luna al máximo, Sol bajo y DeepSeek automático con su enrutado', () => {
+    const env = { OPENROUTER_API_KEY: 'o' };
+    expect(resolveModelConfig(env, 'gpt-6-luna')).toMatchObject({ provider: 'openrouter', model: 'openai/gpt-6-luna', effort: 'high', routing: { order: ['OpenAI'] } });
+    expect(resolveModelConfig(env, 'gpt-6.1-sol-low')).toMatchObject({ model: 'openai/gpt-6.1-sol', effort: 'low' });
+    const ds = resolveModelConfig(env, 'deepseek-v4.1-flash');
+    expect(ds).toMatchObject({ effort: 'auto', routing: { minThroughput: 60, maxLatency: 3 } });
+    expect(ds.routing?.quantizations).not.toContain('fp4');
   });
   it('sin la clave del proveedor: error en español', () => {
-    expect(() => resolveModelConfig({ ANTHROPIC_API_KEY: 'a' }, 'grok-4.3')).toThrow(/OPENROUTER_API_KEY/);
+    expect(() => resolveModelConfig({ ANTHROPIC_API_KEY: 'a' }, 'gpt-6-luna')).toThrow(/OPENROUTER_API_KEY/);
   });
   it('disponibilidad según las claves presentes', () => {
     expect(modelAvailable({ ANTHROPIC_API_KEY: 'a' }, 'claude-haiku-5-5')).toBe(true);
-    expect(modelAvailable({ ANTHROPIC_API_KEY: 'a' }, 'grok-4.3')).toBe(false);
-    expect(modelAvailable({ OPENROUTER_API_KEY: 'o' }, 'grok-4.3')).toBe(true);
-    expect(modelAvailable({ OPENROUTER_API_KEY: 'o' }, 'inventado')).toBe(false);
-  });
-  it('el esfuerzo fijo del catálogo llega a la configuración', () => {
-    expect(resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'deepseek-v4.1-flash-high')).toMatchObject({ model: 'deepseek/deepseek-v4.1-flash-1017', effort: 'high' });
-    expect(resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'mimo-v2.6-pro')).toMatchObject({ model: 'xiaomi/mimo-v2.6-pro' });
-    expect(resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'grok-4.3').effort).toBe('auto');
-  });
-  it('DeepSeek usa enrutado con calidad y rendimiento mínimos; el resto, el automático', () => {
-    const c = resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'deepseek-v4.1-flash');
-    expect(c.routing).toMatchObject({ minThroughput: 60, maxLatency: 3 });
-    expect(c.routing?.quantizations).not.toContain('fp4');
-    expect(resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'grok-4.3').routing).toBeUndefined();
+    expect(modelAvailable({ ANTHROPIC_API_KEY: 'a' }, 'gpt-6-luna')).toBe(false);
+    expect(modelAvailable({ OPENROUTER_API_KEY: 'o' }, 'deepseek-v4.1-flash')).toBe(true);
+    expect(modelAvailable({ OPENROUTER_API_KEY: 'o' }, 'grok-4.3')).toBe(false);
   });
   it('el objeto provider de OpenRouter siempre exige herramientas', () => {
     expect(openRouterProvider()).toEqual({ require_parameters: true, allow_fallbacks: true });
     expect(openRouterProvider({ minThroughput: 60, maxLatency: 3, quantizations: ['fp8'] })).toMatchObject({ preferred_min_throughput: 60, preferred_max_latency: 3, quantizations: ['fp8'] });
   });
-  it('Luna va en medio y Haiku en adaptativo con tope alto aunque el global esté apagado', () => {
-    const luna = resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'gpt-6-luna');
-    expect(luna).toMatchObject({ effort: 'medium', routing: { order: ['OpenAI'] } });
-    expect(resolveModelConfig({ ANTHROPIC_API_KEY: 'a', LLM_THINKING: 'off' }, 'claude-haiku-5-5')).toMatchObject({ thinking: 'adaptive', effort: 'high', model: 'claude-haiku-5-5' });
-    expect(resolveModelConfig({ ANTHROPIC_API_KEY: 'a', LLM_THINKING: 'off' }, 'claude-sonnet-5-5')).toMatchObject({ thinking: 'off' });
-  });
   it('los ids del catálogo son únicos', () => {
     const ids = MODEL_CATALOG.map(m => m.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe('herramientas por OpenRouter: tolerancia', () => {
+  it('lee argumentos con bloque json, texto alrededor o doble codificación', () => {
+    expect(parseToolArgs('```json\n{"a":1}\n```')).toEqual({ a: 1 });
+    expect(parseToolArgs('Aquí va: {"a":2} listo')).toEqual({ a: 2 });
+    expect(parseToolArgs(JSON.stringify(JSON.stringify({ a: 3 })))).toEqual({ a: 3 });
+    expect(() => parseToolArgs('nada')).toThrow();
+  });
+  it('acumula llamadas sin index y nombres repetidos completos', () => {
+    const acc: ToolCallAccumulator = new Map();
+    accumulateToolCallDeltas(acc, [{ id: 'c1', function: { name: 'add_sets', arguments: '{"sets":' } }]);
+    accumulateToolCallDeltas(acc, [{ function: { name: 'add_sets', arguments: '[]}' } }]);
+    accumulateToolCallDeltas(acc, [{ id: 'c2', function: { name: 'suggest_replies', arguments: '{}' } }]);
+    const calls = finalizeToolCalls(acc);
+    expect(calls.map(c => [c.id, c.name])).toEqual([['c1', 'add_sets'], ['c2', 'suggest_replies']]);
+    expect(calls[0].args).toEqual({ sets: [] });
+  });
+  it('con herramientas pedidas, un "stop" cuenta como tool_use (salvo corte por longitud)', () => {
+    expect(mapOpenAiFinishReason('stop', false, true)).toBe('tool_use');
+    expect(mapOpenAiFinishReason(null, false, true)).toBe('tool_use');
+    expect(mapOpenAiFinishReason('length', false, true)).toBe('max_tokens');
+    expect(mapOpenAiFinishReason('stop', false, false)).toBe('end');
+  });
+  it('devuelve reasoning_details en el turno siguiente y añade el recordatorio solo si se pide', () => {
+    const msgs = toOpenAiMessages({ stable: 'S', volatile: 'V' }, [
+      { role: 'assistant', text: '', toolCalls: [{ id: 'x', name: 'a', args: {} }], providerData: { reasoning_details: [{ type: 'reasoning.text', text: 'pienso' }] } },
+    ], { toolReminder: true });
+    expect((msgs[0] as any).content).toContain(TOOL_USE_REMINDER);
+    expect((msgs[2] as any).reasoning_details).toEqual([{ type: 'reasoning.text', text: 'pienso' }]);
+    expect((toOpenAiMessages({ stable: 'S', volatile: 'V' }, [])[0] as any).content).toBe('S');
+  });
+  it('une los trozos de razonamiento por índice', () => {
+    const acc = new Map<number, Record<string, unknown>>();
+    acumularRazonamiento(acc, [{ type: 'reasoning.text', index: 0, text: 'ho' }]);
+    acumularRazonamiento(acc, [{ index: 0, text: 'la', signature: 'sig' }]);
+    expect(Array.from(acc.values())).toEqual([{ type: 'reasoning.text', index: 0, text: 'hola', signature: 'sig' }]);
   });
 });
 

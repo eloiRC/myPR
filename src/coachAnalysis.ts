@@ -19,6 +19,8 @@ export interface ExerciseRow {
   PR: number | null;
   /** Descanso por defecto del ejercicio (s); null/ausente = usa el global */
   DescansoSeg?: number | null;
+  /** 1 = archivado (ya no está disponible, p. ej. cambio de gimnasio); su historial se conserva */
+  Archivat?: number | null;
   GrupMuscular1?: number | null;
   GrupMuscular2?: number | null;
   GrupMuscular3?: number | null;
@@ -42,6 +44,8 @@ export const SESSION_FOCUSES = [
   { nom: 'HIPERTROFIA', reps: '8-12 reps', descanso: '60-120 s', rir: 'RIR 1-2', nota: 'Volumen moderado, variantes de ángulo y unilaterales.' },
   { nom: 'METABÓLICO / BOMBEO', reps: '12-20 reps', descanso: '45-75 s', rir: 'RIR 0-2', nota: 'Máquinas, poleas, superseries o drop sets en el último set.' },
 ] as const;
+
+export const isArchived = (ex: Pick<ExerciseRow, 'Archivat'>): boolean => Number(ex.Archivat) === 1;
 
 export function muscleGroupsOf(ex: ExerciseRow): number[] {
   return [ex.GrupMuscular1, ex.GrupMuscular2, ex.GrupMuscular3, ex.GrupMuscular4, ex.GrupMuscular5]
@@ -107,6 +111,8 @@ export interface CoachAnalysis {
   focus: typeof SESSION_FOCUSES[number];
   text: string;
   validExerciseIds: Set<number>;
+  /** Ejercicios archivados: no se ofrecen al modelo y add_sets/edit_set los rechazan con un error claro */
+  archivedExerciseIds: Set<number>;
 }
 
 export function analyzeTraining(opts: {
@@ -119,7 +125,10 @@ export function analyzeTraining(opts: {
   const sessions = buildSessions(opts.rows);
   const exById = new Map(opts.exercises.map(e => [e.ExerciciId, e]));
   const gmName = new Map(opts.muscleGroups.map(g => [g.GrupMuscularId, g.Nom]));
-  const exName = (id: number) => exById.get(id)?.Nom ?? `#${id}`;
+  const exName = (id: number) => { const ex = exById.get(id); return ex ? (isArchived(ex) ? `${ex.Nom} (archivado)` : ex.Nom) : `#${id}`; };
+  // Los archivados siguen nombrándose en el historial, pero no se proponen (catálogo, rotación, estancados...)
+  const active = opts.exercises.filter(e => !isArchived(e));
+  const isActiveId = (id: number) => { const ex = exById.get(id); return !!ex && !isArchived(ex); };
 
   // --- Uso por ejercicio ---
   const lastUsed = new Map<number, number>();
@@ -146,7 +155,7 @@ export function analyzeTraining(opts: {
       }
     }
   }
-  const usedGroups = new Set(opts.exercises.flatMap(muscleGroupsOf));
+  const usedGroups = new Set(active.flatMap(muscleGroupsOf));
   const gmLines = Array.from(usedGroups)
     .map(g => ({ g, days: gmLast.has(g) ? daysAgo(gmLast.get(g)!, now) : Infinity, sets: gmSets7.get(g) || 0 }))
     .sort((a, b) => b.days - a.days)
@@ -156,7 +165,7 @@ export function analyzeTraining(opts: {
   const stagnant: string[] = [];
   const progressing: string[] = [];
   for (const [id, hist] of perExerciseHistory) {
-    if (hist.length < 3) continue;
+    if (hist.length < 3 || !isActiveId(id)) continue;
     const [a, b, c, d] = hist.map(bestE1RM);
     const ref = d ?? c;
     if (a <= ref * 1.005 && b <= ref * 1.005) {
@@ -167,7 +176,7 @@ export function analyzeTraining(opts: {
 
   // --- Candidatos de rotación: ejercicios del catálogo no usados en 21+ días ---
   const rotationByGroup = new Map<string, string[]>();
-  for (const ex of opts.exercises) {
+  for (const ex of active) {
     const last = lastUsed.get(ex.ExerciciId);
     const days = last ? daysAgo(last, now) : Infinity;
     if (days < 21) continue;
@@ -183,9 +192,9 @@ export function analyzeTraining(opts: {
   const sessionsLast7 = sessions.filter(s => now - s.data <= 7 * DAY).length;
   const focus = SESSION_FOCUSES[(sessions.length + sessionsLast7) % SESSION_FOCUSES.length];
 
-  // --- Catálogo: TODOS los ejercicios (para poder elegir cualquiera), en formato compacto.
+  // --- Catálogo: TODOS los ejercicios activos (para poder elegir cualquiera), en formato compacto.
   // El uso reciente ya está resumido en frescura, estancados, progresando y rotación.
-  const catalog = opts.exercises.map(ex => {
+  const catalog = active.map(ex => {
     const groups = muscleGroupsOf(ex).map(g => gmName.get(g) ?? g).join('/') || 'sin grupo';
     const extra = [
       ex.PR ? `PR ${ex.PR} kg` : '',
@@ -224,7 +233,13 @@ export function analyzeTraining(opts: {
     section('CATÁLOGO DE EJERCICIOS (formato "ID: nombre [grupos]"; usa SOLO estos IDs)', catalog),
   ].join('\n\n');
 
-  return { focus, text, validExerciseIds: new Set(opts.exercises.map(e => e.ExerciciId)) };
+  return {
+    focus,
+    text,
+    // validExerciseIds incluye los archivados (son del usuario): así las herramientas pueden dar un error específico
+    validExerciseIds: new Set(opts.exercises.map(e => e.ExerciciId)),
+    archivedExerciseIds: new Set(opts.exercises.filter(isArchived).map(e => e.ExerciciId)),
+  };
 }
 
 export interface SerieHoyRow {

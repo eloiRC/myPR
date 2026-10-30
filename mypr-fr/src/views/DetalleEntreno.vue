@@ -12,6 +12,7 @@ import {
 import Chatbot from '../components/Chatbot.vue';
 import BottomSheet from '../components/BottomSheet.vue';
 import SerieForm from '../components/SerieForm.vue';
+import { ejerciciosSeleccionables } from '../utils/archivado';
 import SerieItem from '../components/SerieItem.vue';
 import RestTimer from '../components/RestTimer.vue';
 import MarcadorSesion from '../components/entreno/MarcadorSesion.vue';
@@ -313,11 +314,13 @@ const loadEjercicios = async () => {
   try {
     ejercicios.value = await apiFetch<any[]>('/api/getExercicis', {});
 
+    // Por defecto en «Nueva serie», solo ejercicios activos (los archivados siguen en la lista para los nombres)
+    const activos = ejerciciosSeleccionables(ejercicios.value);
     const lastSaved = localStorage.getItem('lastSelectedExerciseId');
-    if (lastSaved && ejercicios.value.some(e => e.ExerciciId === Number(lastSaved))) {
+    if (lastSaved && activos.some(e => e.ExerciciId === Number(lastSaved))) {
       nuevaSerie.value.ejercicioId = Number(lastSaved);
-    } else if (ejercicios.value.length > 0) {
-      nuevaSerie.value.ejercicioId = ejercicios.value[0].ExerciciId;
+    } else if (activos.length > 0) {
+      nuevaSerie.value.ejercicioId = activos[0].ExerciciId;
     }
   } catch (e) { console.error(e); }
 };

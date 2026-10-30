@@ -3,7 +3,7 @@ import { logger } from 'hono/logger'
 import { zValidator } from '@hono/zod-validator'
 import { HTTPException } from 'hono/http-exception'
 import { cors } from 'hono/cors'
-import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars, getExercici, getPesosHistorial, nouEntreno, editEntreno, getCargaHistorial, chatGPT, getUser, deleteEntreno, reorderSerie, toggleSerieCompletada, updateRestTimer, updateLlmModel, chatStatus, memoryList, memoryCreate, memoryUpdate, memoryDelete } from './schema'
+import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars, getExercici, archivarExercici, getPesosHistorial, nouEntreno, editEntreno, getCargaHistorial, chatGPT, getUser, deleteEntreno, reorderSerie, toggleSerieCompletada, updateRestTimer, updateLlmModel, chatStatus, memoryList, memoryCreate, memoryUpdate, memoryDelete } from './schema'
 import { hashPassword, verifyPassword, generateJWT, verifyJWT } from './jwt'
 import { INTERVIEW_PERSONA, INTERVIEW_TOOLS, INTERVIEW_TOOL_DEFS, buildInterviewContext } from './coachInterview'
 import { createProvider, formatUsage, MODEL_CATALOG, DEFAULT_MODEL_ID, findModel, modelAvailable } from './llm'
@@ -140,6 +140,23 @@ app.post('/api/editExercici', zValidator('json', editExercici), async (c) => {
   } catch (error) {
     throw new HTTPException(500, { message: 'error sql query' })
   }
+})
+
+// Archivar / desarchivar un ejercicio propio. No borra nada: las series y entrenos antiguos lo siguen mostrando
+app.post('/api/archivarExercici', zValidator('json', archivarExercici), async (c) => {
+  const { exerciciId, archivat } = await c.req.json()
+  const userId = await c.get('jwtPayload').UserId
+
+  let changes = 0
+  try {
+    const result = await c.env.DB.prepare('UPDATE Exercici SET Archivat=? WHERE ExerciciId=? AND UserId=?').bind(archivat ? 1 : 0, exerciciId, userId).run()
+    changes = result.meta.changes ?? 0
+  } catch (error) {
+    console.error('archivarExercici error:', error)
+    throw new HTTPException(500, { message: 'error sql query' })
+  }
+  if (!changes) throw new HTTPException(404, { message: 'Ejercicio no encontrado' })
+  return c.json({ message: archivat ? 'exercici arxivat' : 'exercici desarxivat', exerciciId, archivat })
 })
 
 //creem un entreno nou l'entrem a la DB retoem OK, Id de l'entereno i data de creacio
@@ -840,6 +857,7 @@ async function procesarChatJob(jobId: string, userId: number, payload: CoachPayl
       userId,
       entrenoId,
       validExerciseIds: analysis.validExerciseIds,
+      archivedExerciseIds: analysis.archivedExerciseIds,
       validMuscleGroupIds: new Set(coachData.muscleGroups.map(g => g.GrupMuscularId)),
       state,
       deps: {
@@ -1049,7 +1067,7 @@ async function getCoachData(userId: number, currentEntrenoId: number, c: DbCtx) 
     ORDER BY E.Data DESC, S.Orden ASC, S.SerieId ASC
   `).bind(userId, currentEntrenoId);
   const exercisesStmt = c.env.DB.prepare(
-    'SELECT ExerciciId, Nom, PR, DescansoSeg, GrupMuscular1, GrupMuscular2, GrupMuscular3, GrupMuscular4, GrupMuscular5 FROM Exercici WHERE UserId = ? ORDER BY Nom ASC'
+    'SELECT ExerciciId, Nom, PR, DescansoSeg, Archivat, GrupMuscular1, GrupMuscular2, GrupMuscular3, GrupMuscular4, GrupMuscular5 FROM Exercici WHERE UserId = ? ORDER BY Nom ASC'
   ).bind(userId);
   const groupsStmt = c.env.DB.prepare('SELECT GrupMuscularId, Nom FROM GrupMuscular');
 

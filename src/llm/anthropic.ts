@@ -18,7 +18,8 @@ export function createAnthropicProvider(apiKey: string, model = ANTHROPIC_DEFAUL
       // así la 2.ª llamada del bucle reutiliza la 1.ª (más rápida y barata).
       const stream = client.messages.stream({
         model,
-        max_tokens: input.maxTokens,
+        // El razonamiento consume salida: con 8000 Haiku en esfuerzo alto se quedaba sin margen y cortaba la respuesta
+        max_tokens: opts.thinking === 'off' ? input.maxTokens : Math.max(input.maxTokens, 16000),
         cache_control: { type: 'ephemeral' },
         ...(opts.thinking === 'off' ? { thinking: { type: 'disabled' as const } } : {}),
         system: toAnthropicSystem(input.system),

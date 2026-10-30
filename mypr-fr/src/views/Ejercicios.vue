@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { Plus, Search, X } from 'lucide-vue-next';
+import { Plus, Search, X, ChevronDown } from 'lucide-vue-next';
 import { useAuthStore } from '../stores/auth';
 import { formatearTexto, guardarNuevoEjercicio } from '../utils/ejercicioUtils';
 import { apiFetch } from '../services/api';
 import BottomSheet from '../components/BottomSheet.vue';
 import FilaEjercicio from '../components/listas/FilaEjercicio.vue';
 import GrupoChips from '../components/listas/GrupoChips.vue';
+import { separarArchivados } from '../utils/archivado';
 
 const authStore = useAuthStore();
 
@@ -17,6 +18,8 @@ interface Ejercicio {
   Nom: string;
   UserId: number;
   PR: number;
+  /** 1 = archivado (no disponible para series nuevas; su historial se conserva) */
+  Archivat?: number;
   GrupMuscular1: number | null;
   GrupMuscular2: number | null;
   GrupMuscular3: number | null;
@@ -44,6 +47,8 @@ const showForm = ref(false);
 const busquedaNombre = ref('');
 const filtroGrupoMuscular = ref<number | null>(null);
 const editandoEjercicio = ref<Ejercicio | null>(null);
+// Los archivados se ocultan por defecto
+const verArchivados = ref(false);
 
 // Estado del formulario
 const nuevoEjercicio = ref({
@@ -77,6 +82,9 @@ const ejerciciosFiltrados = computed(() => {
 
   return resultado;
 });
+
+// Activos y archivados que cumplen los filtros (búsqueda y grupo)
+const listas = computed(() => separarArchivados(ejerciciosFiltrados.value));
 
 // Limpiar el filtro
 const limpiarFiltro = () => {
@@ -322,14 +330,16 @@ onMounted(() => {
 
     <div v-else>
       <h2 class="section-title" aria-live="polite">
-        {{ ejerciciosFiltrados.length }} {{ ejerciciosFiltrados.length === 1 ? 'ejercicio' : 'ejercicios' }}
+        {{ listas.activos.length }} {{ listas.activos.length === 1 ? 'ejercicio' : 'ejercicios' }}
         <template v-if="filtroGrupoMuscular !== null"> · {{ getNombreGrupoMuscular(filtroGrupoMuscular) }}</template>
       </h2>
 
-      <p v-if="ejerciciosFiltrados.length === 0" class="sin-resultados">Ningún ejercicio coincide con la búsqueda.</p>
+      <p v-if="listas.activos.length === 0" class="sin-resultados">
+        {{ listas.archivados.length ? 'Solo hay ejercicios archivados que coincidan.' : 'Ningún ejercicio coincide con la búsqueda.' }}
+      </p>
 
       <FilaEjercicio
-        v-for="ejercicio in ejerciciosFiltrados"
+        v-for="ejercicio in listas.activos"
         :key="ejercicio.ExerciciId"
         :nombre="ejercicio.Nom"
         :pr="ejercicio.PR"
@@ -337,6 +347,33 @@ onMounted(() => {
         @abrir="verDetalleEjercicio(ejercicio.ExerciciId)"
         @editar="iniciarEdicionEjercicio(ejercicio)"
       />
+
+      <!-- Archivados: ocultos por defecto; su historial sigue en entrenos y en su detalle -->
+      <template v-if="listas.archivados.length">
+        <button
+          type="button"
+          class="ver-archivados"
+          :aria-expanded="verArchivados"
+          aria-controls="lista-archivados"
+          @click="verArchivados = !verArchivados"
+        >
+          <span>Archivados ({{ listas.archivados.length }})</span>
+          <ChevronDown :size="18" class="ver-archivados-chev" :class="{ abierto: verArchivados }" aria-hidden="true" />
+        </button>
+        <div v-show="verArchivados" id="lista-archivados">
+          <p class="archivados-ayuda">No aparecen al añadir series ni en el entrenador. Ábrelos para desarchivarlos.</p>
+          <FilaEjercicio
+            v-for="ejercicio in listas.archivados"
+            :key="ejercicio.ExerciciId"
+            :nombre="ejercicio.Nom"
+            :pr="ejercicio.PR"
+            :grupos="nombresGrupos(ejercicio)"
+            archivado
+            @abrir="verDetalleEjercicio(ejercicio.ExerciciId)"
+            @editar="iniciarEdicionEjercicio(ejercicio)"
+          />
+        </div>
+      </template>
     </div>
 
     <!-- Nuevo ejercicio -->
@@ -480,6 +517,33 @@ onMounted(() => {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
 }
+
+.ver-archivados {
+  width: 100%;
+  min-height: var(--touch-min);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 1rem 0 0.5rem;
+  padding: 0 0.9rem;
+  background: none;
+  border: 1px solid var(--n3);
+  border-radius: var(--radius-md);
+  color: var(--n7);
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.ver-archivados:hover { background: var(--n1); color: var(--n8); }
+.ver-archivados:focus-visible { outline: 2px solid var(--judge-white); outline-offset: 2px; }
+.ver-archivados-chev { transition: transform 0.15s ease; }
+.ver-archivados-chev.abierto { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .ver-archivados-chev { transition: none; } }
+.archivados-ayuda { margin: 0 0 0.6rem; font-size: 0.85rem; color: var(--n6); }
 
 .sin-resultados { color: var(--n6); text-align: center; padding: 1.5rem 0; margin: 0; }
 .hoja-form .form-actions { margin-top: 1.25rem; }

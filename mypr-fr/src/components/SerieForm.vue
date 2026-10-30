@@ -6,6 +6,7 @@ import BuscadorSelect from './BuscadorSelect.vue';
 import { formatKgInput } from '../utils/pesoFormula';
 import { DURACIONES_PRESET, DURACION_MIN_SEG, DURACION_MAX_SEG, descansoAceptable, textoDescanso } from '../composables/useRestTimer';
 import { parseKgEscrito, resolverKgAlSalir, sumarKg, sumarReps, PASO_KG, PASO_REPS } from '../utils/kgInput';
+import { ejerciciosSeleccionables } from '../utils/archivado';
 
 // Contador a nivel de módulo: ids únicos por instancia para que cada <label for> apunte a su input
 let contadorInstancias = 0;
@@ -58,6 +59,9 @@ watch(ejercicioIdLocal, (v) => {
 const textos = computed(() => props.mode === 'crear'
   ? { titulo: 'Nueva serie', guardar: 'Guardar serie', guardando: 'Guardando…' }
   : { titulo: 'Editar serie', guardar: 'Guardar cambios', guardando: 'Guardando…' });
+
+// Sin archivados; al editar se mantiene el ejercicio original de la serie para que su nombre se vea
+const opcionesEjercicio = computed(() => ejerciciosSeleccionables(props.ejercicios, props.mode === 'editar' ? props.ejercicioId : null));
 
 const cargaCalculada = computed(() => kgLocal.value * repsLocal.value);
 const mensajeError = computed(() => errorLocal.value || props.error);
@@ -124,7 +128,7 @@ const enviar = () => {
     <div class="campo">
       <span class="rotulo" :id="`${uid}-ej-label`">Ejercicio</span>
       <div class="ej-fila">
-        <BuscadorSelect v-model="ejercicioIdLocal" :options="ejercicios" label="Nom" :reduce="(e: any) => e.ExerciciId" placeholder="Busca un ejercicio..." />
+        <BuscadorSelect v-model="ejercicioIdLocal" :options="opcionesEjercicio" label="Nom" :reduce="(e: any) => e.ExerciciId" placeholder="Busca un ejercicio..." />
         <button type="button" class="btn-cuadrado" @click="emit('openModalEjercicio')" aria-label="Crear ejercicio nuevo" title="Crear ejercicio nuevo"><Plus :size="20" :stroke-width="2.25" /></button>
       </div>
     </div>
