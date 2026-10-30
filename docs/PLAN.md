@@ -71,7 +71,10 @@ Botón en Perfil, dentro de Memoria del entrenador («Hacer la entrevista inicia
 - **Técnico**: modo "entrevista" del coach (otro prompt de sistema, sin entreno asociado). Reutiliza las colas, las fases, las respuestas rápidas y las herramientas de memoria.
 - **Por decidir**: si se repite cada cierto tiempo (revisión trimestral) y qué hacer con la memoria existente (revisar, actualizar o añadir).
 
-### C · "Cerebro" de conocimiento de entrenamiento (RAG)
+### C · "Cerebro" de conocimiento de entrenamiento (RAG) — HECHO (2026-10-31)
+Decisión: con 36 fichas (~11k tokens) no se vectoriza. Las fichas completas con fuentes están en `knowledge/*.md` (investigación en `reports/` y `research_notes/`); su resumen (~14k caracteres, `src/coachKnowledge.ts`) va en el bloque estable y cacheado del prompt del entrenador, con una pista en el contexto variable cuando hay lesiones activas. Revisar coste y latencia con `[coach-usage]`; si crece la base (más de ~150 fichas) o Sol sale caro sin caché, pasar a índice más herramienta o a Vectorize.
+
+Plan original:
 Objetivo: respuestas mejor fundamentadas (programación, volumen, progresión, técnica, ejercicios por objetivo, adaptaciones ante molestias) **sin añadir latencia** ni consultas a la web.
 
 1. **Base de conocimiento propia** en el repo (`knowledge/*.md`): fichas cortas escritas o resumidas por nosotros (no texto copiado). Cada ficha lleva etiquetas: objetivo, grupo muscular, nivel, tipo de sesión, lesión.

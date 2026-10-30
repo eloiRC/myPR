@@ -2,6 +2,7 @@
 // por petición (fechas, ids, datos del usuario). Todo lo variable va en buildVolatileContext.
 import { renderMemoryBlock, type MemoryRow } from './coachMemory';
 import { AUTO_NAME_REGEX, MAX_SETS_PER_CALL } from './coachTools';
+import { COACH_KNOWLEDGE } from './coachKnowledge';
 
 export const COACH_PERSONA = `SYSTEM INSTRUCTIONS: EXPERT STRENGTH COACH
 
@@ -72,6 +73,16 @@ RESTRICCIONES
 
 Continuidad: No cambies un básico que aparezca en "PROGRESANDO"; la variedad se aplica sobre accesorios y básicos estancados.
 Resolución de dudas: Si el usuario pregunta algo técnico o sobre una molestia, suspende la propuesta y responde a la consulta con prioridad máxima.
+
+BASE DE CONOCIMIENTO DE ENTRENAMIENTO
+
+Lo que sigue resume la evidencia científica actual. Úsala para decidir volumen, intensidad, descansos, ejercicios, progresión y adaptaciones, y para responder dudas técnicas con fundamento.
+- Aplica solo lo pertinente a la petición; no la recites ni la resumas entera.
+- Lo que diga el usuario y su memoria (lesiones, material, preferencias) manda sobre estas pautas generales.
+- Las reglas marcadas [evidencia baja] u [opinión] son orientativas: preséntalas como tal si el usuario pregunta.
+- No cites estudios ni autores salvo que el usuario lo pida.
+
+${COACH_KNOWLEDGE}
 `;
 
 export interface VolatileInput {
@@ -99,6 +110,21 @@ export function renderMuscleGroupCatalog(groups: { GrupMuscularId: number; Nom: 
   return `GRUPOS MUSCULARES (para create_exercise)\n${groups.map(g => `- ${g.GrupMuscularId}: ${g.Nom}`).join('\n')}`;
 }
 
+const ZONAS_DOLOR: [string, RegExp][] = [
+  ['hombro', /hombro|manguito|deltoides/i],
+  ['rodilla', /rodilla|r[oó]tula|patelar|femoropatelar|menisco/i],
+  ['lumbar', /lumbar|espalda baja|lumbago|ci[aá]tic/i],
+  ['codo', /codo|epicondil|epitroclea/i],
+];
+
+/** Línea que apunta a la sección de dolor de la base de conocimiento si hay lesiones activas en la memoria. */
+export function renderInjuryHint(memories: MemoryRow[]): string {
+  const activas = memories.filter(m => m.Kind === 'lesion' && m.Status === 'activa');
+  if (!activas.length) return '';
+  const zonas = ZONAS_DOLOR.filter(([, re]) => activas.some(m => re.test(m.Text))).map(([z]) => z);
+  return `LESIONES ACTIVAS: aplica la sección de dolor y molestias de la BASE DE CONOCIMIENTO${zonas.length ? ` (zona: ${zonas.join(', ')})` : ''} al programar y al responder.`;
+}
+
 /** Contexto variable por petición (va DESPUÉS del breakpoint de caché). */
 export function buildVolatileContext(v: VolatileInput): string {
   return `SITUACIÓN ACTUAL:
@@ -108,7 +134,7 @@ export function buildVolatileContext(v: VolatileInput): string {
 - Series ya realizadas hoy: ${v.seriesToday}
 
 ${renderMemoryBlock(v.memories, v.nowSec)}
-
+${renderInjuryHint(v.memories) ? `\n${renderInjuryHint(v.memories)}\n` : ''}
 ${renderRestTimerBlock(v.restTimer)}
 
 ${renderMuscleGroupCatalog(v.muscleGroups)}
