@@ -16,6 +16,6 @@ evidencia: moderada
 
 **Por qué:** En el dolor del manguito rotador, el ejercicio progresivo con resistencia es la base (guías JOSPT 2022 y 2025). En el ensayo GRASP (708 pacientes), una sesión de buenos consejos con ejercicios para casa igualó a un programa supervisado a 12 meses: lo sencillo puede bastar.
 
-**Matices:** El grado A de la guía 2025 viene de un resumen secundario, no verificado. No hay ensayos sobre adaptaciones del press en quien entrena fuerza.
+**Matices:** Según resúmenes secundarios (no verificados en el original), la guía 2025 da al ejercicio el grado A; el texto completo está tras muro de pago. No hay ensayos sobre adaptaciones del press en quien entrena fuerza.
 
-**Fuentes:** Hopewell 2021 (GRASP), Lancet, PMID 34265255; Lafrance 2022, JOSPT, PMID 35881707; Desmeules 2025, JOSPT, PMID 40165544 (solo cita); Naunton 2020, Clin Rehabil, PMID 32571081; Littlewood 2015, Int J Rehabil Res, PMID 25715230.
+**Fuentes:** Hopewell 2021 (GRASP), Lancet, PMID 34265255; Lafrance 2022, JOSPT, PMID 35881707; Desmeules 2025, JOSPT 55(4):235-274, doi:10.2519/jospt.2025.13182, PMID 40165544 (grados sin verificar); Naunton 2020, Clin Rehabil, PMID 32571081; Littlewood 2015, Int J Rehabil Res, PMID 25715230.

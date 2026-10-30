@@ -14,8 +14,8 @@ evidencia: moderada
 - Las gomas elásticas sirven igual que pesas o máquinas para ganar fuerza general.
 - Avisar: para maximizar el 1RM de un levantamiento, el material ligero se queda corto.
 
-**Por qué:** Lopez 2021: hipertrofia similar con cargas bajas, moderadas y altas llevadas al fallo, pero más fuerza con cargas altas y moderadas. Lopes 2019: gomas y pesas dan ganancias de fuerza parecidas. El ACSM 2026 reconoce que el peso corporal, las gomas y el entreno en casa producen ganancias significativas.
+**Por qué:** Lopez 2021: hipertrofia similar con cargas bajas, moderadas y altas llevadas al fallo, pero más fuerza con altas y moderadas. Lopes 2019: gomas y pesas dan ganancias de fuerza parecidas. ACSM 2026: igual hipertrofia del 30 % al 100 % 1RM; las gomas aumentan fuerza y tamaño muscular, y entrenar en casa mejora fuerza, resistencia muscular y equilibrio (sin datos de hipertrofia).
 
-**Matices:** Que las cargas ligeras requieran ir muy cerca del fallo es razonamiento aceptado, no un resultado directo de estos metaanálisis. No hay metaanálisis de calistenia frente a pesas para hipertrofia ni del tempo lento como progresión. El corrigendum de Lopes 2019 no se revisó.
+**Matices:** El ACSM 2026 no evaluó el peso corporal por separado. Que las cargas ligeras exijan ir muy cerca del fallo es razonamiento, no un resultado directo. No hay metaanálisis de calistenia frente a pesas ni del tempo lento. El corrigendum de Lopes 2019 no se revisó.
 
 **Fuentes:** Lopez 2021, MSSE, PMID 33433148; Lopes 2019, SAGE Open Med, PMID 30815258; Currier 2026 (ACSM), MSSE, PMID 41843416; Schoenfeld 2021, Sports (Basel), PMID 33671664.

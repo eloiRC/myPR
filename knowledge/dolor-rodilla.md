@@ -10,13 +10,13 @@ evidencia: moderada
 ---
 **Qué hacer:**
 - No es diagnóstico. Dolor en la parte delantera de la rodilla: mantener sentadilla y zancada ajustando profundidad (p. ej. sentadilla a cajón), ritmo y carga según el semáforo de dolor.
-- Añadir trabajo de cadera (abductores y extensores) y de cuádriceps, incluida la extensión de rodilla en un rango cómodo.
+- Combinar cadera (glúteo medio y posterolaterales; al principio puede convenir priorizarla) y cuádriceps (sentadilla o extensión de rodilla con resistencia, en un rango cómodo). Si la extensión duele demasiado: carga baja con oclusión (opinión de expertos).
 - Si el dolor apareció al subir el entreno de golpe: reducir y volver a subir poco a poco.
-- Molestia en el tendón rotuliano: avanzar de isométricos (prensa o extensión, series de 30-45 s) a fuerza pesada y lenta y, al final, saltos, según el dolor.
+- Tendón rotuliano: avanzar de isométricos (prensa o extensión, series de 30-45 s) a fuerza pesada y lenta y, al final, saltos, según el dolor.
 - Derivar ante bloqueo, hinchazón importante, golpe con chasquido o incapacidad de apoyar, o si no mejora.
 
-**Por qué:** Trabajar cadera y rodilla reduce más el dolor patelofemoral que trabajar solo la rodilla (Nascimento 2018). En la tendinopatía rotuliana, la carga progresiva superó al excéntrico (Breda 2021).
+**Por qué:** Cadera más rodilla reduce más el dolor patelofemoral que solo rodilla (Crossley 2016; Nascimento 2018; guía JOSPT 2019, grado A). En la tendinopatía rotuliana, la carga progresiva superó al excéntrico (Breda 2021).
 
-**Matices:** Los isométricos no son un analgésico garantizado: ensayos posteriores (Holden 2020) no confirman un alivio duradero. Profundidades y dosis concretas son opinión de expertos; los grados de la guía JOSPT 2019 no se verificaron.
+**Matices:** Grado A comprobado en la traducción oficial de la guía (texto inglés no accesible); rodilleras y aparatología pasiva no se recomiendan (B). Los isométricos no son un analgésico garantizado (Holden 2020). Profundidades, "rango cómodo" y dosis: opinión de expertos.
 
-**Fuentes:** Nascimento 2018, JOSPT, PMID 29034800; Willy 2019, JOSPT, PMID 31475628 (solo cita); Breda 2021, Br J Sports Med, PMID 33219115; Rio 2015, Br J Sports Med, PMID 25979840; Holden 2020, J Sci Med Sport, PMID 31735531.
+**Fuentes:** Willy 2019, JOSPT, PMID 31475628; Crossley 2016, Br J Sports Med, PMID 27247098; Nascimento 2018, JOSPT, PMID 29034800; Breda 2021, Br J Sports Med, PMID 33219115; Rio 2015, Br J Sports Med, PMID 25979840; Holden 2020, J Sci Med Sport, PMID 31735531.
