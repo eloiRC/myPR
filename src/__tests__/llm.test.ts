@@ -295,13 +295,13 @@ describe('modelo elegido por el usuario', () => {
   it('el esfuerzo fijo del catálogo llega a la configuración', () => {
     expect(resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'deepseek-v4.1-flash-high')).toMatchObject({ model: 'deepseek/deepseek-v4.1-flash-1017', effort: 'high' });
     expect(resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'mimo-v2.6-pro')).toMatchObject({ model: 'xiaomi/mimo-v2.6-pro' });
-    expect(resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'gpt-6-luna').effort).toBeUndefined();
+    expect(resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'grok-4.3').effort).toBeUndefined();
   });
   it('DeepSeek usa enrutado con calidad y rendimiento mínimos; el resto, el automático', () => {
     const c = resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'deepseek-v4.1-flash');
     expect(c.routing).toMatchObject({ minThroughput: 60, maxLatency: 3 });
     expect(c.routing?.quantizations).not.toContain('fp4');
-    expect(resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'gpt-6-luna').routing).toBeUndefined();
+    expect(resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'grok-4.3').routing).toBeUndefined();
   });
   it('el objeto provider de OpenRouter siempre exige herramientas', () => {
     expect(openRouterProvider()).toEqual({ require_parameters: true, allow_fallbacks: true });
