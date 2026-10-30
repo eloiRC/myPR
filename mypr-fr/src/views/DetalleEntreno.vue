@@ -22,6 +22,7 @@ import DatosEntreno from '../components/entreno/DatosEntreno.vue';
 import NuevoEjercicioSheet from '../components/entreno/NuevoEjercicioSheet.vue';
 import { eliminarConDeshacer } from '../composables/useDeshacer';
 import { useRestTimer } from '../composables/useRestTimer';
+import { useCoachAcceso } from '../composables/useCoachAcceso';
 
 const authStore = useAuthStore();
 
@@ -124,6 +125,7 @@ const ahoraSeg = ref(abiertoSeg.value);
 let relojTimer: ReturnType<typeof setInterval> | null = null;
 
 const restTimer = useRestTimer();
+const { coachHabilitado } = useCoachAcceso();
 
 // ---------- Datos derivados ----------
 const isCompletada = (serieId: number) => completadasMap.value[serieId] ?? false;
@@ -730,6 +732,7 @@ const irAEjercicio = (id: number) => router.push(`/ejercicio/${id}`);
         @volver="volver"
         @renombrar="guardarNombre"
         @datos="showDatos = true"
+        :coach="coachHabilitado"
         @coach="abrirCoach"
       >
         <template #descanso><RestTimer /></template>
@@ -861,7 +864,7 @@ const irAEjercicio = (id: number) => router.push(`/ejercicio/${id}`);
 
   <!-- El coach se abre con ?chat=1 (botón de la cabecera del entreno); se refresca si la IA cambia datos -->
   <Chatbot
-    v-if="entreno"
+    v-if="entreno && coachHabilitado"
     :entreno-id="entrenoId"
     :entreno-data="entreno"
     :series="series"

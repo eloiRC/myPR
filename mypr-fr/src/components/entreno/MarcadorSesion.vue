@@ -19,6 +19,8 @@ interface Props {
   etiquetas: string[];
   /** Serie que se está viendo (cursor de la tira) */
   indice: number;
+  /** Muestra el botón del entrenador IA (solo cuentas con acceso) */
+  coach?: boolean;
 }
 const props = defineProps<Props>();
 const emit = defineEmits<{
@@ -115,7 +117,7 @@ const posEtiqueta = computed(() => {
         <button v-else type="button" class="nombre-btn" title="Toca para editar el nombre" @click="empezar">{{ nombre || 'Sin nombre' }}</button>
       </h1>
       <button type="button" class="icono" aria-label="Datos del entreno" @click="emit('datos')"><ChartColumn :size="22" :stroke-width="2" /></button>
-      <button type="button" class="icono" aria-label="Abrir el entrenador IA" @click="emit('coach')"><MessageSquareText :size="22" :stroke-width="2" /></button>
+      <button v-if="coach" type="button" class="icono" aria-label="Abrir el entrenador IA" @click="emit('coach')"><MessageSquareText :size="22" :stroke-width="2" /></button>
     </div>
 
     <div class="lecturas">

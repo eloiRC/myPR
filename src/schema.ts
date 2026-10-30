@@ -115,6 +115,10 @@ export const reorderSerie = z.object({
 export const getUser = z.object({})
 
 // Actualización parcial de los ajustes del temporizador de descanso (por usuario)
+export const updateLlmModel = z.object({
+  modelId: z.string().min(1).max(60),
+})
+
 export const updateRestTimer = z.object({
   enabled: z.boolean().optional(),
   defaultSec: restSegSchema.optional(),

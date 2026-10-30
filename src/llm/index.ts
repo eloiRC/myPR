@@ -1,14 +1,15 @@
 import type { LlmProvider } from './types';
 import { createAnthropicProvider } from './anthropic';
 import { createOpenAiProvider } from './openai';
-import { resolveProviderConfig, type LlmEnv } from './config';
+import { resolveModelConfig, type LlmEnv } from './config';
 
 export * from './types';
 export * from './config';
+export * from './models';
 
-export function createProvider(env: LlmEnv): LlmProvider {
-  const cfg = resolveProviderConfig(env);
-  return cfg.provider === 'anthropic'
-    ? createAnthropicProvider(cfg.apiKey, cfg.model, { thinking: cfg.thinking })
-    : createOpenAiProvider(cfg.apiKey, cfg.model);
+export function createProvider(env: LlmEnv, modelId?: string | null): LlmProvider {
+  const cfg = resolveModelConfig(env, modelId);
+  if (cfg.provider === 'anthropic') return createAnthropicProvider(cfg.apiKey, cfg.model, { thinking: cfg.thinking });
+  if (cfg.provider === 'openrouter') return createOpenAiProvider(cfg.apiKey, cfg.model, { baseURL: 'https://openrouter.ai/api/v1', name: 'openrouter', thinking: cfg.thinking });
+  return createOpenAiProvider(cfg.apiKey, cfg.model);
 }

@@ -8,7 +8,8 @@ import {
   toOpenAiMessages, toOpenAiTools, accumulateToolCallDeltas, finalizeToolCalls, mapOpenAiFinishReason, mapOpenAiUsage,
   type ToolCallAccumulator,
 } from '../llm/openaiConvert';
-import { resolveProviderConfig } from '../llm/config';
+import { resolveProviderConfig, resolveModelConfig, modelAvailable } from '../llm/config';
+import { MODEL_CATALOG } from '../llm/models';
 import { runToolLoop, executeToolCalls, closingNote, MAX_TOOL_ITERATIONS } from '../llm/loop';
 
 const conversation: LlmMessage[] = [
@@ -269,5 +270,29 @@ describe('runToolLoop', () => {
     expect(ran).toBe(false);
     expect(r.text).toContain('No puedo');
     expect(closingNote('end', 'x')).toBe('');
+  });
+});
+
+describe('modelo elegido por el usuario', () => {
+  it('sin elección o desconocido: usa el del entorno', () => {
+    expect(resolveModelConfig({ ANTHROPIC_API_KEY: 'k' }, null).model).toBe('claude-haiku-5-5');
+    expect(resolveModelConfig({ ANTHROPIC_API_KEY: 'k' }, 'no-existe').model).toBe('claude-haiku-5-5');
+  });
+  it('modelos de Anthropic van directos y el resto por OpenRouter', () => {
+    expect(resolveModelConfig({ ANTHROPIC_API_KEY: 'a' }, 'claude-sonnet-5-5')).toMatchObject({ provider: 'anthropic', model: 'claude-sonnet-5-5', apiKey: 'a' });
+    expect(resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'gpt-6.1-terra')).toMatchObject({ provider: 'openrouter', model: 'openai/gpt-6.1-terra', apiKey: 'o' });
+  });
+  it('sin la clave del proveedor: error en español', () => {
+    expect(() => resolveModelConfig({ ANTHROPIC_API_KEY: 'a' }, 'grok-4.3')).toThrow(/OPENROUTER_API_KEY/);
+  });
+  it('disponibilidad según las claves presentes', () => {
+    expect(modelAvailable({ ANTHROPIC_API_KEY: 'a' }, 'claude-haiku-5-5')).toBe(true);
+    expect(modelAvailable({ ANTHROPIC_API_KEY: 'a' }, 'grok-4.3')).toBe(false);
+    expect(modelAvailable({ OPENROUTER_API_KEY: 'o' }, 'grok-4.3')).toBe(true);
+    expect(modelAvailable({ OPENROUTER_API_KEY: 'o' }, 'inventado')).toBe(false);
+  });
+  it('los ids del catálogo son únicos', () => {
+    const ids = MODEL_CATALOG.map(m => m.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });

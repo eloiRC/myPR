@@ -60,7 +60,7 @@ export interface LlmTurn {
 }
 
 export interface LlmProvider {
-  readonly name: 'anthropic' | 'openai';
+  readonly name: 'anthropic' | 'openai' | 'openrouter';
   readonly model: string;
   runTurn(input: LlmInput, onText: (delta: string) => void): Promise<LlmTurn>;
 }

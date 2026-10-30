@@ -3,9 +3,9 @@ import { logger } from 'hono/logger'
 import { zValidator } from '@hono/zod-validator'
 import { HTTPException } from 'hono/http-exception'
 import { cors } from 'hono/cors'
-import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars, getExercici, getPesosHistorial, nouEntreno, editEntreno, getCargaHistorial, chatGPT, getUser, deleteEntreno, reorderSerie, toggleSerieCompletada, updateRestTimer, chatStatus, memoryList, memoryCreate, memoryUpdate, memoryDelete } from './schema'
+import { nouExercici, petition, getEntrenos, novaSerie, getEntreno, editSerie, signup, login, deleteSerie, editExercici, getGrupsMusculars, getExercici, getPesosHistorial, nouEntreno, editEntreno, getCargaHistorial, chatGPT, getUser, deleteEntreno, reorderSerie, toggleSerieCompletada, updateRestTimer, updateLlmModel, chatStatus, memoryList, memoryCreate, memoryUpdate, memoryDelete } from './schema'
 import { hashPassword, verifyPassword, generateJWT, verifyJWT } from './jwt'
-import { createProvider, formatUsage } from './llm'
+import { createProvider, formatUsage, MODEL_CATALOG, DEFAULT_MODEL_ID, findModel, modelAvailable } from './llm'
 import { runToolLoop, type LoopPhaseEvent } from './llm/loop'
 import { convertHistory } from './llm/history'
 import { executeTool, TOOL_DEFS, TERMINAL_TOOLS, type ToolContext } from './coachTools'
@@ -29,6 +29,9 @@ type Bindings = {
   jwt_secret: string;
   ANTHROPIC_API_KEY: string;
   OPENAI_API_KEY: string;
+  OPENROUTER_API_KEY?: string;
+  /** Ids de usuario con acceso al entrenador IA, separados por comas (por ahora solo el 13) */
+  COACH_USER_IDS?: string;
   LLM_PROVIDER: string;
   LLM_MODEL?: string;
 }
@@ -590,7 +593,7 @@ app.post('/api/getUser', zValidator('json', getUser), async (c) => {
     if (!user) {
       throw new HTTPException(404, { message: 'User not found' });
     }
-    return c.json(user);
+    return c.json({ ...user, CoachEnabled: coachAllowed(c.env, userId) });
   } catch (error) {
     throw new HTTPException(500, { message: 'Error fetching user' });
   }
@@ -614,6 +617,40 @@ app.post('/api/updateRestTimer', zValidator('json', updateRestTimer), async (c) 
 });
 
 
+
+// ---- Modelo del entrenador IA: catálogo cerrado, elección por usuario ----
+
+app.post('/api/getLlmModels', zValidator('json', getUser), async (c) => {
+  const userId = await c.get('jwtPayload').UserId;
+  requireCoach(c.env, userId);
+  const row = await c.env.DB.prepare('SELECT LlmModel FROM Users WHERE UserId = ?').bind(userId).first<{ LlmModel: string | null }>();
+  const elegido = findModel(row?.LlmModel)?.id ?? DEFAULT_MODEL_ID;
+  const stats = new Map<string, { Jobs: number; TtftMsSum: number; SpeedSum: number; SpeedN: number }>();
+  try {
+    const { results } = await c.env.DB.prepare('SELECT Model, Jobs, TtftMsSum, SpeedSum, SpeedN FROM LlmStats').all<any>();
+    for (const r of results ?? []) stats.set(r.Model, r);
+  } catch { /* la tabla aún no existe: sin datos de velocidad */ }
+  return c.json({
+    selected: elegido,
+    models: MODEL_CATALOG.map(m => ({
+      ttftMs: stats.get(m.id)?.Jobs ? Math.round(stats.get(m.id)!.TtftMsSum / stats.get(m.id)!.Jobs) : null,
+      tokPerSec: stats.get(m.id)?.SpeedN ? Math.round(stats.get(m.id)!.SpeedSum / stats.get(m.id)!.SpeedN) : null,
+      samples: stats.get(m.id)?.Jobs ?? 0,
+      id: m.id, label: m.label, group: m.group, inputPrice: m.inputPrice, outputPrice: m.outputPrice, note: m.note ?? null,
+      available: modelAvailable(c.env, m.id),
+    })),
+  });
+});
+
+app.post('/api/updateLlmModel', zValidator('json', updateLlmModel), async (c) => {
+  const { modelId } = await c.req.json()
+  const userId = await c.get('jwtPayload').UserId
+  requireCoach(c.env, userId)
+  if (!findModel(modelId)) throw new HTTPException(400, { message: 'Modelo no válido' })
+  if (!modelAvailable(c.env, modelId)) throw new HTTPException(400, { message: 'Ese modelo no está disponible todavía (falta la clave del proveedor).' })
+  await c.env.DB.prepare('UPDATE Users SET LlmModel = ? WHERE UserId = ?').bind(modelId, userId).run()
+  return c.json({ selected: modelId })
+});
 
 // ---- Memoria del entrenador IA (JWT, siempre filtrada por usuario) ----
 
@@ -669,9 +706,17 @@ app.post('/api/memory/delete', zValidator('json', memoryDelete), async (c) => {
 });
 
 // Endpoint del coach IA (long-polling). /api/gemini se mantiene como alias para clientes antiguos en caché.
+// El entrenador IA (chat, memoria y selector de modelo) está limitado a unos usuarios mientras se prueba
+const coachAllowed = (env: Bindings, userId: number | string) =>
+  (env.COACH_USER_IDS ?? '13').split(',').map(s => s.trim()).filter(Boolean).includes(String(userId));
+const requireCoach = (env: Bindings, userId: number | string) => {
+  if (!coachAllowed(env, userId)) throw new HTTPException(403, { message: 'El entrenador IA aún no está disponible para tu cuenta.' });
+};
+
 const coachHandler = async (c: any) => {
   const { message, currentTraining, history, requestId: rawRequestId } = await c.req.json();
   const userId = await c.get('jwtPayload').UserId;
+  requireCoach(c.env, userId);
   const requestId = normalizeRequestId(rawRequestId);
   // Idempotente: un reintento con el mismo requestId devuelve el job existente
   const { id: jobId, created } = await createOrGetJob(c.env.DB, userId, requestId);
@@ -728,7 +773,8 @@ async function procesarChatJob(jobId: string, userId: number, payload: CoachPayl
   let tCtx = 0, tFirstText = 0;
   try {
     // Falla pronto (y en español) si falta la clave del proveedor seleccionado
-    const provider = createProvider(c.env);
+    const userModel = await c.env.DB.prepare('SELECT LlmModel FROM Users WHERE UserId = ?').bind(userId).first<{ LlmModel: string | null }>();
+    const provider = createProvider(c.env, userModel?.LlmModel);
 
     const [entreno, coachData, seriesCurrentTraining, memories, restSettings] = await Promise.all([
       c.env.DB.prepare('SELECT EntrenoId, Nom FROM Entreno WHERE EntrenoId = ? AND UserId = ?').bind(entrenoId, userId).first<{ EntrenoId: number; Nom: string | null }>(),
@@ -822,6 +868,17 @@ async function procesarChatJob(jobId: string, userId: number, payload: CoachPayl
     console.log(formatUsage(provider.name, provider.model, result.usage), `iterations=${result.iterations} stop=${result.stopReason}`);
     console.log(`[coach-timing] contexto_ms=${tCtx} primer_texto_ms=${tFirstText} total_ms=${Date.now() - t0} iteraciones=${result.iterations} historial=${Array.isArray(history) ? history.length : 0}`);
 
+    // Velocidad medida de este modelo: primer texto (desde que se pide al modelo) y tokens de salida por segundo
+    try {
+      const totalMs = Date.now() - t0;
+      const ttft = tFirstText ? Math.max(0, tFirstText - tCtx) : 0;
+      const genMs = totalMs - tCtx - ttft;
+      const speed = result.usage.outputTokens >= 30 && genMs > 300 ? result.usage.outputTokens / (genMs / 1000) : 0;
+      await recordLlmStats(c.env.DB, findModel(userModel?.LlmModel)?.id ?? provider.model, ttft, speed);
+    } catch (e) {
+      console.error('No se pudo guardar la velocidad del modelo:', e);
+    }
+
     let finalText = result.text.trim();
     if (!finalText) finalText = state.workoutUpdated ? 'Hecho.' : 'No he podido generar una respuesta. Inténtalo de nuevo.';
     await finishJob(c.env.DB, jobId, state.workoutUpdated, finalText, state.quickReplies);
@@ -834,6 +891,13 @@ async function procesarChatJob(jobId: string, userId: number, payload: CoachPayl
       console.error('No se pudo marcar el job como fallido:', e);
     }
   }
+}
+
+async function recordLlmStats(db: D1Database, modelId: string, ttftMs: number, speed: number) {
+  await db.prepare(
+    `INSERT INTO LlmStats (Model, Jobs, TtftMsSum, SpeedSum, SpeedN) VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT(Model) DO UPDATE SET Jobs = Jobs + ?, TtftMsSum = TtftMsSum + ?, SpeedSum = SpeedSum + ?, SpeedN = SpeedN + ?`
+  ).bind(modelId, ttftMs ? 1 : 0, ttftMs, speed, speed ? 1 : 0, ttftMs ? 1 : 0, ttftMs, speed, speed ? 1 : 0).run();
 }
 
 // Chat job status (polling)

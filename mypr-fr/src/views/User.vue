@@ -6,8 +6,11 @@ import { useAuthStore } from '../stores/auth';
 import { apiFetch } from '../services/api';
 import TemporizadorDescanso from '../components/perfil/TemporizadorDescanso.vue';
 import MemoriaEntrenador from '../components/perfil/MemoriaEntrenador.vue';
+import { useCoachAcceso } from '../composables/useCoachAcceso';
+import ModeloEntrenador from '../components/perfil/ModeloEntrenador.vue';
 
 const router = useRouter();
+const { coachHabilitado } = useCoachAcceso();
 const authStore = useAuthStore();
 
 const isLoading = ref(false);
@@ -78,7 +81,9 @@ onMounted(() => {
 
     <TemporizadorDescanso />
 
-    <MemoriaEntrenador />
+    <ModeloEntrenador v-if="coachHabilitado" />
+
+    <MemoriaEntrenador v-if="coachHabilitado" />
 
     <section class="panel" aria-labelledby="datos-h">
       <h2 id="datos-h" class="panel-title">Datos</h2>

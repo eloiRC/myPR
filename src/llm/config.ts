@@ -1,3 +1,5 @@
+import { DEFAULT_MODEL_ID, findModel } from './models';
+
 export const ANTHROPIC_DEFAULT_MODEL = 'claude-haiku-5-5';
 export const OPENAI_DEFAULT_MODEL = 'gpt-6-luna';
 
@@ -8,10 +10,11 @@ export interface LlmEnv {
   LLM_THINKING?: string;
   ANTHROPIC_API_KEY?: string;
   OPENAI_API_KEY?: string;
+  OPENROUTER_API_KEY?: string;
 }
 
 export interface ProviderConfig {
-  provider: 'anthropic' | 'openai';
+  provider: 'anthropic' | 'openai' | 'openrouter';
   model: string;
   apiKey: string;
   thinking: 'adaptive' | 'off';
@@ -31,3 +34,27 @@ export function resolveProviderConfig(env: LlmEnv): ProviderConfig {
   const thinking = env.LLM_THINKING?.trim().toLowerCase() === 'off' ? 'off' : 'adaptive';
   return { provider: raw, model, apiKey, thinking };
 }
+
+/** ¿Hay clave para usar este modelo del catálogo? (el selector deshabilita los que no se pueden usar) */
+export function modelAvailable(env: LlmEnv, modelId: string): boolean {
+  const m = findModel(modelId);
+  if (!m) return false;
+  return m.route === 'anthropic' ? !!env.ANTHROPIC_API_KEY : !!env.OPENROUTER_API_KEY;
+}
+
+/**
+ * Configuración para el modelo elegido por el usuario. Si no eligió ninguno (o ya no existe en el catálogo)
+ * se usa el del entorno (LLM_PROVIDER / LLM_MODEL), como antes.
+ */
+export function resolveModelConfig(env: LlmEnv, modelId?: string | null): ProviderConfig {
+  const m = findModel(modelId);
+  if (!m) return resolveProviderConfig(env);
+  const thinking = env.LLM_THINKING?.trim().toLowerCase() === 'off' ? 'off' : 'adaptive';
+  const key = m.route === 'anthropic' ? env.ANTHROPIC_API_KEY : env.OPENROUTER_API_KEY;
+  if (!key) {
+    throw new Error(`El modelo ${m.label} no está disponible: falta ${m.route === 'anthropic' ? 'ANTHROPIC_API_KEY' : 'OPENROUTER_API_KEY'}.`);
+  }
+  return { provider: m.route, model: m.model, apiKey: key, thinking };
+}
+
+export { DEFAULT_MODEL_ID };

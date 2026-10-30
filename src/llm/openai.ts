@@ -4,11 +4,21 @@ import { accumulateToolCallDeltas, finalizeToolCalls, mapOpenAiFinishReason, map
 
 import { OPENAI_DEFAULT_MODEL } from './config';
 
-export function createOpenAiProvider(apiKey: string, model = OPENAI_DEFAULT_MODEL): LlmProvider {
-  const client = new OpenAI({ apiKey });
+export interface OpenAiOptions {
+  baseURL?: string;
+  name?: string;
+  thinking?: 'adaptive' | 'off';
+}
+
+export function createOpenAiProvider(apiKey: string, model = OPENAI_DEFAULT_MODEL, opts: OpenAiOptions = {}): LlmProvider {
+  const client = new OpenAI({
+    apiKey,
+    baseURL: opts.baseURL,
+    defaultHeaders: opts.baseURL ? { 'HTTP-Referer': 'https://myprfr.pages.dev', 'X-Title': 'MyPR' } : undefined,
+  });
 
   return {
-    name: 'openai',
+    name: (opts.name ?? 'openai') as 'openai' | 'openrouter',
     model,
     async runTurn(input: LlmInput, onText: (delta: string) => void): Promise<LlmTurn> {
       // Sin temperature/top_p: no se asume soporte para este modelo
@@ -20,7 +30,9 @@ export function createOpenAiProvider(apiKey: string, model = OPENAI_DEFAULT_MODE
         max_completion_tokens: input.maxTokens,
         stream: true,
         stream_options: { include_usage: true },
-      });
+        // OpenRouter: razonamiento corto cuando se pide respuesta rápida (los modelos sin razonamiento lo ignoran)
+        ...(opts.thinking === 'off' ? { reasoning: { effort: 'low' } } : {}),
+      } as OpenAI.Chat.ChatCompletionCreateParamsStreaming);
 
       let text = '';
       let finishReason: string | null = null;

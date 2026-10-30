@@ -11,9 +11,12 @@
 		"enabled": true
 	},
   // Proveedor del coach IA: "anthropic" (claude-haiku-5-5) u "openai" (gpt-6-luna). LLM_MODEL (opcional) sobrescribe el modelo.
-  // Las claves ANTHROPIC_API_KEY / OPENAI_API_KEY son secretos: wrangler secret put <NAME>
+  // Cada usuario elige su modelo en Perfil (catálogo en src/llm/models.ts); estas variables solo fijan el de por defecto.
+  // Claves (secretos, wrangler secret put <NAME>): ANTHROPIC_API_KEY (modelos Claude) y OPENROUTER_API_KEY (resto de modelos).
   "vars": {
     "LLM_PROVIDER": "anthropic",
+    // Usuarios con acceso al entrenador IA (ids separados por comas). Por ahora solo el 13.
+    "COACH_USER_IDS": "13",
     // "off" = sin razonamiento previo (respuesta más rápida). Bórralo o pon "adaptive" para que piense antes.
     "LLM_THINKING": "off"
   },
