@@ -193,6 +193,21 @@ const cargarCompletadas = () => {
   completadasMap.value = map;
 };
 
+// En tarjetas, al marcar la tarjeta que se está viendo se pasa a la siguiente (con una pausa para ver el cambio)
+const AVANCE_MS = 450;
+let avanceTimer: ReturnType<typeof setTimeout> | null = null;
+const avanzarTrasHecha = (serieId: number) => {
+  if (modoVisualizacion.value !== 'tarjetas' || serieActual.value?.SerieId !== serieId) return;
+  if (avanceTimer) clearTimeout(avanceTimer);
+  avanceTimer = setTimeout(() => {
+    avanceTimer = null;
+    // Solo si el usuario sigue en esa tarjeta y hay una siguiente
+    if (modoVisualizacion.value === 'tarjetas' && serieActual.value?.SerieId === serieId && serieActualIdx.value < seriesCardOrder.value.length - 1) {
+      serieActualIdx.value++;
+    }
+  }, AVANCE_MS);
+};
+
 const toggleCompletadoCard = async (serieId: number) => {
   const currentState = completadasMap.value[serieId] ?? false;
   const newState = !currentState;
@@ -208,6 +223,7 @@ const toggleCompletadoCard = async (serieId: number) => {
     const serieHecha = series.value.find(s => s.SerieId === serieId);
     const ejercicioHecho = serieHecha ? ejercicios.value.find(e => e.ExerciciId === serieHecha.ExerciciId) : undefined;
     restTimer.iniciarAuto(serieHecha, ejercicioHecho);
+    avanzarTrasHecha(serieId);
   }
   try {
     await apiFetch('/api/toggleSerieCompletada', { serieId, completada: newState });
@@ -657,6 +673,7 @@ onUnmounted(() => {
   window.removeEventListener('scroll', alHacerScroll);
   if (rafScroll) cancelAnimationFrame(rafScroll);
   if (prTimer) clearTimeout(prTimer);
+  if (avanceTimer) clearTimeout(avanceTimer);
   if (avisoOkTimer) clearTimeout(avisoOkTimer);
   if (avisoErrorTimer) clearTimeout(avisoErrorTimer);
 });
