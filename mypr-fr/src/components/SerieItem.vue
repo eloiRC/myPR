@@ -221,13 +221,13 @@ const resumenAria = computed(() =>
   -webkit-tap-highlight-color: transparent;
   touch-action: pan-y;
 }
-.fila--actual { border-color: rgba(255, 176, 32, 0.55); background: var(--n2); }
+.fila--actual { border-color: var(--led-amber); background: var(--n2); }
 .fila--levantada {
   z-index: 5;
   pointer-events: none;
   background: var(--n3);
   border-color: var(--n6);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.6);
+  box-shadow: var(--shadow-lg);
 }
 .fila.serie-drop-target { border-color: var(--led-amber); background: var(--led-amber-dim); }
 
@@ -316,5 +316,5 @@ const resumenAria = computed(() =>
 }
 .fila-editar:hover { background: var(--n3); color: var(--n8); }
 .fila-toque:focus-visible, .fila-editar:focus-visible { outline-offset: -3px; }
-.fila-toque:hover { background: rgba(255, 255, 255, 0.02); }
+.fila-toque:hover { background: var(--n2); }
 </style>

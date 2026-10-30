@@ -5,9 +5,9 @@
 
 export const CHART_COLORS = {
   // Los datos se dibujan en gris claro: el ámbar se reserva para lo accionable o en curso
-  accent: '#b9bec5',
-  pr: '#f4f6f7',
-  surface: '#141518',
+  accent: '#b9bec5' /* --n7 */,
+  pr: '#f4f6f7' /* --judge-white */,
+  surface: '#141518' /* --n1 */,
 } as const;
 
 let themed = false;
@@ -22,8 +22,8 @@ export function applyChartTheme() {
   const d = ChartJS.defaults;
   d.font.family = "'Barlow', system-ui, -apple-system, sans-serif";
   d.font.size = 12;
-  d.color = '#8a9099';
-  d.borderColor = 'rgba(255, 255, 255, 0.06)';
+  d.color = '#8a9099' /* --n6 */;
+  d.borderColor = '#262a2f' /* --n3 */;
 
   // defaults.set crea la ruta aunque ese tipo de elemento aún no esté registrado
   d.set('elements.line', {
@@ -43,15 +43,15 @@ export function applyChartTheme() {
   });
 
   d.set('plugins.tooltip', {
-    backgroundColor: 'rgba(13, 17, 26, 0.95)',
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: '#141518' /* --n1 */,
+    borderColor: '#353a41' /* --n4 */,
     borderWidth: 1,
     cornerRadius: 4,
     padding: { x: 12, y: 10 },
     caretSize: 6,
     displayColors: false,
-    titleColor: '#f4f6fb',
-    bodyColor: '#f4f6fb',
+    titleColor: '#eef0f2' /* --n8 */,
+    bodyColor: '#eef0f2' /* --n8 */,
     titleFont: { weight: '600' },
     bodyFont: { weight: '700', size: 13 },
   });
@@ -91,7 +91,7 @@ export function roundedChartOptions(opts: { yTitle?: string; tooltipLabel: (valu
       y: {
         beginAtZero: true,
         border: { display: false, dash: [4, 6] },
-        grid: { color: 'rgba(255, 255, 255, 0.07)', drawTicks: false },
+        grid: { color: '#1b1d21' /* --n2 */, drawTicks: false },
         ticks: { padding: 10, maxTicksLimit: 5 },
         title: opts.yTitle ? { display: true, text: opts.yTitle } : { display: false },
       },

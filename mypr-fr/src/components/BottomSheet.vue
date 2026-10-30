@@ -70,7 +70,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  background: rgba(5, 6, 7, 0.7);
+  background: var(--scrim);
 }
 .sheet {
   width: 100%;
@@ -82,7 +82,6 @@ onBeforeUnmount(() => {
   border: 1px solid var(--n3);
   border-bottom: none;
   border-radius: var(--radius-md) var(--radius-md) 0 0;
-  box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.5);
   padding-bottom: env(safe-area-inset-bottom);
   outline: none;
 }

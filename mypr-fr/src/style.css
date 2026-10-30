@@ -56,24 +56,19 @@
   --radius-sm: 3px;
   --radius-md: 4px;
   --radius-lg: 6px;
-  --radius-xl: 8px;
-  --radius-full: 9999px;
 
   /* Sin halos: solo bisel de chapa y sombras con desplazamiento */
   --bevel: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  --shadow-sm: 0 1px 0 rgba(0, 0, 0, 0.6);
-  --shadow-md: 0 2px 0 rgba(0, 0, 0, 0.55);
-  --shadow-lg: 0 10px 28px rgba(0, 0, 0, 0.55);
-  --shadow-glow: none;
+  --shadow-sm: 0 0 0 1px var(--n0);
+  --shadow-md: 0 0 0 1px var(--n0);
+  --shadow-lg: 0 0 0 1px var(--n0);
+  --scrim: rgba(5, 6, 7, 0.7);
 
   --space-page-x: 1rem;
   --space-footer: 1.5rem;
   --max-content: 44rem;
 
   /* Alias heredados */
-  --color-teal: var(--led-amber);
-  --color-teal-dim: var(--led-amber);
-  --color-teal-dark: var(--accent-primary-dark);
   --color-coral: var(--led-red);
   --color-coral-dim: var(--led-red);
   --color-magenta: var(--led-amber);
@@ -330,11 +325,11 @@ textarea {
 .btn-danger {
   background: var(--led-red-dim);
   color: var(--led-red);
-  border-color: rgba(255, 74, 61, 0.4);
+  border-color: var(--led-red);
 }
 
 .btn-danger:hover:not(:disabled) {
-  background: rgba(255, 74, 61, 0.2);
+  background: var(--led-red-dim);
 }
 
 /* Acción destructiva discreta: texto sin relleno para que no compita con la principal */
@@ -568,9 +563,9 @@ textarea.prompt-input:focus {
   font-size: 0.875rem;
   margin: 0.5rem 0;
   padding: 0.625rem 0.75rem;
-  background: rgba(248, 113, 113, 0.1);
+  background: var(--led-red-dim);
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(248, 113, 113, 0.25);
+  border: 1px solid var(--led-red);
 }
 
 /* Toasts */
@@ -595,28 +590,6 @@ textarea.prompt-input:focus {
   color: var(--on-accent);
 }
 
-.toast-pr {
-  background: var(--judge-white);
-  color: #2a1a00;
-  font-size: 1rem;
-  padding: 1rem 1.25rem;
-  animation: toast-in 0.35s cubic-bezier(0.22, 1, 0.36, 1), pr-pop 0.6s 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.toast-pr strong {
-  display: block;
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  opacity: 0.8;
-}
-
-@keyframes pr-pop {
-  0% { transform: scale(1); }
-  40% { transform: scale(1.04); }
-  100% { transform: scale(1); }
-}
-
 .toast-warning {
   background: var(--led-amber);
   color: var(--on-amber);
@@ -624,7 +597,7 @@ textarea.prompt-input:focus {
 
 .toast-error {
   background: var(--led-red);
-  color: #fff;
+  color: var(--judge-white);
 }
 
 @keyframes toast-in {
@@ -675,29 +648,6 @@ textarea.prompt-input:focus {
   font-size: 0.875rem;
   line-height: 1.6;
   margin: 0 0 1rem;
-}
-
-.pr-display {
-  text-align: center;
-  padding: 1rem 0 1.5rem;
-}
-
-.pr-display h2 {
-  margin: 0 0 0.5rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-}
-
-.pr-valor {
-  margin: 0;
-  font-size: clamp(2.5rem, 8vw, 3.25rem);
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  color: var(--pr);
-  font-variant-numeric: tabular-nums;
 }
 
 /* Utilities */
