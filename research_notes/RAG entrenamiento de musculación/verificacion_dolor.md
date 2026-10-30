@@ -220,3 +220,50 @@ Notas:
 - Sprague 2021, figura 1: https://media.springernature.com/full/springer-static/image/art%3A10.1186%2Fs40814-021-00792-5/MediaObjects/40814_2021_792_Fig1_HTML.png
 - Sprague 2021, texto: PMC7905015
 - Smith 2017: PMC5739826
+
+## Verificación con texto aportado por el usuario
+
+Fecha: 31-10-2026. El usuario pegó el texto completo en inglés de dos guías JOSPT. Grados leídos en el original (A fuerte, B moderada, C débil, D contradictoria, E teórica, F opinión de expertos).
+
+### Desmeules F et al. 2025. Rotator Cuff Tendinopathy Diagnosis, Nonsurgical Medical Care, and Rehabilitation: A Clinical Practice Guideline. JOSPT 55(4):235-274
+
+Cita confirmada en la portada del texto.
+
+| Rec. | Sección | Grado | Contenido (resumen propio) |
+|---|---|---|---|
+| 25 | 3.2 Exercise | A | Programa de ejercicio activo (control motor y/o fuerza con cargas variadas) como tratamiento inicial para reducir dolor y discapacidad |
+| 24 | 3.1 Education | C | Educación individualizada sobre la lesión, el manejo del dolor, la modificación de actividades y el autocuidado |
+| 26 | 3.3 Manual Therapy | B | Terapia manual sola o con ejercicio, para el dolor a corto plazo |
+| 27 | 3.4 Taping | D | Vendaje añadido al ejercicio, corto plazo |
+| 34 | 3.6 Ergonomic Interventions | C | Adaptaciones ergonómicas para el dolor laboral |
+| 35-36 | 4 Return to Sport | F | Valorar capacidad y tolerancia a la carga; usar cuestionarios y pruebas funcionales para guiar la vuelta |
+| 14 | 2 (medicina no quirúrgica) | F | Derivar a especialista si el dolor o la discapacidad siguen siendo intensos tras un máximo de 12 semanas de buen tratamiento |
+| 9-10 | 1.8 Indications for Referral | F | No pedir imagen al inicio; considerarla si no mejora en un máximo de 12 semanas |
+
+Dosis (apartado "Dosage" de 3.2, sin recomendación graduada): carga alta frente a baja sin diferencia significativa (evidencia muy baja); más dosis (carga y volumen) redujo algo más el dolor con actividad en 1 ECA (certeza baja); supervisado no supera a casa (sección 3.2); ejercicio con o sin dolor sin diferencias (1 ECA, n = 22). La guía dice expresamente que faltan parámetros óptimos (FITT). No da series, repeticiones ni frecuencia.
+
+### Willy RW et al. 2019. Patellofemoral Pain. JOSPT 49(9):CPG1-CPG95
+
+Cita confirmada en la portada. Grados del "Summary of Recommendations" (CPG2-CPG4), coincidentes con los de la sección Interventions (CPG34-CPG47) y con la traducción china leída antes.
+
+| Recomendación | Grado |
+|---|---|
+| Ejercicio combinado de cadera (posterolateral) y rodilla (sentadilla resistida o extensión de rodilla); al principio puede priorizarse la cadera (Specific Modes of Exercise Therapy, CPG37) | A |
+| Combinar intervenciones, con el ejercicio como componente central (Combined Interventions) | A |
+| Oclusión vascular con ejercicio de rodilla de muchas repeticiones si la extensión resistida duele, vigilando efectos adversos | F |
+| Educación sobre gestión de carga, peso corporal, adherencia y kinesiofobia | F |
+| Vendaje rotuliano adaptado junto al ejercicio, corto plazo (4 semanas) | B |
+| No rodilleras, mangas ni cinchas | B (en contra) |
+| Plantillas prefabricadas con pronación aumentada, solo corto plazo (hasta 6 semanas) y con ejercicio | A |
+| No terapia manual aislada | A (en contra) |
+| No agentes biofísicos | B (en contra) |
+| No punción seca | A (en contra) |
+| No biofeedback EMG ni visual | B (en contra) |
+| Reentrenamiento de carrera (pisada, cadencia, aducción de cadera) | C |
+
+Dosis: la guía declara la dosis óptima poco clara. Datos sueltos: 1 ECA (nivel II) con 3×30+ repeticiones, 3 días/semana, 12 semanas, sin agravar el dolor, mejor que 3×10; oclusión al 30 % de 1RM (30 + 3×15) frente a 3×7-10 al ~70 % de 1RM. Irritabilidad: dolor casi constante >5/10 pide menos estrés en la rodilla; dolor intermitente <3/10 tolera más carga (fuerza en carga). Subcategoría de sobrecarga (F): subida de carga más rápida que la recuperación.
+
+### Cambios en las fichas
+
+- `dolor-hombro.md`: el grado A del ejercicio pasa a verificado; se quitan las notas de "no verificado"; se añaden los grados B, C y D y el límite de 12 semanas para derivar; la progresión se redacta como carga variada (alta o baja) por falta de diferencia clara.
+- `dolor-rodilla.md`: los grados pasan a constar como leídos en el texto inglés; se añade que la terapia manual aislada no se recomienda (A) y que la oclusión va con vigilancia de efectos adversos.
