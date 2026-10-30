@@ -9,7 +9,8 @@ export interface OpenAiOptions {
   baseURL?: string;
   name?: string;
   thinking?: 'adaptive' | 'off';
-  effort?: 'low' | 'medium' | 'high';
+  /** 'auto' = no se envía el parámetro y cada modelo usa su razonamiento por defecto */
+  effort?: 'low' | 'medium' | 'high' | 'auto';
   routing?: Routing;
 }
 
@@ -48,7 +49,7 @@ export function createOpenAiProvider(apiKey: string, model = OPENAI_DEFAULT_MODE
         // OpenRouter: solo proveedores que soporten todos los parámetros (herramientas), más las preferencias del modelo
         ...(opts.baseURL ? { provider: openRouterProvider(opts.routing) } : {}),
         // OpenRouter: razonamiento corto cuando se pide respuesta rápida (los modelos sin razonamiento lo ignoran)
-        ...(opts.effort ? { reasoning: { effort: opts.effort } } : opts.thinking === 'off' ? { reasoning: { effort: 'low' } } : {}),
+        ...(opts.effort === 'auto' ? {} : opts.effort ? { reasoning: { effort: opts.effort } } : opts.thinking === 'off' ? { reasoning: { effort: 'low' } } : {}),
       } as OpenAI.Chat.ChatCompletionCreateParamsStreaming);
 
       let text = '';

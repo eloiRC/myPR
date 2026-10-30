@@ -295,7 +295,7 @@ describe('modelo elegido por el usuario', () => {
   it('el esfuerzo fijo del catálogo llega a la configuración', () => {
     expect(resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'deepseek-v4.1-flash-high')).toMatchObject({ model: 'deepseek/deepseek-v4.1-flash-1017', effort: 'high' });
     expect(resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'mimo-v2.6-pro')).toMatchObject({ model: 'xiaomi/mimo-v2.6-pro' });
-    expect(resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'grok-4.3').effort).toBeUndefined();
+    expect(resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'grok-4.3').effort).toBe('auto');
   });
   it('DeepSeek usa enrutado con calidad y rendimiento mínimos; el resto, el automático', () => {
     const c = resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'deepseek-v4.1-flash');
@@ -307,10 +307,10 @@ describe('modelo elegido por el usuario', () => {
     expect(openRouterProvider()).toEqual({ require_parameters: true, allow_fallbacks: true });
     expect(openRouterProvider({ minThroughput: 60, maxLatency: 3, quantizations: ['fp8'] })).toMatchObject({ preferred_min_throughput: 60, preferred_max_latency: 3, quantizations: ['fp8'] });
   });
-  it('Luna y Haiku van en razonamiento medio; Haiku razona aunque el global esté apagado', () => {
+  it('Luna va en medio y Haiku en adaptativo con tope alto aunque el global esté apagado', () => {
     const luna = resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'gpt-6-luna');
     expect(luna).toMatchObject({ effort: 'medium', routing: { order: ['OpenAI'] } });
-    expect(resolveModelConfig({ ANTHROPIC_API_KEY: 'a', LLM_THINKING: 'off' }, 'claude-haiku-5-5')).toMatchObject({ thinking: 'adaptive', effort: 'medium', model: 'claude-haiku-5-5' });
+    expect(resolveModelConfig({ ANTHROPIC_API_KEY: 'a', LLM_THINKING: 'off' }, 'claude-haiku-5-5')).toMatchObject({ thinking: 'adaptive', effort: 'high', model: 'claude-haiku-5-5' });
     expect(resolveModelConfig({ ANTHROPIC_API_KEY: 'a', LLM_THINKING: 'off' }, 'claude-sonnet-5-5')).toMatchObject({ thinking: 'off' });
   });
   it('los ids del catálogo son únicos', () => {

@@ -15,7 +15,7 @@ export interface CatalogModel {
   outputPrice: number;
   note?: string;
   /** Esfuerzo de razonamiento fijo para este modelo (OpenRouter); sin él se usa el global (LLM_THINKING) */
-  effort?: 'low' | 'medium' | 'high';
+  effort?: 'low' | 'medium' | 'high' | 'auto';
   /** Enrutado en OpenRouter (proveedor, calidad y rendimiento mínimo). Sin él: reparto automático de OpenRouter */
   routing?: Routing;
   /** Razonamiento previo (Anthropic): sustituye al global LLM_THINKING para este modelo */
@@ -42,7 +42,7 @@ const MIMO_ROUTING: Routing = { quantizations: ['fp8', 'bf16', 'unknown'], minTh
 const OPENAI_ROUTING: Routing = { order: ['OpenAI'] };
 
 export const MODEL_CATALOG: CatalogModel[] = [
-  { id: 'claude-haiku-5-5', model: 'claude-haiku-5-5', route: 'anthropic', label: 'Claude Haiku 5.5', group: 'Anthropic', inputPrice: 0.1, outputPrice: 0.5, note: 'Razonamiento medio', effort: 'medium', thinking: 'adaptive' },
+  { id: 'claude-haiku-5-5', model: 'claude-haiku-5-5', route: 'anthropic', label: 'Claude Haiku 5.5', group: 'Anthropic', inputPrice: 0.1, outputPrice: 0.5, note: 'Razonamiento automático (alto)', effort: 'high', thinking: 'adaptive' },
   { id: 'claude-sonnet-5-5', model: 'claude-sonnet-5-5', route: 'anthropic', label: 'Claude Sonnet 5.5', group: 'Anthropic', inputPrice: 2, outputPrice: 10 },
   { id: 'gpt-6-luna', model: 'openai/gpt-6-luna', route: 'openrouter', label: 'GPT-6 Luna', group: 'OpenAI', inputPrice: 0.1, outputPrice: 0.5, note: 'Razonamiento medio', effort: 'medium', routing: OPENAI_ROUTING },
   { id: 'gpt-6.1-terra', model: 'openai/gpt-6.1-terra', route: 'openrouter', label: 'GPT-6.1 Terra', group: 'OpenAI', inputPrice: 1, outputPrice: 5, routing: OPENAI_ROUTING },

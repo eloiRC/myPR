@@ -19,7 +19,7 @@ export interface ProviderConfig {
   apiKey: string;
   thinking: 'adaptive' | 'off';
   /** Esfuerzo de razonamiento fijo del modelo elegido (si el catálogo lo define) */
-  effort?: 'low' | 'medium' | 'high';
+  effort?: 'low' | 'medium' | 'high' | 'auto';
   /** Preferencias de enrutado (solo OpenRouter) */
   routing?: Routing;
 }
@@ -58,7 +58,7 @@ export function resolveModelConfig(env: LlmEnv, modelId?: string | null): Provid
   if (!key) {
     throw new Error(`El modelo ${m.label} no está disponible: falta ${m.route === 'anthropic' ? 'ANTHROPIC_API_KEY' : 'OPENROUTER_API_KEY'}.`);
   }
-  return { provider: m.route, model: m.model, apiKey: key, thinking, ...(m.effort ? { effort: m.effort } : {}), ...(m.routing ? { routing: m.routing } : {}) };
+  return { provider: m.route, model: m.model, apiKey: key, thinking, ...(m.effort ? { effort: m.effort } : m.route === 'openrouter' ? { effort: 'auto' as const } : {}), ...(m.routing ? { routing: m.routing } : {}) };
 }
 
 export { DEFAULT_MODEL_ID };
