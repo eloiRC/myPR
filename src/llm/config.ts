@@ -1,4 +1,4 @@
-import { DEFAULT_MODEL_ID, findModel } from './models';
+import { DEFAULT_MODEL_ID, findModel, type Routing } from './models';
 
 export const ANTHROPIC_DEFAULT_MODEL = 'claude-haiku-5-5';
 export const OPENAI_DEFAULT_MODEL = 'gpt-6-luna';
@@ -20,8 +20,8 @@ export interface ProviderConfig {
   thinking: 'adaptive' | 'off';
   /** Esfuerzo de razonamiento fijo del modelo elegido (si el catálogo lo define) */
   effort?: 'low' | 'medium' | 'high';
-  /** Orden de proveedores preferidos (solo OpenRouter) */
-  providers?: string[];
+  /** Preferencias de enrutado (solo OpenRouter) */
+  routing?: Routing;
 }
 
 /** Resuelve proveedor, modelo y clave desde el entorno; lanza un error en español si falta la clave. */
@@ -58,7 +58,7 @@ export function resolveModelConfig(env: LlmEnv, modelId?: string | null): Provid
   if (!key) {
     throw new Error(`El modelo ${m.label} no está disponible: falta ${m.route === 'anthropic' ? 'ANTHROPIC_API_KEY' : 'OPENROUTER_API_KEY'}.`);
   }
-  return { provider: m.route, model: m.model, apiKey: key, thinking, ...(m.effort ? { effort: m.effort } : {}), ...(m.providers ? { providers: m.providers } : {}) };
+  return { provider: m.route, model: m.model, apiKey: key, thinking, ...(m.effort ? { effort: m.effort } : {}), ...(m.routing ? { routing: m.routing } : {}) };
 }
 
 export { DEFAULT_MODEL_ID };

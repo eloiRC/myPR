@@ -10,6 +10,7 @@ import {
 } from '../llm/openaiConvert';
 import { resolveProviderConfig, resolveModelConfig, modelAvailable } from '../llm/config';
 import { MODEL_CATALOG } from '../llm/models';
+import { openRouterProvider } from '../llm/openai';
 import { runToolLoop, executeToolCalls, closingNote, MAX_TOOL_ITERATIONS } from '../llm/loop';
 
 const conversation: LlmMessage[] = [
@@ -296,10 +297,15 @@ describe('modelo elegido por el usuario', () => {
     expect(resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'mimo-v2.6-pro')).toMatchObject({ model: 'xiaomi/mimo-v2.6-pro' });
     expect(resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'gpt-6-luna').effort).toBeUndefined();
   });
-  it('DeepSeek prefiere su API oficial y luego hosts de confianza', () => {
+  it('DeepSeek usa enrutado con calidad y rendimiento mínimos; el resto, el automático', () => {
     const c = resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'deepseek-v4.1-flash');
-    expect(c.providers?.[0]).toBe('DeepSeek');
-    expect(resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'gpt-6-luna').providers).toBeUndefined();
+    expect(c.routing).toMatchObject({ minThroughput: 60, maxLatency: 3 });
+    expect(c.routing?.quantizations).not.toContain('fp4');
+    expect(resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'gpt-6-luna').routing).toBeUndefined();
+  });
+  it('el objeto provider de OpenRouter siempre exige herramientas', () => {
+    expect(openRouterProvider()).toEqual({ require_parameters: true, allow_fallbacks: true });
+    expect(openRouterProvider({ minThroughput: 60, maxLatency: 3, quantizations: ['fp8'] })).toMatchObject({ preferred_min_throughput: 60, preferred_max_latency: 3, quantizations: ['fp8'] });
   });
   it('los ids del catálogo son únicos', () => {
     const ids = MODEL_CATALOG.map(m => m.id);

@@ -3,13 +3,26 @@ import type { LlmInput, LlmProvider, LlmTurn } from './types';
 import { accumulateToolCallDeltas, finalizeToolCalls, mapOpenAiFinishReason, mapOpenAiUsage, toOpenAiMessages, toOpenAiTools, type ToolCallAccumulator } from './openaiConvert';
 
 import { OPENAI_DEFAULT_MODEL } from './config';
+import type { Routing } from './models';
 
 export interface OpenAiOptions {
   baseURL?: string;
   name?: string;
   thinking?: 'adaptive' | 'off';
   effort?: 'low' | 'medium' | 'high';
-  providers?: string[];
+  routing?: Routing;
+}
+
+/** Objeto `provider` de OpenRouter a partir de las preferencias de enrutado del modelo */
+export function openRouterProvider(r?: Routing): Record<string, unknown> {
+  return {
+    require_parameters: true,
+    allow_fallbacks: true,
+    ...(r?.order?.length ? { order: r.order } : {}),
+    ...(r?.quantizations?.length ? { quantizations: r.quantizations } : {}),
+    ...(r?.minThroughput ? { preferred_min_throughput: r.minThroughput } : {}),
+    ...(r?.maxLatency ? { preferred_max_latency: r.maxLatency } : {}),
+  };
 }
 
 export function createOpenAiProvider(apiKey: string, model = OPENAI_DEFAULT_MODEL, opts: OpenAiOptions = {}): LlmProvider {
@@ -32,8 +45,8 @@ export function createOpenAiProvider(apiKey: string, model = OPENAI_DEFAULT_MODE
         max_completion_tokens: input.maxTokens,
         stream: true,
         stream_options: { include_usage: true },
-        // OpenRouter: solo proveedores que soporten todos los parámetros (herramientas) y, si se indica, en este orden
-        ...(opts.baseURL ? { provider: { require_parameters: true, allow_fallbacks: true, ...(opts.providers?.length ? { order: opts.providers } : {}) } } : {}),
+        // OpenRouter: solo proveedores que soporten todos los parámetros (herramientas), más las preferencias del modelo
+        ...(opts.baseURL ? { provider: openRouterProvider(opts.routing) } : {}),
         // OpenRouter: razonamiento corto cuando se pide respuesta rápida (los modelos sin razonamiento lo ignoran)
         ...(opts.effort ? { reasoning: { effort: opts.effort } } : opts.thinking === 'off' ? { reasoning: { effort: 'low' } } : {}),
       } as OpenAI.Chat.ChatCompletionCreateParamsStreaming);
