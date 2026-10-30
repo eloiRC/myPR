@@ -4,7 +4,7 @@ import { mapAnthropicStopReason, mapAnthropicUsage, toAnthropicMessages, toAnthr
 
 import { ANTHROPIC_DEFAULT_MODEL } from './config';
 
-export function createAnthropicProvider(apiKey: string, model = ANTHROPIC_DEFAULT_MODEL, opts: { thinking?: 'adaptive' | 'off' } = {}): LlmProvider {
+export function createAnthropicProvider(apiKey: string, model = ANTHROPIC_DEFAULT_MODEL, opts: { thinking?: 'adaptive' | 'off'; effort?: 'low' | 'medium' | 'high' } = {}): LlmProvider {
   const client = new Anthropic({ apiKey });
 
   return {
@@ -25,7 +25,7 @@ export function createAnthropicProvider(apiKey: string, model = ANTHROPIC_DEFAUL
         messages: toAnthropicMessages(input.messages) as Anthropic.MessageParam[],
         tools: toAnthropicTools(input.tools) as Anthropic.Tool[],
         tool_choice: { type: 'auto' },
-        output_config: { effort: 'low' },
+        output_config: { effort: opts.effort ?? 'low' },
       });
       stream.on('text', delta => onText(delta));
 

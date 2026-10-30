@@ -51,7 +51,7 @@ export function modelAvailable(env: LlmEnv, modelId: string): boolean {
  * se usa el del entorno (LLM_PROVIDER / LLM_MODEL), como antes.
  */
 export function resolveModelConfig(env: LlmEnv, modelId?: string | null): ProviderConfig {
-  const m = findModel(modelId);
+  const m = modelId == null ? findModel(DEFAULT_MODEL_ID) : findModel(modelId);
   if (!m) return resolveProviderConfig(env);
   const thinking = m.thinking ?? (env.LLM_THINKING?.trim().toLowerCase() === 'off' ? 'off' : 'adaptive');
   const key = m.route === 'anthropic' ? env.ANTHROPIC_API_KEY : env.OPENROUTER_API_KEY;
