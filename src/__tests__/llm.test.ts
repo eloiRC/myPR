@@ -307,6 +307,12 @@ describe('modelo elegido por el usuario', () => {
     expect(openRouterProvider()).toEqual({ require_parameters: true, allow_fallbacks: true });
     expect(openRouterProvider({ minThroughput: 60, maxLatency: 3, quantizations: ['fp8'] })).toMatchObject({ preferred_min_throughput: 60, preferred_max_latency: 3, quantizations: ['fp8'] });
   });
+  it('Luna va en razonamiento medio por la API de OpenAI y Haiku puede razonar aunque el global esté apagado', () => {
+    const luna = resolveModelConfig({ OPENROUTER_API_KEY: 'o' }, 'gpt-6-luna');
+    expect(luna).toMatchObject({ effort: 'medium', routing: { order: ['OpenAI'] } });
+    expect(resolveModelConfig({ ANTHROPIC_API_KEY: 'a', LLM_THINKING: 'off' }, 'claude-haiku-5-5').thinking).toBe('off');
+    expect(resolveModelConfig({ ANTHROPIC_API_KEY: 'a', LLM_THINKING: 'off' }, 'claude-haiku-5-5-think')).toMatchObject({ thinking: 'adaptive', model: 'claude-haiku-5-5' });
+  });
   it('los ids del catálogo son únicos', () => {
     const ids = MODEL_CATALOG.map(m => m.id);
     expect(new Set(ids).size).toBe(ids.length);

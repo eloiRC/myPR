@@ -53,7 +53,7 @@ export function modelAvailable(env: LlmEnv, modelId: string): boolean {
 export function resolveModelConfig(env: LlmEnv, modelId?: string | null): ProviderConfig {
   const m = findModel(modelId);
   if (!m) return resolveProviderConfig(env);
-  const thinking = env.LLM_THINKING?.trim().toLowerCase() === 'off' ? 'off' : 'adaptive';
+  const thinking = m.thinking ?? (env.LLM_THINKING?.trim().toLowerCase() === 'off' ? 'off' : 'adaptive');
   const key = m.route === 'anthropic' ? env.ANTHROPIC_API_KEY : env.OPENROUTER_API_KEY;
   if (!key) {
     throw new Error(`El modelo ${m.label} no está disponible: falta ${m.route === 'anthropic' ? 'ANTHROPIC_API_KEY' : 'OPENROUTER_API_KEY'}.`);
