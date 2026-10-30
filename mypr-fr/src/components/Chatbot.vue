@@ -57,7 +57,7 @@ const mounted = ref(true);
 
 // Mensaje de bienvenida
 const welcomeMessage = computed(() => {
-  if (esEntrevista.value) return 'Te hago unas preguntas cortas para conocerte: objetivos, experiencia, días, material, lesiones y preferencias. Con tus respuestas actualizo lo que recuerdo de ti y lo tendré en cuenta en cada entreno.';
+  if (esEntrevista.value) return 'Te hago unas preguntas cortas. Si ya tengo cosas apuntadas de ti, primero las repasamos una a una para confirmarlas, corregirlas o borrarlas; luego completo lo que falte: objetivos, experiencia, días, material, lesiones y preferencias.';
   return 'Conozco tu historial, tus récords y qué músculos llevan más tiempo sin trabajar. Pídeme el entreno de hoy o elige una sugerencia.';
 });
 
