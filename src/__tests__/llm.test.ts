@@ -280,8 +280,8 @@ describe('modelo elegido por el usuario', () => {
     expect(resolveModelConfig({ ANTHROPIC_API_KEY: 'k' }, null).model).toBe('claude-haiku-5-5');
     expect(resolveModelConfig({ ANTHROPIC_API_KEY: 'k' }, 'no-existe').model).toBe('claude-haiku-5-5');
   });
-  it('catálogo reducido: Haiku, Luna, Sol low y DeepSeek Flash', () => {
-    expect(MODEL_CATALOG.map(m => m.id)).toEqual(['claude-haiku-5-5', 'gpt-6-luna', 'gpt-6.1-sol-low', 'deepseek-v4.1-flash']);
+  it('catálogo reducido: Haiku, Luna, Sol low, Grok 4.7 y DeepSeek Flash', () => {
+    expect(MODEL_CATALOG.map(m => m.id)).toEqual(['claude-haiku-5-5', 'gpt-6-luna', 'gpt-6.1-sol-low', 'grok-4.7', 'deepseek-v4.1-flash']);
   });
   it('Haiku va directo y adaptativo con tope medio aunque el global esté apagado', () => {
     expect(resolveModelConfig({ ANTHROPIC_API_KEY: 'a', LLM_THINKING: 'off' }, 'claude-haiku-5-5')).toMatchObject({ provider: 'anthropic', thinking: 'adaptive', effort: 'medium', apiKey: 'a' });
@@ -290,6 +290,7 @@ describe('modelo elegido por el usuario', () => {
     const env = { OPENROUTER_API_KEY: 'o' };
     expect(resolveModelConfig(env, 'gpt-6-luna')).toMatchObject({ provider: 'openrouter', model: 'openai/gpt-6-luna', effort: 'high', routing: { order: ['OpenAI'] } });
     expect(resolveModelConfig(env, 'gpt-6.1-sol-low')).toMatchObject({ model: 'openai/gpt-6.1-sol', effort: 'low' });
+    expect(resolveModelConfig(env, 'grok-4.7')).toMatchObject({ provider: 'openrouter', model: 'x-ai/grok-4.7', effort: 'auto' });
     const ds = resolveModelConfig(env, 'deepseek-v4.1-flash');
     expect(ds).toMatchObject({ effort: 'auto', routing: { minThroughput: 60, maxLatency: 3 } });
     expect(ds.routing?.quantizations).not.toContain('fp4');

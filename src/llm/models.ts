@@ -44,6 +44,7 @@ export const MODEL_CATALOG: CatalogModel[] = [
   { id: 'claude-haiku-5-5', model: 'claude-haiku-5-5', route: 'anthropic', label: 'Claude Haiku 5.5', group: 'Anthropic', inputPrice: 0.1, outputPrice: 0.5, note: 'Razonamiento adaptativo', effort: 'medium', thinking: 'adaptive' },
   { id: 'gpt-6-luna', model: 'openai/gpt-6-luna', route: 'openrouter', label: 'GPT-6 Luna', group: 'OpenAI', inputPrice: 0.1, outputPrice: 0.5, note: 'Razonamiento máximo', effort: 'high', routing: OPENAI_ROUTING },
   { id: 'gpt-6.1-sol-low', model: 'openai/gpt-6.1-sol', route: 'openrouter', label: 'GPT-6.1 Sol · low', group: 'OpenAI', inputPrice: 2, outputPrice: 10, note: 'Razonamiento bajo', effort: 'low', routing: OPENAI_ROUTING },
+  { id: 'grok-4.7', model: 'x-ai/grok-4.7', route: 'openrouter', label: 'Grok 4.7', group: 'xAI', inputPrice: 2, outputPrice: 6, note: 'Razonamiento por defecto del modelo' },
   { id: 'deepseek-v4.1-flash', model: 'deepseek/deepseek-v4.1-flash-1017', route: 'openrouter', label: 'DeepSeek V4.1 Flash', group: 'DeepSeek', inputPrice: 0.15, outputPrice: 0.6, note: 'Razonamiento adaptativo; fuera de hora punta', routing: DEEPSEEK_ROUTING },
 ];
 
